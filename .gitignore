@@ -1,0 +1,27 @@
+# Python virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# Django static files
+staticfiles/
+
+# Database
+db.sqlite3
+
+# VS Code settings
+.vscode/
+
+# React dependencies
+kemis-frontend/node_modules/
+
+# React production build
+kemis-frontend/dist/
+
+# OS files
+.DS_Store
