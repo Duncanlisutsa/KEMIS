@@ -3,7 +3,6 @@ from .models import Estate
 from .models import Estate, Unit
 
 
-
 class EstateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Estate

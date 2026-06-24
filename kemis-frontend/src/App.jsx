@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import MainLayout from './layouts/MainLayout';
 import Estates from './pages/Estates';
 import Units from './pages/Units';
+import Tenants from './pages/Tenants';
 function App() {
 
     return (
@@ -16,6 +17,7 @@ function App() {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/estates" element={<Estates />} />
                     <Route path="/units" element={<Units />} />
+                    <Route path="/tenants" element={<Tenants />} />
                 </Routes>
 
             </MainLayout>

@@ -24,5 +24,6 @@ urlpatterns = [
         'api/reports/',
         include('reports.urls')
     ),
-    path('api/property/', include('estates.urls')),    
+    path('api/property/', include('estates.urls')),  
+    path('api/tenants/', include('tenants.urls')),  
 ]
