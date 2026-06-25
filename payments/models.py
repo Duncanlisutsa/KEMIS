@@ -1,15 +1,18 @@
 from django.db import models
 from leases.models import Lease
-from django.conf import settings
 
 
 class Payment(models.Model):
-
-    PAYMENT_METHODS = (
-        ('CASH', 'Cash'),
+    PAYMENT_METHODS = [
         ('MPESA', 'M-Pesa'),
         ('BANK', 'Bank'),
-    )
+        ('CASH', 'Cash'),
+    ]
+
+    PAYMENT_TYPES = [
+        ('RENT', 'Rent'),
+        ('DEPOSIT', 'Deposit'),
+    ]
 
     lease = models.ForeignKey(
         Lease,
@@ -29,24 +32,23 @@ class Payment(models.Model):
         choices=PAYMENT_METHODS
     )
 
+    payment_type = models.CharField(
+        max_length=20,
+        choices=PAYMENT_TYPES,
+        default='RENT'
+    )
+
     reference_number = models.CharField(
         max_length=100,
         unique=True
     )
 
-    received_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True
+    status = models.CharField(
+        max_length=20,
+        default='PAID'
     )
 
-    remarks = models.TextField(
-        blank=True
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.reference_number} - KES {self.amount}"
+        return f"{self.lease} - {self.amount}"
