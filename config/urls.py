@@ -28,6 +28,6 @@ urlpatterns = [
     path('api/tenants/', include('tenants.urls')), 
     path('api/leases/', include('leases.urls')), 
     path('api/payments/', include('payments.urls')),
-    #path('api/maintenance/', include('maintenance.urls')),
+    path('api/maintenance/', include('maintenance.urls')),
     #path('api/notifications/', include('notifications.urls')),
 ]

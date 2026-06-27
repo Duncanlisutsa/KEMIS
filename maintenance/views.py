@@ -1,3 +1,8 @@
-from django.shortcuts import render
+from rest_framework import viewsets
+from .models import MaintenanceRequest
+from .serializers import MaintenanceRequestSerializer
 
-# Create your views here.
+
+class MaintenanceRequestViewSet(viewsets.ModelViewSet):
+    queryset = MaintenanceRequest.objects.all()
+    serializer_class = MaintenanceRequestSerializer

@@ -1,23 +1,21 @@
 from django.db import models
-from tenants.models import Tenant
 from estates.models import Unit
+from tenants.models import Tenant
 
 
 class MaintenanceRequest(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('IN_PROGRESS', 'In Progress'),
+        ('COMPLETED', 'Completed'),
+    ]
 
-    PRIORITY_CHOICES = (
+    PRIORITY_CHOICES = [
         ('LOW', 'Low'),
         ('MEDIUM', 'Medium'),
         ('HIGH', 'High'),
-        ('EMERGENCY', 'Emergency'),
-    )
-
-    STATUS_CHOICES = (
-        ('OPEN', 'Open'),
-        ('IN_PROGRESS', 'In Progress'),
-        ('COMPLETED', 'Completed'),
-        ('CLOSED', 'Closed'),
-    )
+        ('URGENT', 'Urgent'),
+    ]
 
     tenant = models.ForeignKey(
         Tenant,
@@ -42,17 +40,15 @@ class MaintenanceRequest(models.Model):
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='OPEN'
+        default='PENDING'
     )
 
-    reported_date = models.DateTimeField(
-        auto_now_add=True
-    )
+    reported_date = models.DateTimeField(auto_now_add=True)
 
-    completed_date = models.DateTimeField(
+    resolved_date = models.DateTimeField(
         null=True,
         blank=True
     )
 
     def __str__(self):
-        return f"{self.unit} - {self.title}"
+        return f"{self.title} - {self.unit}"
