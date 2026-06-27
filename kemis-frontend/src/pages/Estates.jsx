@@ -3,6 +3,7 @@ import api from "../services/api";
 
 function Estates() {
   const [estates, setEstates] = useState([]);
+  const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -22,6 +23,25 @@ function Estates() {
       console.error("Error fetching estates:", error);
     }
   };
+  
+  const handleDelete = async (id) => {
+  try {
+    await api.delete(`property/estates/${id}/`);
+    fetchEstates();
+  } catch (error) {
+    console.error("Error deleting estate:", error);
+  }
+};
+
+  const handleEdit = (estate) => {
+  setFormData({
+    name: estate.name,
+    location: estate.location,
+    description: estate.description,
+  });
+
+  setEditingId(estate.id);
+};
 
   const handleChange = (e) => {
     setFormData({
@@ -31,22 +51,31 @@ function Estates() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
+  try {
+    if (editingId) {
+      await api.put(
+        `property/estates/${editingId}/`,
+        formData
+      );
+    } else {
       await api.post("property/estates/", formData);
-
-      setFormData({
-        name: "",
-        location: "",
-        description: "",
-      });
-
-      fetchEstates();
-    } catch (error) {
-      console.error("Error adding estate:", error);
     }
-  };
+
+    setFormData({
+      name: "",
+      location: "",
+      description: "",
+    });
+
+    setEditingId(null);
+    fetchEstates();
+
+  } catch (error) {
+    console.error("Error saving estate:", error);
+  }
+};
 
   return (
     <div>
@@ -85,7 +114,7 @@ function Estates() {
           type="submit"
           style={{ marginLeft: "10px" }}
         >
-          Add Estate
+          {editingId ? "Update Estate" : "Add Estate"}
         </button>
       </form>
 
@@ -95,18 +124,30 @@ function Estates() {
             <th>ID</th>
             <th>Name</th>
             <th>Location</th>
-            <th>Description</th>
+            <th>Actions</th>
           </tr>
         </thead>
 
         <tbody>
           {estates.map((estate) => (
-            <tr key={estate.id}>
-              <td>{estate.id}</td>
-              <td>{estate.name}</td>
-              <td>{estate.location}</td>
-              <td>{estate.description}</td>
-            </tr>
+        <tr key={estate.id}>
+            <td>{estate.id}</td>
+            <td>{estate.name}</td>
+            <td>{estate.location}</td>
+            <td>{estate.description}</td>
+            <td>
+                <button onClick={() => handleEdit(estate)}>
+                    Edit
+                </button>
+
+                <button
+                    onClick={() => handleDelete(estate.id)}
+                    style={{ marginLeft: "10px" }}
+                >
+                    Delete
+                </button>
+            </td>
+        </tr>
           ))}
         </tbody>
       </table>
