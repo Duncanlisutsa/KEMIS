@@ -5,6 +5,7 @@ function Units() {
   const [units, setUnits] = useState([]);
   const [estates, setEstates] = useState([]);
 
+
   const [formData, setFormData] = useState({
     estate: "",
     unit_number: "",
@@ -12,6 +13,10 @@ function Units() {
     rent_amount: "",
     status: "VACANT",
   });
+
+  const [editingId, setEditingId] = useState(null);
+
+  
 
   useEffect(() => {
     fetchUnits();
@@ -47,12 +52,22 @@ function Units() {
   e.preventDefault();
 
   try {
-    await api.post("property/units/", {
-      ...formData,
-      rent_amount: Number(formData.rent_amount),
-    });
+        if (editingId) {
+        await api.put(`property/units/${editingId}/`, {
+            ...formData,
+            rent_amount: Number(formData.rent_amount),
+        });
 
-    alert("Unit added successfully!");
+        alert("Unit updated successfully!");
+
+        } else {
+        await api.post("property/units/", {
+            ...formData,
+            rent_amount: Number(formData.rent_amount),
+        });
+
+        alert("Unit added successfully!");
+        }
 
     setFormData({
       estate: "",
@@ -63,6 +78,7 @@ function Units() {
     });
 
     fetchUnits();
+    setEditingId(null);
 
   } catch (error) {
     console.error("Error adding unit:", error);
@@ -74,6 +90,18 @@ function Units() {
       alert("Failed to connect to server");
     }
   }
+};
+
+const editUnit = (unit) => {
+  setEditingId(unit.id);
+
+  setFormData({
+    estate: unit.estate,
+    unit_number: unit.unit_number,
+    unit_type: unit.unit_type,
+    rent_amount: unit.rent_amount,
+    status: unit.status,
+  });
 };
 
 
@@ -167,7 +195,7 @@ function Units() {
           type="submit"
           style={{ marginLeft: "10px" }}
         >
-          Add Unit
+          {editingId ? "Update Unit" : "Add Unit"}
         </button>
       </form>
 
@@ -195,6 +223,19 @@ function Units() {
             <td>{unit.status}</td>
 
             <td>
+                <button
+                onClick={() => editUnit(unit)}
+                style={{
+                    backgroundColor: "blue",
+                    color: "white",
+                    border: "none",
+                    padding: "5px 10px",
+                    cursor: "pointer",
+                    marginRight: "5px",
+                }}
+                >
+                Edit
+                </button>
                 <button
                 onClick={() => deleteUnit(unit.id)}
                 style={{
