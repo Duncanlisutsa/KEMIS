@@ -10,7 +10,7 @@ function Units() {
     unit_number: "",
     unit_type: "",
     rent_amount: "",
-    status: "Vacant",
+    status: "VACANT",
   });
 
   useEffect(() => {
@@ -43,25 +43,39 @@ function Units() {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      await api.post("property/units/", formData);
+  try {
+    await api.post("property/units/", {
+      ...formData,
+      rent_amount: Number(formData.rent_amount),
+    });
 
-      setFormData({
-        estate: "",
-        unit_number: "",
-        unit_type: "",
-        rent_amount: "",
-        status: "Vacant",
-      });
+    alert("Unit added successfully!");
 
-      fetchUnits();
-    } catch (error) {
-      console.error("Error adding unit:", error);
+    setFormData({
+      estate: "",
+      unit_number: "",
+      unit_type: "",
+      rent_amount: "",
+      status: "VACANT",
+    });
+
+    fetchUnits();
+
+  } catch (error) {
+    console.error("Error adding unit:", error);
+
+    if (error.response) {
+      console.log(error.response.data);
+      alert(JSON.stringify(error.response.data));
+    } else {
+      alert("Failed to connect to server");
     }
-  };
+  }
+};
+
 
   const deleteUnit = async (id) => {
   const confirmDelete = window.confirm(
@@ -101,24 +115,30 @@ function Units() {
           ))}
         </select>
 
-        <input
-          type="text"
-          name="unit_number"
-          placeholder="Unit Number"
-          value={formData.unit_number}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
-        />
+        <select
+            name="unit_type"
+            value={formData.unit_type}
+            onChange={handleChange}
+            required
+            style={{ marginLeft: "10px" }}
+            >
+            <option value="">Select Unit Type</option>
+            <option value="SINGLE">Single Room</option>
+            <option value="BEDSITTER">Bedsitter</option>
+            <option value="ONE_BEDROOM">One Bedroom</option>
+            <option value="TWO_BEDROOM">Two Bedroom</option>
+            <option value="BUSINESS">Business Premise</option>
+        </select>
+
 
         <input
-          type="text"
-          name="unit_type"
-          placeholder="Unit Type"
-          value={formData.unit_type}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
+            type="text"
+            name="unit_number"
+            placeholder="Unit Number"
+            value={formData.unit_number}
+            onChange={handleChange}
+            required
+            style={{ marginLeft: "10px" }}
         />
 
         <input
@@ -132,13 +152,15 @@ function Units() {
         />
 
         <select
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          style={{ marginLeft: "10px" }}
-        >
-          <option value="Vacant">Vacant</option>
-          <option value="Occupied">Occupied</option>
+            name="status"
+            value={formData.status}
+            onChange={handleChange}
+            style={{ marginLeft: "10px" }}
+            >
+            <option value="VACANT">Vacant</option>
+            <option value="OCCUPIED">Occupied</option>
+            <option value="RESERVED">Reserved</option>
+            <option value="MAINTENANCE">Under Maintenance</option>
         </select>
 
         <button
