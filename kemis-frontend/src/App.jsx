@@ -24,6 +24,7 @@ function App() {
           <Route path="/leases" element={<Leases />} />
           <Route path="/payments" element={<Payments />} />
           <Route path="/maintenance" element={<Maintenance />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </div>
     </div>
