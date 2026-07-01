@@ -1,14 +1,18 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+
+from accounts.permissions import IsAdminOrManager
 
 from estates.models import Estate, Unit
 from tenants.models import Tenant
 from leases.models import Lease
 from payments.models import Payment
+
 from django.db.models import Sum
 
 
 @api_view(['GET'])
+@permission_classes([IsAdminOrManager])
 def dashboard_statistics(request):
 
     total_estates = Estate.objects.count()

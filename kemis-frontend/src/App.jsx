@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Sidebar from "./components/sidebar";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
 
+import { PERMISSIONS } from "./config/permissions";
 import Dashboard from "./pages/Dashboard";
 import Estates from "./pages/Estates";
 import Units from "./pages/Units";
@@ -36,8 +37,7 @@ function App() {
           <Route path="/maintenance" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/reports" element={<RoleProtectedRoute allowedRoles={['Admin', 'Manager']}><Reports /></RoleProtectedRoute>} />
-        </Routes>
+          <Route path="/reports" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.reports}><Reports /></RoleProtectedRoute>} />        </Routes>
       </div>
     </div>
   );

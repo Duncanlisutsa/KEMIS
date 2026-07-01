@@ -1,6 +1,8 @@
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 
+import { PERMISSIONS } from "../config/permissions";
+
 
 import { Link } from "react-router-dom";
 import {
@@ -55,55 +57,71 @@ if (!user) return null;
 
       <nav>
         <ul style={{ listStyle: "none", padding: 0 }}>
+          {PERMISSIONS.dashboard.includes(user.role) && (
           <li style={{ margin: "20px 0" }}>
             <Link to="/" style={linkStyle}>
               <FaHome /> Dashboard
             </Link>
           </li>
+        )}
 
+          {PERMISSIONS.estates.includes(user.role) && (
           <li style={{ margin: "20px 0" }}>
             <Link to="/estates" style={linkStyle}>
               <FaBuilding /> Estates
             </Link>
           </li>
+        )}
 
+          {PERMISSIONS.units.includes(user.role) && (
           <li style={{ margin: "20px 0" }}>
             <Link to="/units" style={linkStyle}>
               <FaDoorOpen /> Units
             </Link>
           </li>
+        )}
 
-          <li style={{ margin: "20px 0" }}>
-            <Link to="/tenants" style={linkStyle}>
-              <FaUsers /> Tenants
-            </Link>
-          </li>
+          {PERMISSIONS.tenants.includes(user.role) && (
+            <li style={{ margin: "20px 0" }}>
+              <Link to="/tenants" style={linkStyle}>
+                <FaUsers /> Tenants
+              </Link>
+            </li>
+          )}
+          
 
+          {PERMISSIONS.leases.includes(user.role) && (
           <li style={{ margin: "20px 0" }}>
             <Link to="/leases" style={linkStyle}>
               <FaFileContract /> Leases
             </Link>
           </li>
+        )}
 
+          {PERMISSIONS.payments.includes(user.role) && (
           <li style={{ margin: "20px 0" }}>
             <Link to="/payments" style={linkStyle}>
               <FaMoneyBillWave /> Payments
             </Link>
           </li>
-
-          <li style={{ margin: "20px 0" }}>
-            <Link to="/maintenance" style={linkStyle}>
-              <FaTools /> Maintenance
-            </Link>
-          </li>
-
-          {user.role !== "Tenant" && (
-          <li style={{ margin: "20px 0" }}>
-            <Link to="/reports" style={linkStyle}>
-              <FaChartBar /> Reports
-            </Link>
-          </li>
         )}
+
+          {PERMISSIONS.maintenance.includes(user.role) && (
+            <li style={{ margin: "20px 0" }}>
+              <Link to="/maintenance" style={linkStyle}>
+                <FaTools /> Maintenance
+              </Link>
+            </li>
+          )}
+          
+
+          {PERMISSIONS.reports.includes(user.role) && (
+            <li style={{ margin: "20px 0" }}>
+              <Link to="/reports" style={linkStyle}>
+                <FaChartBar /> Reports
+              </Link>
+            </li>
+          )}
           <li style={{ margin: "20px 0" }}>
             <button
               onClick={handleLogout}
