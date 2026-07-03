@@ -18,9 +18,28 @@ import {
 
 function Sidebar() {
 
-  const { user } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
 
-if (!user) return null;
+    if (loading) {
+      return (
+        <div
+          style={{
+            width: "250px",
+            height: "100vh",
+            background: "#1e293b",
+            color: "white",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            fontSize: "18px",
+          }}
+        >
+          Loading...
+        </div>
+      );
+    }
+
+    if (!user) return null;
 
 
   const handleLogout = () => {

@@ -1,9 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { AuthContext } from "../context/AuthContext";
 
 function Login() {
   const navigate = useNavigate();
+  const { loadUser } = useContext(AuthContext);
+
   useEffect(() => {
   const token = localStorage.getItem("access_token");
 
@@ -25,30 +28,37 @@ function Login() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const response = await api.post("token/", formData);
+  console.log("Sending:", formData);
 
-      localStorage.setItem(
-        "access_token",
-        response.data.access
-      );
+  try {
+    const response = await api.post("token/", formData);
 
-      localStorage.setItem(
-        "refresh_token",
-        response.data.refresh
-      );
+    console.log("SUCCESS:", response.data);
 
-      alert("Login successful!");
+    localStorage.setItem(
+  "access_token",
+  response.data.access
+);
 
-      navigate("/dashboard");
+localStorage.setItem(
+  "refresh_token",
+  response.data.refresh
+);
 
-    } catch (error) {
-      console.error(error);
-      alert("Invalid username or password");
-    }
-  };
+// Load the logged-in user's details
+await loadUser();
+
+alert("Login successful!");
+
+navigate("/dashboard");
+  } catch (error) {
+    console.log("ERROR STATUS:", error.response?.status);
+    console.log("ERROR DATA:", error.response?.data);
+    console.log("REQUEST DATA:", formData);
+  }
+};
 
   return (
     <div
