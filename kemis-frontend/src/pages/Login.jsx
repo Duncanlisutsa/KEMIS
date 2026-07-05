@@ -2,10 +2,12 @@ import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
 
 function Login() {
   const navigate = useNavigate();
   const { loadUser } = useContext(AuthContext);
+  const { showNotification } = useNotification();
 
   useEffect(() => {
   const token = localStorage.getItem("access_token");
@@ -20,6 +22,8 @@ function Login() {
     password: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -27,36 +31,37 @@ function Login() {
     });
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
 
-  console.log("Sending:", formData);
+  setLoading(true);
 
   try {
     const response = await api.post("token/", formData);
 
-    console.log("SUCCESS:", response.data);
+    localStorage.setItem("access_token", response.data.access);
+    localStorage.setItem("refresh_token", response.data.refresh);
 
-    localStorage.setItem(
-  "access_token",
-  response.data.access
-);
+    await loadUser();
 
-localStorage.setItem(
-  "refresh_token",
-  response.data.refresh
-);
+    showNotification("Login successful!", "success");
 
-// Load the logged-in user's details
-await loadUser();
-
-alert("Login successful!");
-
-navigate("/dashboard");
+    navigate("/dashboard");
   } catch (error) {
-    console.log("ERROR STATUS:", error.response?.status);
-    console.log("ERROR DATA:", error.response?.data);
-    console.log("REQUEST DATA:", formData);
+    if (error.response?.status === 401) {
+      showNotification("Invalid username or password.", "error");
+    } else if (!error.response) {
+      showNotification(
+        "Unable to connect to the server. Please check your internet connection.",
+        "error"
+      );
+    } else {
+      showNotification("Login failed. Please try again.", "error");
+    }
+
+    console.log(error);
+  } finally {
+    setLoading(false);
   }
 };
 
@@ -102,12 +107,15 @@ navigate("/dashboard");
 
         <button
           type="submit"
+          disabled={loading}
           style={{
             width: "100%",
             padding: "10px",
+            cursor: loading ? "not-allowed" : "pointer",
+            opacity: loading ? 0.7 : 1,
           }}
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
     </div>

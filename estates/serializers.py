@@ -3,25 +3,30 @@ from .models import Estate, Unit
 
 
 class EstateSerializer(serializers.ModelSerializer):
+    owner_name = serializers.CharField(
+        source="owner.get_full_name",
+        read_only=True
+    )
+
     class Meta:
         model = Estate
-        fields = '__all__'
+        fields = [
+            "id",
+            "name",
+            "location",
+            "description",
+            "owner",
+            "owner_name",
+            "created_at",
+        ]
 
 
 class UnitSerializer(serializers.ModelSerializer):
     estate_name = serializers.CharField(
-        source='estate.name',
+        source="estate.name",
         read_only=True
     )
 
     class Meta:
         model = Unit
-        fields = [
-            'id',
-            'estate',
-            'estate_name',
-            'unit_number',
-            'unit_type',
-            'rent_amount',
-            'status'
-        ]
+        fields = "__all__"

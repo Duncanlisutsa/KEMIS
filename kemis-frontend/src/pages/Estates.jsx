@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 function Estates() {
   const [estates, setEstates] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -11,27 +14,42 @@ function Estates() {
     description: "",
   });
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [estateToDelete, setEstateToDelete] = useState(null);
+
   useEffect(() => {
     fetchEstates();
   }, []);
 
   const fetchEstates = async () => {
+    setLoading(true);
+
     try {
       const response = await api.get("property/estates/");
       setEstates(response.data);
     } catch (error) {
       console.error("Error fetching estates:", error);
+    } finally {
+      setLoading(false);
     }
   };
   
-  const handleDelete = async (id) => {
-  try {
-    await api.delete(`property/estates/${id}/`);
-    fetchEstates();
-  } catch (error) {
-    console.error("Error deleting estate:", error);
-  }
-};
+  const handleDelete = async () => {
+    if (!estateToDelete) return;
+
+    try {
+      await api.delete(`property/estates/${estateToDelete}/`);
+
+      fetchEstates();
+
+    } catch (error) {
+      console.error("Error deleting estate:", error);
+    } finally {
+      setConfirmOpen(false);
+      setEstateToDelete(null);
+    }
+  };
+
 
   const handleEdit = (estate) => {
   setFormData({
@@ -76,6 +94,10 @@ function Estates() {
     console.error("Error saving estate:", error);
   }
 };
+
+  if (loading) {
+  return <LoadingSpinner text="Loading estates..." />;
+  }
 
   return (
     <div>
@@ -141,17 +163,31 @@ function Estates() {
                 </button>
 
                 <button
-                    onClick={() => handleDelete(estate.id)}
-                    style={{ marginLeft: "10px" }}
+                  onClick={() => {
+                    setEstateToDelete(estate.id);
+                    setConfirmOpen(true);
+                  }}
+                  style={{ marginLeft: "10px" }}
                 >
-                    Delete
+                  Delete
                 </button>
             </td>
         </tr>
           ))}
         </tbody>
       </table>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete Estate"
+        message="Are you sure you want to delete this estate? This action cannot be undone."
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setEstateToDelete(null);
+        }}
+      />
     </div>
+  
   );
 }
 

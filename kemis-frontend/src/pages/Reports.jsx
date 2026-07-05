@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 
 function Reports() {
-
   const [revenue, setRevenue] = useState([]);
 
   useEffect(() => {
@@ -25,82 +24,43 @@ function Reports() {
       <h2>Monthly Revenue Report</h2>
 
       <div
-  style={{
-    display: "flex",
-    gap: "20px",
-    marginBottom: "30px",
-    flexWrap: "wrap",
-  }}
->
-  <div
-    style={{
-      background: "#2563eb",
-      color: "white",
-      padding: "20px",
-      borderRadius: "10px",
-      minWidth: "220px",
-    }}
-  >
-    <h3>Total Revenue Records</h3>
-    <h1>{revenue.length}</h1>
-  </div>
+        style={{
+          display: "flex",
+          gap: "20px",
+          marginBottom: "30px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div
+          style={{
+            background: "#2563eb",
+            color: "white",
+            padding: "20px",
+            borderRadius: "10px",
+            minWidth: "220px",
+          }}
+        >
+          <h3>Total Revenue Records</h3>
+          <h1>{revenue.length}</h1>
+        </div>
 
-  <div
-    style={{
-      background: "#16a34a",
-      color: "white",
-      padding: "20px",
-      borderRadius: "10px",
-      minWidth: "220px",
-    }}
-  >
-    <h3>Total Revenue (KES)</h3>
-    <h1>
-      {revenue
-        .reduce((sum, item) => sum + Number(item.total), 0)
-        .toLocaleString()}
-    </h1>
-  </div>
-</div>
-      
-      <div
-  style={{
-    display: "flex",
-    gap: "20px",
-    marginBottom: "30px",
-    flexWrap: "wrap",
-  }}
->
-  <div
-    style={{
-      background: "#2563eb",
-      color: "white",
-      padding: "20px",
-      borderRadius: "10px",
-      minWidth: "220px",
-    }}
-  >
-    <h3>Total Revenue Records</h3>
-    <h1>{revenue.length}</h1>
-  </div>
-
-    <div
-      style={{
-        background: "#16a34a",
-        color: "white",
-        padding: "20px",
-        borderRadius: "10px",
-        minWidth: "220px",
-      }}
-    >
-      <h3>Total Revenue (KES)</h3>
-      <h1>
-        {revenue
-          .reduce((sum, item) => sum + Number(item.total), 0)
-          .toLocaleString()}
-      </h1>
-    </div>
-  </div>
+        <div
+          style={{
+            background: "#16a34a",
+            color: "white",
+            padding: "20px",
+            borderRadius: "10px",
+            minWidth: "220px",
+          }}
+        >
+          <h3>Total Revenue (KES)</h3>
+          <h1>
+            {revenue
+              .reduce((sum, item) => sum + Number(item.total), 0)
+              .toLocaleString()}
+          </h1>
+        </div>
+      </div>
 
       <table
         border="1"
@@ -126,7 +86,6 @@ function Reports() {
           ))}
         </tbody>
       </table>
-
     </div>
   );
 }

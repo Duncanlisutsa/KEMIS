@@ -11,6 +11,11 @@ from payments.models import Payment
 from django.db.models import Sum
 from django.db.models.functions import TruncMonth
 
+from django.db.models import Count
+from django.utils import timezone
+
+from maintenance.models import MaintenanceRequest
+
 
 @api_view(['GET'])
 @permission_classes([IsAdminOrManager])
