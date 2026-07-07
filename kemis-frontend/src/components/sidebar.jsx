@@ -51,14 +51,47 @@ function Sidebar() {
   return (
     <div
       style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
         width: "250px",
         height: "100vh",
         background: "#1e293b",
         color: "white",
         padding: "20px",
+        overflow: "hidden",
+        boxSizing: "border-box",
+
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <h2>KEMIS</h2>
+      <>
+        <h2
+          style={{
+            marginBottom: "5px",
+          }}
+        >
+          KEMIS
+        </h2>
+
+        <p
+          style={{
+            fontSize: "12px",
+            color: "#94a3b8",
+            marginBottom: "20px",
+          }}
+        >
+          Kabras Estate Management Information System
+        </p>
+
+        <hr
+          style={{
+            borderColor: "#334155",
+            marginBottom: "20px",
+          }}
+        />
+      </>
 
       <p
         style={{
@@ -74,7 +107,12 @@ function Sidebar() {
         <small>{user.role}</small>
       </p>
 
-      <nav>
+      <nav
+        style={{
+          flex: 1,
+          overflowY: "auto",
+        }}
+      >
         <ul style={{ listStyle: "none", padding: 0 }}>
           {PERMISSIONS.dashboard.includes(user.role) && (
           <li style={{ margin: "20px 0" }}>
@@ -141,7 +179,12 @@ function Sidebar() {
               </Link>
             </li>
           )}
-          <li style={{ margin: "20px 0" }}>
+          <li
+            style={{
+              marginTop: "auto",
+              listStyle: "none",
+            }}
+          >
             <button
               onClick={handleLogout}
               style={{

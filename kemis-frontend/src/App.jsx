@@ -25,7 +25,15 @@ function App() {
     <div style={{ display: "flex" }}>
       {!hideSidebar && <Sidebar />}
 
-      <div style={{ flex: 1, padding: "20px" }}>
+      <div
+        style={{
+          flex: 1,
+          marginLeft: hideSidebar ? "0" : "250px",
+          padding: "20px",
+          minHeight: "100vh",
+          overflowY: "auto",
+        }}
+      >
         <Routes>
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
