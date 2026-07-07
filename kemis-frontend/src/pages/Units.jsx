@@ -93,6 +93,13 @@ function Units() {
 };
 
 const editUnit = (unit) => {
+
+  if (unit.status === "OCCUPIED") {
+    alert(
+      "This unit has an active lease. End or terminate the lease before changing the unit status."
+    );
+    return;
+  }
   setEditingId(unit.id);
 
   setFormData({
@@ -106,6 +113,13 @@ const editUnit = (unit) => {
 
 
   const deleteUnit = async (id) => {
+  const unit = units.find((u) => u.id === id);
+
+  if (unit && unit.status === "OCCUPIED") {
+    alert("This unit has an active lease and cannot be deleted.");
+    return;
+  }
+
   const confirmDelete = window.confirm(
     "Are you sure you want to delete this unit?"
   );
@@ -115,10 +129,17 @@ const editUnit = (unit) => {
   try {
     await api.delete(`property/units/${id}/`);
     fetchUnits();
+    alert("Unit deleted successfully!");
   } catch (error) {
     console.error("Error deleting unit:", error);
+
+    if (error.response) {
+      alert(JSON.stringify(error.response.data));
+    } else {
+      alert("Failed to connect to server.");
+    }
   }
- };
+};
 
   return (
     <div>
@@ -180,15 +201,14 @@ const editUnit = (unit) => {
         />
 
         <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            style={{ marginLeft: "10px" }}
-            >
-            <option value="VACANT">Vacant</option>
-            <option value="OCCUPIED">Occupied</option>
-            <option value="RESERVED">Reserved</option>
-            <option value="MAINTENANCE">Under Maintenance</option>
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+          style={{ marginLeft: "10px" }}
+        >
+          <option value="VACANT">Vacant</option>
+          <option value="RESERVED">Reserved</option>
+          <option value="MAINTENANCE">Under Maintenance</option>
         </select>
 
         <button
@@ -220,7 +240,27 @@ const editUnit = (unit) => {
             <td>{unit.estate_name}</td>
             <td>{unit.unit_type}</td>
             <td>KES {unit.rent_amount}</td>
-            <td>{unit.status}</td>
+            <td>
+              <span
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: "15px",
+                  color: "white",
+                  backgroundColor:
+                    unit.status === "OCCUPIED"
+                      ? "#16a34a"
+                      : unit.status === "VACANT"
+                      ? "#2563eb"
+                      : unit.status === "RESERVED"
+                      ? "#f59e0b"
+                      : "#dc2626",
+                  fontWeight: "bold",
+                  fontSize: "12px",
+                }}
+              >
+                {unit.status}
+              </span>
+            </td>
 
             <td>
                 <button
