@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import ConfirmDialog from "../components/ConfirmDialog";
+
 
 function Units() {
   const [units, setUnits] = useState([]);
@@ -16,7 +18,8 @@ function Units() {
 
   const [editingId, setEditingId] = useState(null);
 
-  
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [unitToDelete, setUnitToDelete] = useState(null);
 
   useEffect(() => {
     fetchUnits();
@@ -112,35 +115,27 @@ const editUnit = (unit) => {
 };
 
 
-  const deleteUnit = async (id) => {
-  const unit = units.find((u) => u.id === id);
+  const deleteUnit = async () => {
+    try {
+      await api.delete(`property/units/${unitToDelete.id}/`);
 
-  if (unit && unit.status === "OCCUPIED") {
-    alert("This unit has an active lease and cannot be deleted.");
-    return;
-  }
+      fetchUnits();
 
-  const confirmDelete = window.confirm(
-    "Are you sure you want to delete this unit?"
-  );
+      setConfirmOpen(false);
+      setUnitToDelete(null);
 
-  if (!confirmDelete) return;
+      alert("Unit deleted successfully!");
 
-  try {
-    await api.delete(`property/units/${id}/`);
-    fetchUnits();
-    alert("Unit deleted successfully!");
-  } catch (error) {
-    console.error("Error deleting unit:", error);
+    } catch (error) {
+      console.error("Error deleting unit:", error);
 
-    if (error.response) {
-      alert(JSON.stringify(error.response.data));
-    } else {
-      alert("Failed to connect to server.");
+      if (error.response) {
+        alert(JSON.stringify(error.response.data));
+      } else {
+        alert("Failed to connect to server.");
+      }
     }
-  }
-};
-
+  };
   return (
     <div>
       <h1>Units</h1>
@@ -277,7 +272,15 @@ const editUnit = (unit) => {
                 Edit
                 </button>
                 <button
-                onClick={() => deleteUnit(unit.id)}
+                  onClick={() => {
+                    if (unit.status === "OCCUPIED") {
+                      alert("This unit has an active lease and cannot be deleted.");
+                      return;
+                    }
+
+                    setUnitToDelete(unit);
+                    setConfirmOpen(true);
+                  }}
                 style={{
                     backgroundColor: "red",
                     color: "white",
@@ -293,6 +296,20 @@ const editUnit = (unit) => {
         ))}
         </tbody>
       </table>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete Unit"
+        message={
+          unitToDelete
+            ? `Are you sure you want to delete Unit "${unitToDelete.unit_number}"? This action cannot be undone.`
+            : ""
+        }
+        onConfirm={deleteUnit}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setUnitToDelete(null);
+        }}
+      />
     </div>
   );
 }
