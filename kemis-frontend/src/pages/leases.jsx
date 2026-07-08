@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 
+
 function Leases() {
   const [leases, setLeases] = useState([]);
   const [tenants, setTenants] = useState([]);
   const [units, setUnits] = useState([]);
   const [editingId, setEditingId] = useState(null);
+
+  const [selectedTenant, setSelectedTenant] = useState(null);
+  const [selectedUnit, setSelectedUnit] = useState(null);
 
   const [formData, setFormData] = useState({
     tenant: "",
@@ -41,6 +45,26 @@ function Leases() {
     }
   };
 
+  {selectedTenant && (
+    <div
+      style={{
+        border: "1px solid #ccc",
+        padding: "10px",
+        marginTop: "10px",
+        marginBottom: "10px",
+        borderRadius: "5px",
+        background: "#f8fafc",
+      }}
+    >
+      <strong>Tenant Information</strong>
+
+      <p>Name: {selectedTenant.full_name}</p>
+      <p>Phone: {selectedTenant.phone_number}</p>
+      <p>ID Number: {selectedTenant.national_id}</p>
+      <p>Email: {selectedTenant.user_email}</p>
+    </div>
+  )}
+
   const fetchUnits = async () => {
     try {
       const response = await api.get("property/units/");
@@ -50,11 +74,59 @@ function Leases() {
     }
   };
 
+  {selectedUnit && (
+    <div
+      style={{
+        border: "1px solid #ccc",
+        padding: "10px",
+        marginTop: "10px",
+        marginBottom: "10px",
+        borderRadius: "5px",
+        background: "#f8fafc",
+      }}
+    >
+      <strong>Unit Information</strong>
+
+      <p>Estate: {selectedUnit.estate_name}</p>
+      <p>Unit Number: {selectedUnit.unit_number}</p>
+      <p>Unit Type: {selectedUnit.unit_type}</p>
+      <p>Rent: KES {selectedUnit.rent_amount}</p>
+      <p>Status: {selectedUnit.status}</p>
+    </div>
+  )}
+
   const handleChange = (e) => {
-    setFormData({
+    const { name, value } = e.target;
+
+    let updatedForm = {
       ...formData,
-      [e.target.name]: e.target.value,
-    });
+      [name]: value,
+    };
+
+    // Tenant selected
+    if (name === "tenant") {
+      const tenant = tenants.find(
+        (t) => t.id === Number(value)
+      );
+
+      setSelectedTenant(tenant || null);
+    }
+
+    // Unit selected
+    if (name === "unit") {
+      const unit = units.find(
+        (u) => u.id === Number(value)
+      );
+
+      setSelectedUnit(unit || null);
+
+      if (unit) {
+        updatedForm.monthly_rent = unit.rent_amount;
+        updatedForm.security_deposit = unit.rent_amount;
+      }
+    }
+
+    setFormData(updatedForm);
   };
 
  const handleSubmit = async (e) => {
@@ -182,9 +254,11 @@ function Leases() {
           name="monthly_rent"
           placeholder="Monthly Rent"
           value={formData.monthly_rent}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
+          readOnly
+          style={{
+            marginLeft: "10px",
+            backgroundColor: "#f3f4f6",
+          }}
         />
 
         <input
@@ -192,9 +266,11 @@ function Leases() {
           name="security_deposit"
           placeholder="Security Deposit"
           value={formData.security_deposit}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
+          readOnly
+          style={{
+            marginLeft: "10px",
+            backgroundColor: "#f3f4f6",
+          }}
         />
 
         <select
