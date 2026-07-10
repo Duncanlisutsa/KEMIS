@@ -7,6 +7,8 @@ function Payments() {
   const [leases, setLeases] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
+  const [selectedLease, setSelectedLease] = useState(null);
+
   const [formData, setFormData] = useState({
     lease: "",
     amount: "",
@@ -41,10 +43,21 @@ function Payments() {
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    // Lease selected
+    if (name === "lease") {
+      const lease = leases.find(
+        (l) => l.id === Number(value)
+      );
+
+      setSelectedLease(lease || null);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -71,6 +84,7 @@ function Payments() {
       });
 
       setEditingId(null);
+      setSelectedLease(null);
       fetchPayments();
 
     } catch (error) {
@@ -92,6 +106,9 @@ function Payments() {
       reference_number: payment.reference_number,
       status: payment.status,
     });
+
+    const lease = leases.find((l) => l.id === payment.lease);
+    setSelectedLease(lease || null);
 
     setEditingId(payment.id);
   };
@@ -185,14 +202,17 @@ function Payments() {
           style={{ marginLeft: "10px" }}
         />
 
-        <input
-          type="text"
+        <select
           name="status"
-          placeholder="Status"
           value={formData.status}
           onChange={handleChange}
           style={{ marginLeft: "10px" }}
-        />
+        >
+          <option value="PAID">Paid</option>
+          <option value="PENDING">Pending</option>
+          <option value="FAILED">Failed</option>
+          <option value="REFUNDED">Refunded</option>
+        </select>
 
         <button
           type="submit"
@@ -200,6 +220,26 @@ function Payments() {
         >
           {editingId ? "Update Payment" : "Add Payment"}
         </button>
+
+        {selectedLease && (
+          <div
+            style={{
+              border: "1px solid #ccc",
+              padding: "10px",
+              marginTop: "10px",
+              marginBottom: "10px",
+              borderRadius: "5px",
+              background: "#f8fafc",
+            }}
+          >
+            <strong>Lease Information</strong>
+
+            <p>Tenant: {selectedLease.tenant_name}</p>
+            <p>Unit: {selectedLease.unit_number}</p>
+            <p>Monthly Rent: KES {selectedLease.monthly_rent}</p>
+            <p>Lease Status: {selectedLease.status}</p>
+          </div>
+        )}
 
       </form>
 

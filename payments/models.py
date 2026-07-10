@@ -14,6 +14,13 @@ class Payment(models.Model):
         ('DEPOSIT', 'Deposit'),
     ]
 
+    PAYMENT_STATUS = [
+        ('PAID', 'Paid'),
+        ('PENDING', 'Pending'),
+        ('FAILED', 'Failed'),
+        ('REFUNDED', 'Refunded'),
+    ]
+
     lease = models.ForeignKey(
         Lease,
         on_delete=models.CASCADE,
@@ -45,6 +52,7 @@ class Payment(models.Model):
 
     status = models.CharField(
         max_length=20,
+        choices=PAYMENT_STATUS,
         default='PAID'
     )
 

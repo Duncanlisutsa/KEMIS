@@ -45,26 +45,6 @@ function Leases() {
     }
   };
 
-  {selectedTenant && (
-    <div
-      style={{
-        border: "1px solid #ccc",
-        padding: "10px",
-        marginTop: "10px",
-        marginBottom: "10px",
-        borderRadius: "5px",
-        background: "#f8fafc",
-      }}
-    >
-      <strong>Tenant Information</strong>
-
-      <p>Name: {selectedTenant.full_name}</p>
-      <p>Phone: {selectedTenant.phone_number}</p>
-      <p>ID Number: {selectedTenant.national_id}</p>
-      <p>Email: {selectedTenant.user_email}</p>
-    </div>
-  )}
-
   const fetchUnits = async () => {
     try {
       const response = await api.get("property/units/");
@@ -73,27 +53,6 @@ function Leases() {
       console.error("Error fetching units:", error);
     }
   };
-
-  {selectedUnit && (
-    <div
-      style={{
-        border: "1px solid #ccc",
-        padding: "10px",
-        marginTop: "10px",
-        marginBottom: "10px",
-        borderRadius: "5px",
-        background: "#f8fafc",
-      }}
-    >
-      <strong>Unit Information</strong>
-
-      <p>Estate: {selectedUnit.estate_name}</p>
-      <p>Unit Number: {selectedUnit.unit_number}</p>
-      <p>Unit Type: {selectedUnit.unit_type}</p>
-      <p>Rent: KES {selectedUnit.rent_amount}</p>
-      <p>Status: {selectedUnit.status}</p>
-    </div>
-  )}
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -153,6 +112,8 @@ function Leases() {
     });
 
     setEditingId(null);
+    setSelectedTenant(null);
+    setSelectedUnit(null);
 
     fetchLeases();
 
@@ -175,6 +136,12 @@ function Leases() {
     security_deposit: lease.security_deposit,
     status: lease.status,
   });
+
+  const tenant = tenants.find((t) => t.id === lease.tenant);
+  setSelectedTenant(tenant || null);
+
+  const unit = units.find((u) => u.id === lease.unit);
+  setSelectedUnit(unit || null);
 
   setEditingId(lease.id);
  };
@@ -287,6 +254,47 @@ function Leases() {
         <button type="submit" style={{ marginLeft: "10px" }}>
           {editingId ? "Update Lease" : "Add Lease"}
         </button>
+
+        {selectedTenant && (
+          <div
+            style={{
+              border: "1px solid #ccc",
+              padding: "10px",
+              marginTop: "10px",
+              marginBottom: "10px",
+              borderRadius: "5px",
+              background: "#f8fafc",
+            }}
+          >
+            <strong>Tenant Information</strong>
+
+            <p>Name: {selectedTenant.full_name}</p>
+            <p>Phone: {selectedTenant.phone_number}</p>
+            <p>ID Number: {selectedTenant.national_id}</p>
+            <p>Email: {selectedTenant.user_email}</p>
+          </div>
+        )}
+
+        {selectedUnit && (
+          <div
+            style={{
+              border: "1px solid #ccc",
+              padding: "10px",
+              marginTop: "10px",
+              marginBottom: "10px",
+              borderRadius: "5px",
+              background: "#f8fafc",
+            }}
+          >
+            <strong>Unit Information</strong>
+
+            <p>Estate: {selectedUnit.estate_name}</p>
+            <p>Unit Number: {selectedUnit.unit_number}</p>
+            <p>Unit Type: {selectedUnit.unit_type}</p>
+            <p>Rent: KES {selectedUnit.rent_amount}</p>
+            <p>Status: {selectedUnit.status}</p>
+          </div>
+        )}
 
       </form>
 
