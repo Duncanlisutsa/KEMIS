@@ -1,8 +1,11 @@
 import { useState, useEffect, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { FaEye, FaEyeSlash, FaHome } from "react-icons/fa";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
+
+const BRAND_COLOR = "#2563eb";
 
 function Login() {
   const navigate = useNavigate();
@@ -22,6 +25,7 @@ function Login() {
     password: "",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -83,7 +87,23 @@ const handleSubmit = async (e) => {
           borderRadius: "10px",
         }}
       >
-        <h2>Login</h2>
+        <h1
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "8px",
+            textAlign: "center",
+            fontSize: "20px",
+            letterSpacing: "1px",
+            marginBottom: "5px",
+            color: BRAND_COLOR,
+          }}
+        >
+          <FaHome /> KABRAS ESTATE
+        </h1>
+
+        <h2 style={{ textAlign: "center", marginTop: 0 }}>Login</h2>
 
         <input
           type="text"
@@ -95,15 +115,43 @@ const handleSubmit = async (e) => {
           style={{ width: "100%", marginBottom: "15px" }}
         />
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          style={{ width: "100%", marginBottom: "15px" }}
-        />
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            marginBottom: "15px",
+          }}
+        >
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            style={{
+              width: "100%",
+              paddingRight: "35px",
+              boxSizing: "border-box",
+            }}
+          />
+
+          <span
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: "absolute",
+              right: "10px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              cursor: "pointer",
+              color: "#64748b",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            {showPassword ? <FaEyeSlash /> : <FaEye />}
+          </span>
+        </div>
 
         <button
           type="submit"
@@ -117,6 +165,12 @@ const handleSubmit = async (e) => {
         >
           {loading ? "Logging in..." : "Login"}
         </button>
+
+        <p style={{ marginTop: "15px", fontSize: "14px", textAlign: "center" }}>
+          <Link to="/forgot-password" style={{ color: BRAND_COLOR }}>
+            Forgot password?
+          </Link>
+        </p>
       </form>
     </div>
   );

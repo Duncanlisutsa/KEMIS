@@ -13,13 +13,18 @@ import Payments from "./pages/payments";
 import Maintenance from "./pages/maintenance";
 import Reports from "./pages/Reports";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useLocation } from "react-router-dom";
 import Profile from "./pages/Profile";
 
 function App() {
   const location = useLocation();
-  const hideSidebar = location.pathname === "/login";
+  const hideSidebar =
+    location.pathname === "/login" ||
+    location.pathname === "/forgot-password" ||
+    location.pathname.startsWith("/reset-password");
 
   return (
     <div style={{ display: "flex" }}>
@@ -35,16 +40,18 @@ function App() {
         }}
       >
         <Routes>
-          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/estates" element={<ProtectedRoute><Estates /></ProtectedRoute>} />
-          <Route path="/units" element={<ProtectedRoute><Units /></ProtectedRoute>} />
-          <Route path="/tenants" element={<ProtectedRoute><Tenants /></ProtectedRoute>} />
-          <Route path="/leases" element={<ProtectedRoute><Leases /></ProtectedRoute>} />
-          <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
-          <Route path="/maintenance" element={<ProtectedRoute><Maintenance /></ProtectedRoute>} />
+          <Route path="/" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.dashboard}><Dashboard /></RoleProtectedRoute>} />
+          <Route path="/dashboard" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.dashboard}><Dashboard /></RoleProtectedRoute>} />
+          <Route path="/estates" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.estates}><Estates /></RoleProtectedRoute>} />
+          <Route path="/units" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.units}><Units /></RoleProtectedRoute>} />
+          <Route path="/tenants" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.tenants}><Tenants /></RoleProtectedRoute>} />
+          <Route path="/leases" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.leases}><Leases /></RoleProtectedRoute>} />
+          <Route path="/payments" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.payments}><Payments /></RoleProtectedRoute>} />
+          <Route path="/maintenance" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.maintenance}><Maintenance /></RoleProtectedRoute>} />
           <Route path="/login" element={<Login />} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
+          <Route path="/profile" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.profile}><Profile /></RoleProtectedRoute>} />
           <Route path="/reports" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.reports}><Reports /></RoleProtectedRoute>} />        </Routes>
       </div>
     </div>

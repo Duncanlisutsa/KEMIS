@@ -1,16 +1,10 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import api from "../services/api";
+import { AuthContext } from "../context/AuthContext";
 
 function Dashboard() {
-  const [stats, setStats] = useState({
-    total_estates: 0,
-    total_units: 0,
-    vacant_units: 0,
-    occupied_units: 0,
-    total_tenants: 0,
-    active_leases: 0,
-    total_revenue: 0,
-  });
+  const { user } = useContext(AuthContext);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
     fetchStats();
@@ -24,6 +18,63 @@ function Dashboard() {
       console.error("Error fetching dashboard statistics:", error);
     }
   };
+
+  if (!stats) {
+    return <h2>Loading...</h2>;
+  }
+
+  if (stats.role === "TENANT") {
+    if (!stats.has_active_lease) {
+      return (
+        <div>
+          <h1>Dashboard</h1>
+          <p>You don't have an active lease at the moment.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <h1>Dashboard</h1>
+
+        <div className="dashboard-grid">
+
+          <div className="card">
+            <h3>Estate</h3>
+            <h2>{stats.estate_name}</h2>
+          </div>
+
+          <div className="card">
+            <h3>Unit</h3>
+            <h2>{stats.unit_number}</h2>
+          </div>
+
+          <div className="card">
+            <h3>Monthly Rent</h3>
+            <h2>KES {stats.monthly_rent}</h2>
+          </div>
+
+          <div className="card">
+            <h3>Total Paid</h3>
+            <h2>KES {stats.total_paid}</h2>
+          </div>
+
+          <div className="card">
+            <h3>Lease Period</h3>
+            <h2 style={{ fontSize: "16px" }}>
+              {stats.lease_start} to {stats.lease_end}
+            </h2>
+          </div>
+
+          <div className="card">
+            <h3>Open Maintenance Requests</h3>
+            <h2>{stats.open_maintenance_requests}</h2>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

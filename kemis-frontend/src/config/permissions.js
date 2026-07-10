@@ -1,19 +1,19 @@
 export const PERMISSIONS = {
-  dashboard: ["Admin", "Manager", "Tenant"],
+  dashboard: ["ADMIN", "MANAGER", "TENANT"],
 
-  estates: ["Admin", "Manager"],
+  estates: ["ADMIN", "MANAGER"],
 
-  units: ["Admin", "Manager"],
+  units: ["ADMIN", "MANAGER"],
 
-  tenants: ["Admin", "Manager"],
+  tenants: ["ADMIN", "MANAGER"],
 
-  leases: ["Admin", "Manager"],
+  leases: ["ADMIN", "MANAGER"],
 
-  payments: ["Admin", "Manager"],
+  payments: ["ADMIN", "MANAGER"],
 
-  maintenance: ["Admin", "Manager", "Tenant"],
+  maintenance: ["ADMIN", "MANAGER", "TENANT"],
 
-  reports: ["Admin", "Manager"],
+  reports: ["ADMIN", "MANAGER"],
 
-  profile: ["Admin", "Manager", "Tenant"],
+  profile: ["ADMIN", "MANAGER", "TENANT"],
 };

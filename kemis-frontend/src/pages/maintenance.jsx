@@ -1,11 +1,15 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import api from "../services/api";
+import { AuthContext } from "../context/AuthContext";
 
 function Maintenance() {
+  const { user } = useContext(AuthContext);
+  const isTenant = user?.role === "TENANT";
 
   const [requests, setRequests] = useState([]);
   const [tenants, setTenants] = useState([]);
   const [units, setUnits] = useState([]);
+  const [ownLease, setOwnLease] = useState(null);
   const [editingId, setEditingId] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -20,9 +24,14 @@ function Maintenance() {
 
   useEffect(() => {
     fetchRequests();
-    fetchTenants();
-    fetchUnits();
-  }, []);
+
+    if (isTenant) {
+      fetchOwnLease();
+    } else {
+      fetchTenants();
+      fetchUnits();
+    }
+  }, [isTenant]);
 
   const fetchRequests = async () => {
     try {
@@ -51,6 +60,16 @@ function Maintenance() {
     }
   };
 
+  const fetchOwnLease = async () => {
+    try {
+      const response = await api.get("leases/");
+      const active = response.data.find((l) => l.status === "ACTIVE");
+      setOwnLease(active || null);
+    } catch (error) {
+      console.error("Error fetching your lease:", error);
+    }
+  };
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -62,12 +81,20 @@ function Maintenance() {
     e.preventDefault();
 
     try {
+      // Tenants never send tenant/unit/status — backend fills these in
+      const payload = isTenant
+        ? {
+            title: formData.title,
+            description: formData.description,
+            priority: formData.priority,
+          }
+        : formData;
 
       if (editingId) {
-        await api.put(`maintenance/${editingId}/`, formData);
+        await api.put(`maintenance/${editingId}/`, payload);
         alert("Request updated successfully!");
       } else {
-        await api.post("maintenance/", formData);
+        await api.post("maintenance/", payload);
         alert("Request added successfully!");
       }
 
@@ -132,36 +159,62 @@ function Maintenance() {
 
       <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
 
-        <select
-          name="tenant"
-          value={formData.tenant}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select Tenant</option>
+        {isTenant ? (
+          <div
+            style={{
+              border: "1px solid #ccc",
+              padding: "10px",
+              marginBottom: "10px",
+              borderRadius: "5px",
+              background: "#f8fafc",
+              maxWidth: "300px",
+            }}
+          >
+            <strong>Filing for:</strong>
+            {ownLease ? (
+              <p style={{ margin: "5px 0 0 0" }}>
+                {ownLease.unit_number} &mdash; {ownLease.tenant_name}
+              </p>
+            ) : (
+              <p style={{ margin: "5px 0 0 0", color: "#b91c1c" }}>
+                No active lease found. You can't file a request.
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
+            <select
+              name="tenant"
+              value={formData.tenant}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select Tenant</option>
 
-          {tenants.map((tenant) => (
-            <option key={tenant.id} value={tenant.id}>
-              {tenant.full_name}
-            </option>
-          ))}
-        </select>
+              {tenants.map((tenant) => (
+                <option key={tenant.id} value={tenant.id}>
+                  {tenant.full_name}
+                </option>
+              ))}
+            </select>
 
-        <select
-          name="unit"
-          value={formData.unit}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
-        >
-          <option value="">Select Unit</option>
+            <select
+              name="unit"
+              value={formData.unit}
+              onChange={handleChange}
+              required
+              style={{ marginLeft: "10px" }}
+            >
+              <option value="">Select Unit</option>
 
-          {units.map((unit) => (
-            <option key={unit.id} value={unit.id}>
-              {unit.unit_number}
-            </option>
-          ))}
-        </select>
+              {units.map((unit) => (
+                <option key={unit.id} value={unit.id}>
+                  {unit.unit_number}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
 
         <input
           type="text"
@@ -170,7 +223,7 @@ function Maintenance() {
           value={formData.title}
           onChange={handleChange}
           required
-          style={{ marginLeft: "10px" }}
+          style={{ marginLeft: isTenant ? "0" : "10px", marginTop: isTenant ? "10px" : "0" }}
         />
 
         <br /><br />
@@ -198,27 +251,32 @@ function Maintenance() {
           <option value="URGENT">Urgent</option>
         </select>
 
-        <select
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          style={{ marginLeft: "10px" }}
-        >
-          <option value="PENDING">Pending</option>
-          <option value="IN_PROGRESS">In Progress</option>
-          <option value="COMPLETED">Completed</option>
-        </select>
+        {!isTenant && (
+          <>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              style={{ marginLeft: "10px" }}
+            >
+              <option value="PENDING">Pending</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="COMPLETED">Completed</option>
+            </select>
 
-        <input
-          type="date"
-          name="resolved_date"
-          value={formData.resolved_date}
-          onChange={handleChange}
-          style={{ marginLeft: "10px" }}
-        />
+            <input
+              type="date"
+              name="resolved_date"
+              value={formData.resolved_date}
+              onChange={handleChange}
+              style={{ marginLeft: "10px" }}
+            />
+          </>
+        )}
 
         <button
           type="submit"
+          disabled={isTenant && !ownLease}
           style={{ marginLeft: "10px" }}
         >
           {editingId

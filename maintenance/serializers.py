@@ -29,3 +29,7 @@ class MaintenanceRequestSerializer(serializers.ModelSerializer):
             'reported_date',
             'resolved_date'
         ]
+        extra_kwargs = {
+            'tenant': {'required': False},
+            'unit': {'required': False},
+        }
