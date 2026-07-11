@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router-dom";
+import { useState } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 
 import Sidebar from "./components/sidebar";
 import RoleProtectedRoute from "./components/RoleProtectedRoute";
@@ -15,12 +16,12 @@ import Reports from "./pages/Reports";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import ProtectedRoute from "./components/ProtectedRoute";
-import { useLocation } from "react-router-dom";
 import Profile from "./pages/Profile";
 
 function App() {
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const hideSidebar =
     location.pathname === "/login" ||
     location.pathname === "/forgot-password" ||
@@ -28,15 +29,32 @@ function App() {
 
   return (
     <div style={{ display: "flex" }}>
-      {!hideSidebar && <Sidebar />}
+      {!hideSidebar && (
+        <>
+          <button
+            className="hamburger-btn"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
+
+          <div
+            className={`sidebar-backdrop${sidebarOpen ? " open" : ""}`}
+            onClick={() => setSidebarOpen(false)}
+          />
+
+          <Sidebar
+            isOpen={sidebarOpen}
+            onNavigate={() => setSidebarOpen(false)}
+          />
+        </>
+      )}
 
       <div
+        className="main-content"
         style={{
-          flex: 1,
           marginLeft: hideSidebar ? "0" : "250px",
-          padding: "20px",
-          minHeight: "100vh",
-          overflowY: "auto",
         }}
       >
         <Routes>
@@ -52,10 +70,11 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
           <Route path="/profile" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.profile}><Profile /></RoleProtectedRoute>} />
-          <Route path="/reports" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.reports}><Reports /></RoleProtectedRoute>} />        </Routes>
+          <Route path="/reports" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.reports}><Reports /></RoleProtectedRoute>} />
+        </Routes>
       </div>
     </div>
   );
 }
- 
+
 export default App;

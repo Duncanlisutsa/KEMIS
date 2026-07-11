@@ -61,8 +61,9 @@ function ForgotPassword() {
           type="submit"
           disabled={loading}
           style={{
-            width: "100%",
-            padding: "10px",
+            width: "90%",
+            maxWidth: "320px",
+            padding: "30px",
             cursor: loading ? "not-allowed" : "pointer",
             opacity: loading ? 0.7 : 1,
           }}

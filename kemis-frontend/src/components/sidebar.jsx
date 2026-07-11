@@ -3,7 +3,6 @@ import { AuthContext } from "../context/AuthContext";
 
 import { PERMISSIONS } from "../config/permissions";
 
-
 import { Link } from "react-router-dom";
 import {
   FaHome,
@@ -16,40 +15,46 @@ import {
   FaChartBar,
 } from "react-icons/fa";
 
-function Sidebar() {
+function Sidebar({ isOpen, onNavigate }) {
 
   const { user, loading } = useContext(AuthContext);
 
-    if (loading) {
-      return (
-        <div
-          style={{
-            width: "250px",
-            height: "100vh",
-            background: "#1e293b",
-            color: "white",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            fontSize: "18px",
-          }}
-        >
-          Loading...
-        </div>
-      );
-    }
+  if (loading) {
+    return (
+      <div
+        className={`sidebar${isOpen ? " open" : ""}`}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "250px",
+          height: "100vh",
+          background: "#1e293b",
+          color: "white",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          fontSize: "18px",
+          zIndex: 1000,
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
 
-    if (!user) return null;
-
+  if (!user) return null;
 
   const handleLogout = () => {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
 
-  window.location.href = "/login";
-};
+    window.location.href = "/login";
+  };
+
   return (
     <div
+      className={`sidebar${isOpen ? " open" : ""}`}
       style={{
         position: "fixed",
         top: 0,
@@ -61,6 +66,7 @@ function Sidebar() {
         padding: "20px",
         overflow: "hidden",
         boxSizing: "border-box",
+        zIndex: 1000,
 
         display: "flex",
         flexDirection: "column",
@@ -115,70 +121,69 @@ function Sidebar() {
       >
         <ul style={{ listStyle: "none", padding: 0 }}>
           {PERMISSIONS.dashboard.includes(user.role) && (
-          <li style={{ margin: "20px 0" }}>
-            <Link to="/" style={linkStyle}>
-              <FaHome /> Dashboard
-            </Link>
-          </li>
-        )}
+            <li style={{ margin: "20px 0" }}>
+              <Link to="/" style={linkStyle} onClick={onNavigate}>
+                <FaHome /> Dashboard
+              </Link>
+            </li>
+          )}
 
           {PERMISSIONS.estates.includes(user.role) && (
-          <li style={{ margin: "20px 0" }}>
-            <Link to="/estates" style={linkStyle}>
-              <FaBuilding /> Estates
-            </Link>
-          </li>
-        )}
+            <li style={{ margin: "20px 0" }}>
+              <Link to="/estates" style={linkStyle} onClick={onNavigate}>
+                <FaBuilding /> Estates
+              </Link>
+            </li>
+          )}
 
           {PERMISSIONS.units.includes(user.role) && (
-          <li style={{ margin: "20px 0" }}>
-            <Link to="/units" style={linkStyle}>
-              <FaDoorOpen /> Units
-            </Link>
-          </li>
-        )}
+            <li style={{ margin: "20px 0" }}>
+              <Link to="/units" style={linkStyle} onClick={onNavigate}>
+                <FaDoorOpen /> Units
+              </Link>
+            </li>
+          )}
 
           {PERMISSIONS.tenants.includes(user.role) && (
             <li style={{ margin: "20px 0" }}>
-              <Link to="/tenants" style={linkStyle}>
+              <Link to="/tenants" style={linkStyle} onClick={onNavigate}>
                 <FaUsers /> Tenants
               </Link>
             </li>
           )}
-          
 
           {PERMISSIONS.leases.includes(user.role) && (
-          <li style={{ margin: "20px 0" }}>
-            <Link to="/leases" style={linkStyle}>
-              <FaFileContract /> Leases
-            </Link>
-          </li>
-        )}
+            <li style={{ margin: "20px 0" }}>
+              <Link to="/leases" style={linkStyle} onClick={onNavigate}>
+                <FaFileContract /> Leases
+              </Link>
+            </li>
+          )}
 
           {PERMISSIONS.payments.includes(user.role) && (
-          <li style={{ margin: "20px 0" }}>
-            <Link to="/payments" style={linkStyle}>
-              <FaMoneyBillWave /> Payments
-            </Link>
-          </li>
-        )}
+            <li style={{ margin: "20px 0" }}>
+              <Link to="/payments" style={linkStyle} onClick={onNavigate}>
+                <FaMoneyBillWave /> Payments
+              </Link>
+            </li>
+          )}
 
           {PERMISSIONS.maintenance.includes(user.role) && (
             <li style={{ margin: "20px 0" }}>
-              <Link to="/maintenance" style={linkStyle}>
+              <Link to="/maintenance" style={linkStyle} onClick={onNavigate}>
                 <FaTools /> Maintenance
               </Link>
             </li>
           )}
-          
 
           {PERMISSIONS.reports.includes(user.role) && (
             <li style={{ margin: "20px 0" }}>
-              <Link to="/reports" style={linkStyle}>
+              <Link to="/reports" style={linkStyle} onClick={onNavigate}>
                 <FaChartBar /> Reports
               </Link>
             </li>
           )}
+
           <li
             style={{
               marginTop: "auto",
@@ -215,4 +220,3 @@ const linkStyle = {
 };
 
 export default Sidebar;
-

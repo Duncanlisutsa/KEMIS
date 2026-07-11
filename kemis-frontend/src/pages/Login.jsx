@@ -81,7 +81,8 @@ const handleSubmit = async (e) => {
       <form
         onSubmit={handleSubmit}
         style={{
-          width: "300px",
+          width: "90%",
+          maxWidth: "320px",
           padding: "30px",
           boxShadow: "0 0 10px #ccc",
           borderRadius: "10px",
