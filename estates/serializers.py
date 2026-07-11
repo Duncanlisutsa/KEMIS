@@ -30,3 +30,19 @@ class UnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Unit
         fields = "__all__"
+
+    def validate(self, attrs):
+        estate = attrs.get("estate", getattr(self.instance, "estate", None))
+        unit_number = attrs.get("unit_number", getattr(self.instance, "unit_number", None))
+
+        query = Unit.objects.filter(estate=estate, unit_number=unit_number)
+
+        if self.instance:
+            query = query.exclude(pk=self.instance.pk)
+
+        if query.exists():
+            raise serializers.ValidationError(
+                {"unit_number": f"Unit number \"{unit_number}\" already exists in this estate."}
+            )
+
+        return attrs

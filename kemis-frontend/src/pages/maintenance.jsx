@@ -1,9 +1,12 @@
 import { useContext, useEffect, useState } from "react";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
+import UnitDropdown from "../components/UnitDropdown";
 
 function Maintenance() {
   const { user } = useContext(AuthContext);
+  const { showNotification } = useNotification();
   const isTenant = user?.role === "TENANT";
 
   const [requests, setRequests] = useState([]);
@@ -77,11 +80,14 @@ function Maintenance() {
     });
   };
 
+  const handleUnitChange = (unitId) => {
+    setFormData((prev) => ({ ...prev, unit: unitId }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      // Tenants never send tenant/unit/status — backend fills these in
       const payload = isTenant
         ? {
             title: formData.title,
@@ -92,10 +98,10 @@ function Maintenance() {
 
       if (editingId) {
         await api.put(`maintenance/${editingId}/`, payload);
-        alert("Request updated successfully!");
+        showNotification("Request updated successfully!", "success");
       } else {
         await api.post("maintenance/", payload);
-        alert("Request added successfully!");
+        showNotification("Request added successfully!", "success");
       }
 
       setFormData({
@@ -113,10 +119,11 @@ function Maintenance() {
 
     } catch (error) {
       console.error("Error saving request:", error);
-
-      if (error.response) {
-        alert(JSON.stringify(error.response.data));
-      }
+      const message =
+        error.response?.data?.detail ||
+        error.response?.data?.non_field_errors?.[0] ||
+        "Failed to save request.";
+      showNotification(message, "error");
     }
   };
 
@@ -137,7 +144,6 @@ function Maintenance() {
   };
 
   const deleteRequest = async (id) => {
-
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this request?"
     );
@@ -146,9 +152,12 @@ function Maintenance() {
 
     try {
       await api.delete(`maintenance/${id}/`);
+      showNotification("Request deleted successfully!", "success");
       fetchRequests();
     } catch (error) {
       console.error("Error deleting request:", error);
+      const message = error.response?.data?.detail || "Failed to delete request.";
+      showNotification(message, "error");
     }
   };
 
@@ -198,21 +207,13 @@ function Maintenance() {
               ))}
             </select>
 
-            <select
-              name="unit"
-              value={formData.unit}
-              onChange={handleChange}
-              required
-              style={{ marginLeft: "10px" }}
-            >
-              <option value="">Select Unit</option>
-
-              {units.map((unit) => (
-                <option key={unit.id} value={unit.id}>
-                  {unit.unit_number}
-                </option>
-              ))}
-            </select>
+            <span style={{ marginLeft: "10px" }}>
+              <UnitDropdown
+                units={units}
+                value={formData.unit}
+                onChange={handleUnitChange}
+              />
+            </span>
           </>
         )}
 
@@ -279,9 +280,7 @@ function Maintenance() {
           disabled={isTenant && !ownLease}
           style={{ marginLeft: "10px" }}
         >
-          {editingId
-            ? "Update Request"
-            : "Add Request"}
+          {editingId ? "Update Request" : "Add Request"}
         </button>
 
       </form>

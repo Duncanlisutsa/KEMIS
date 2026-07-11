@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import ConfirmDialog from "../components/ConfirmDialog";
+import { useNotification } from "../context/NotificationContext";
 
 
 function Units() {
+  const { showNotification } = useNotification();
+
   const [units, setUnits] = useState([]);
   const [estates, setEstates] = useState([]);
-
 
   const [formData, setFormData] = useState({
     estate: "",
@@ -51,69 +53,69 @@ function Units() {
     });
   };
 
-    const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  try {
-        if (editingId) {
+    try {
+      if (editingId) {
         await api.put(`property/units/${editingId}/`, {
-            ...formData,
-            rent_amount: Number(formData.rent_amount),
+          ...formData,
+          rent_amount: Number(formData.rent_amount),
         });
 
-        alert("Unit updated successfully!");
+        showNotification("Unit updated successfully!", "success");
 
-        } else {
+      } else {
         await api.post("property/units/", {
-            ...formData,
-            rent_amount: Number(formData.rent_amount),
+          ...formData,
+          rent_amount: Number(formData.rent_amount),
         });
 
-        alert("Unit added successfully!");
-        }
+        showNotification("Unit added successfully!", "success");
+      }
+
+      setFormData({
+        estate: "",
+        unit_number: "",
+        unit_type: "",
+        rent_amount: "",
+        status: "VACANT",
+      });
+
+      fetchUnits();
+      setEditingId(null);
+
+    } catch (error) {
+      console.error("Error saving unit:", error);
+
+      const message =
+        error.response?.data?.unit_number?.[0] ||
+        error.response?.data?.detail ||
+        error.response?.data?.non_field_errors?.[0] ||
+        "Failed to save unit.";
+
+      showNotification(message, "error");
+    }
+  };
+
+  const editUnit = (unit) => {
+    if (unit.status === "OCCUPIED") {
+      showNotification(
+        "This unit has an active lease. End or terminate the lease before changing the unit status.",
+        "error"
+      );
+      return;
+    }
+    setEditingId(unit.id);
 
     setFormData({
-      estate: "",
-      unit_number: "",
-      unit_type: "",
-      rent_amount: "",
-      status: "VACANT",
+      estate: unit.estate,
+      unit_number: unit.unit_number,
+      unit_type: unit.unit_type,
+      rent_amount: unit.rent_amount,
+      status: unit.status,
     });
-
-    fetchUnits();
-    setEditingId(null);
-
-  } catch (error) {
-    console.error("Error adding unit:", error);
-
-    if (error.response) {
-      console.log(error.response.data);
-      alert(JSON.stringify(error.response.data));
-    } else {
-      alert("Failed to connect to server");
-    }
-  }
-};
-
-const editUnit = (unit) => {
-
-  if (unit.status === "OCCUPIED") {
-    alert(
-      "This unit has an active lease. End or terminate the lease before changing the unit status."
-    );
-    return;
-  }
-  setEditingId(unit.id);
-
-  setFormData({
-    estate: unit.estate,
-    unit_number: unit.unit_number,
-    unit_type: unit.unit_type,
-    rent_amount: unit.rent_amount,
-    status: unit.status,
-  });
-};
-
+  };
 
   const deleteUnit = async () => {
     try {
@@ -124,23 +126,20 @@ const editUnit = (unit) => {
       setConfirmOpen(false);
       setUnitToDelete(null);
 
-      alert("Unit deleted successfully!");
+      showNotification("Unit deleted successfully!", "success");
 
     } catch (error) {
       console.error("Error deleting unit:", error);
-
-      if (error.response) {
-        alert(JSON.stringify(error.response.data));
-      } else {
-        alert("Failed to connect to server.");
-      }
+      const message = error.response?.data?.detail || "Failed to delete unit.";
+      showNotification(message, "error");
+      setConfirmOpen(false);
+      setUnitToDelete(null);
     }
   };
+
   return (
     <div>
       <h1>Units</h1>
-
-      {/* Add Unit Form */}
 
       <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
 
@@ -160,29 +159,28 @@ const editUnit = (unit) => {
         </select>
 
         <select
-            name="unit_type"
-            value={formData.unit_type}
-            onChange={handleChange}
-            required
-            style={{ marginLeft: "10px" }}
-            >
-            <option value="">Select Unit Type</option>
-            <option value="SINGLE">Single Room</option>
-            <option value="BEDSITTER">Bedsitter</option>
-            <option value="ONE_BEDROOM">One Bedroom</option>
-            <option value="TWO_BEDROOM">Two Bedroom</option>
-            <option value="BUSINESS">Business Premise</option>
+          name="unit_type"
+          value={formData.unit_type}
+          onChange={handleChange}
+          required
+          style={{ marginLeft: "10px" }}
+        >
+          <option value="">Select Unit Type</option>
+          <option value="SINGLE">Single Room</option>
+          <option value="BEDSITTER">Bedsitter</option>
+          <option value="ONE_BEDROOM">One Bedroom</option>
+          <option value="TWO_BEDROOM">Two Bedroom</option>
+          <option value="BUSINESS">Business Premise</option>
         </select>
 
-
         <input
-            type="text"
-            name="unit_number"
-            placeholder="Unit Number"
-            value={formData.unit_number}
-            onChange={handleChange}
-            required
-            style={{ marginLeft: "10px" }}
+          type="text"
+          name="unit_number"
+          placeholder="Unit Number"
+          value={formData.unit_number}
+          onChange={handleChange}
+          required
+          style={{ marginLeft: "10px" }}
         />
 
         <input
@@ -214,8 +212,6 @@ const editUnit = (unit) => {
         </button>
       </form>
 
-      {/* Units Table */}
-
       <table border="1" cellPadding="10" width="100%">
         <thead>
           <tr>
@@ -229,71 +225,66 @@ const editUnit = (unit) => {
         </thead>
 
         <tbody>
-        {units.map((unit) => (
+          {units.map((unit) => (
             <tr key={unit.id}>
-            <td>{unit.unit_number}</td>
-            <td>{unit.estate_name}</td>
-            <td>{unit.unit_type}</td>
-            <td>KES {unit.rent_amount}</td>
-            <td>
-              <span
-                style={{
-                  padding: "4px 10px",
-                  borderRadius: "15px",
-                  color: "white",
-                  backgroundColor:
-                    unit.status === "OCCUPIED"
-                      ? "#16a34a"
-                      : unit.status === "VACANT"
-                      ? "#2563eb"
-                      : unit.status === "RESERVED"
-                      ? "#f59e0b"
-                      : "#dc2626",
-                  fontWeight: "bold",
-                  fontSize: "12px",
-                }}
-              >
-                {unit.status}
-              </span>
-            </td>
+              <td>{unit.unit_number}</td>
+              <td>{unit.estate_name}</td>
+              <td>{unit.unit_type}</td>
+              <td>KES {unit.rent_amount}</td>
+              <td>
+                <span
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "15px",
+                    color: "white",
+                    backgroundColor:
+                      unit.status === "OCCUPIED"
+                        ? "#16a34a"
+                        : unit.status === "VACANT"
+                        ? "#2563eb"
+                        : unit.status === "RESERVED"
+                        ? "#f59e0b"
+                        : "#dc2626",
+                    fontWeight: "bold",
+                    fontSize: "12px",
+                  }}
+                >
+                  {unit.status}
+                </span>
+              </td>
 
-            <td>
+              <td>
                 <button
-                onClick={() => editUnit(unit)}
-                style={{
+                  onClick={() => editUnit(unit)}
+                  style={{
                     backgroundColor: "blue",
                     color: "white",
                     border: "none",
                     padding: "5px 10px",
                     cursor: "pointer",
                     marginRight: "5px",
-                }}
+                  }}
                 >
-                Edit
+                  Edit
                 </button>
                 <button
                   onClick={() => {
-                    if (unit.status === "OCCUPIED") {
-                      alert("This unit has an active lease and cannot be deleted.");
-                      return;
-                    }
-
                     setUnitToDelete(unit);
                     setConfirmOpen(true);
                   }}
-                style={{
+                  style={{
                     backgroundColor: "red",
                     color: "white",
                     border: "none",
                     padding: "5px 10px",
                     cursor: "pointer",
-                }}
+                  }}
                 >
-                Delete
+                  Delete
                 </button>
-            </td>
+              </td>
             </tr>
-        ))}
+          ))}
         </tbody>
       </table>
       <ConfirmDialog

@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import api from "../services/api";
-
+import { useNotification } from "../context/NotificationContext";
+import UnitDropdown from "../components/UnitDropdown";
 
 function Leases() {
+  const { showNotification } = useNotification();
+
   const [leases, setLeases] = useState([]);
   const [tenants, setTenants] = useState([]);
   const [units, setUnits] = useState([]);
@@ -57,94 +60,89 @@ function Leases() {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    let updatedForm = {
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    };
+    }));
 
-    // Tenant selected
     if (name === "tenant") {
-      const tenant = tenants.find(
-        (t) => t.id === Number(value)
-      );
-
+      const tenant = tenants.find((t) => t.id === Number(value));
       setSelectedTenant(tenant || null);
     }
-
-    // Unit selected
-    if (name === "unit") {
-      const unit = units.find(
-        (u) => u.id === Number(value)
-      );
-
-      setSelectedUnit(unit || null);
-
-      if (unit) {
-        updatedForm.monthly_rent = unit.rent_amount;
-        updatedForm.security_deposit = unit.rent_amount;
-      }
-    }
-
-    setFormData(updatedForm);
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleUnitChange = (unitId) => {
+    const unit = units.find((u) => u.id === unitId);
+    setSelectedUnit(unit || null);
 
-  try {
+    setFormData((prev) => ({
+      ...prev,
+      unit: unitId,
+      monthly_rent: unit ? unit.rent_amount : prev.monthly_rent,
+      security_deposit: unit ? unit.rent_amount : prev.security_deposit,
+    }));
+  };
 
-    if (editingId) {
-      await api.put(`leases/${editingId}/`, formData);
-      alert("Lease updated successfully!");
-    } else {
-      await api.post("leases/", formData);
-      alert("Lease added successfully!");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      if (editingId) {
+        await api.put(`leases/${editingId}/`, formData);
+        showNotification("Lease updated successfully!", "success");
+      } else {
+        await api.post("leases/", formData);
+        showNotification("Lease added successfully!", "success");
+      }
+
+      setFormData({
+        tenant: "",
+        unit: "",
+        start_date: "",
+        end_date: "",
+        monthly_rent: "",
+        security_deposit: "",
+        status: "ACTIVE",
+      });
+
+      setEditingId(null);
+      setSelectedTenant(null);
+      setSelectedUnit(null);
+
+      fetchLeases();
+
+    } catch (error) {
+      console.error("Error saving lease:", error);
+
+      const message =
+        error.response?.data?.detail ||
+        error.response?.data?.unit?.[0] ||
+        error.response?.data?.non_field_errors?.[0] ||
+        "Failed to save lease.";
+
+      showNotification(message, "error");
     }
+  };
 
+  const editLease = (lease) => {
     setFormData({
-      tenant: "",
-      unit: "",
-      start_date: "",
-      end_date: "",
-      monthly_rent: "",
-      security_deposit: "",
-      status: "ACTIVE",
+      tenant: lease.tenant,
+      unit: lease.unit,
+      start_date: lease.start_date,
+      end_date: lease.end_date,
+      monthly_rent: lease.monthly_rent,
+      security_deposit: lease.security_deposit,
+      status: lease.status,
     });
 
-    setEditingId(null);
-    setSelectedTenant(null);
-    setSelectedUnit(null);
+    const tenant = tenants.find((t) => t.id === lease.tenant);
+    setSelectedTenant(tenant || null);
 
-    fetchLeases();
+    const unit = units.find((u) => u.id === lease.unit);
+    setSelectedUnit(unit || null);
 
-  } catch (error) {
-    console.error("Error saving lease:", error);
-
-    if (error.response) {
-      alert(JSON.stringify(error.response.data));
-    }
-  }
- };
-
- const editLease = (lease) => {
-  setFormData({
-    tenant: lease.tenant,
-    unit: lease.unit,
-    start_date: lease.start_date,
-    end_date: lease.end_date,
-    monthly_rent: lease.monthly_rent,
-    security_deposit: lease.security_deposit,
-    status: lease.status,
-  });
-
-  const tenant = tenants.find((t) => t.id === lease.tenant);
-  setSelectedTenant(tenant || null);
-
-  const unit = units.find((u) => u.id === lease.unit);
-  setSelectedUnit(unit || null);
-
-  setEditingId(lease.id);
- };
+    setEditingId(lease.id);
+  };
 
   const deleteLease = async (id) => {
     const confirmDelete = window.confirm(
@@ -155,9 +153,12 @@ function Leases() {
 
     try {
       await api.delete(`leases/${id}/`);
+      showNotification("Lease deleted successfully!", "success");
       fetchLeases();
     } catch (error) {
       console.error("Error deleting lease:", error);
+      const message = error.response?.data?.detail || "Failed to delete lease.";
+      showNotification(message, "error");
     }
   };
 
@@ -182,21 +183,13 @@ function Leases() {
           ))}
         </select>
 
-        <select
-          name="unit"
-          value={formData.unit}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
-        >
-          <option value="">Select Unit</option>
-
-          {units.map((unit) => (
-            <option key={unit.id} value={unit.id}>
-              {unit.unit_number}
-            </option>
-          ))}
-        </select>
+        <span style={{ marginLeft: "10px" }}>
+          <UnitDropdown
+            units={units}
+            value={formData.unit}
+            onChange={handleUnitChange}
+          />
+        </span>
 
         <input
           type="date"

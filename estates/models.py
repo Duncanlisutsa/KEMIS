@@ -1,5 +1,5 @@
 from django.db import models
-from django.conf import settings 
+from django.conf import settings
 
 
 class Estate(models.Model):
@@ -8,13 +8,13 @@ class Estate(models.Model):
     description = models.TextField(blank=True)
 
     owner = models.ForeignKey(
-    settings.AUTH_USER_MODEL,
-    on_delete=models.CASCADE,
-    related_name="estates",
-    limit_choices_to={"role": "LANDLORD"},
-    null=True,
-    blank=True
-)
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="estates",
+        limit_choices_to={"role": "LANDLORD"},
+        null=True,
+        blank=True
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -41,7 +41,7 @@ class Unit(models.Model):
 
     estate = models.ForeignKey(
         Estate,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='units'
     )
 
@@ -66,6 +66,14 @@ class Unit(models.Model):
     description = models.TextField(blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['estate', 'unit_number'],
+                name='unique_unit_number_per_estate'
+            )
+        ]
 
     def __str__(self):
         return f"{self.estate.name} - {self.unit_number}"

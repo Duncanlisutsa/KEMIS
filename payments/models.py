@@ -23,7 +23,7 @@ class Payment(models.Model):
 
     lease = models.ForeignKey(
         Lease,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='payments'
     )
 

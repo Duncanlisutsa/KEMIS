@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ConfirmDialog from "../components/ConfirmDialog";
+import { useNotification } from "../context/NotificationContext";
 
 function Estates() {
+  const { showNotification } = useNotification();
+
   const [estates, setEstates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
@@ -33,33 +36,33 @@ function Estates() {
       setLoading(false);
     }
   };
-  
+
   const handleDelete = async () => {
     if (!estateToDelete) return;
 
     try {
       await api.delete(`property/estates/${estateToDelete}/`);
-
+      showNotification("Estate deleted successfully!", "success");
       fetchEstates();
-
     } catch (error) {
       console.error("Error deleting estate:", error);
+      const message = error.response?.data?.detail || "Failed to delete estate.";
+      showNotification(message, "error");
     } finally {
       setConfirmOpen(false);
       setEstateToDelete(null);
     }
   };
 
-
   const handleEdit = (estate) => {
-  setFormData({
-    name: estate.name,
-    location: estate.location,
-    description: estate.description,
-  });
+    setFormData({
+      name: estate.name,
+      location: estate.location,
+      description: estate.description,
+    });
 
-  setEditingId(estate.id);
-};
+    setEditingId(estate.id);
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -69,34 +72,35 @@ function Estates() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    if (editingId) {
-      await api.put(
-        `property/estates/${editingId}/`,
-        formData
-      );
-    } else {
-      await api.post("property/estates/", formData);
+    try {
+      if (editingId) {
+        await api.put(`property/estates/${editingId}/`, formData);
+        showNotification("Estate updated successfully!", "success");
+      } else {
+        await api.post("property/estates/", formData);
+        showNotification("Estate added successfully!", "success");
+      }
+
+      setFormData({
+        name: "",
+        location: "",
+        description: "",
+      });
+
+      setEditingId(null);
+      fetchEstates();
+
+    } catch (error) {
+      console.error("Error saving estate:", error);
+      const message = error.response?.data?.detail || "Failed to save estate.";
+      showNotification(message, "error");
     }
-
-    setFormData({
-      name: "",
-      location: "",
-      description: "",
-    });
-
-    setEditingId(null);
-    fetchEstates();
-
-  } catch (error) {
-    console.error("Error saving estate:", error);
-  }
-};
+  };
 
   if (loading) {
-  return <LoadingSpinner text="Loading estates..." />;
+    return <LoadingSpinner text="Loading estates..." />;
   }
 
   return (
@@ -146,20 +150,21 @@ function Estates() {
             <th>ID</th>
             <th>Name</th>
             <th>Location</th>
+            <th>Description</th>
             <th>Actions</th>
           </tr>
         </thead>
 
         <tbody>
           {estates.map((estate) => (
-        <tr key={estate.id}>
-            <td>{estate.id}</td>
-            <td>{estate.name}</td>
-            <td>{estate.location}</td>
-            <td>{estate.description}</td>
-            <td>
+            <tr key={estate.id}>
+              <td>{estate.id}</td>
+              <td>{estate.name}</td>
+              <td>{estate.location}</td>
+              <td>{estate.description}</td>
+              <td>
                 <button onClick={() => handleEdit(estate)}>
-                    Edit
+                  Edit
                 </button>
 
                 <button
@@ -171,8 +176,8 @@ function Estates() {
                 >
                   Delete
                 </button>
-            </td>
-        </tr>
+              </td>
+            </tr>
           ))}
         </tbody>
       </table>
@@ -187,7 +192,7 @@ function Estates() {
         }}
       />
     </div>
-  
+
   );
 }
 

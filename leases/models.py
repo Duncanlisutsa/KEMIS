@@ -12,13 +12,13 @@ class Lease(models.Model):
 
     tenant = models.ForeignKey(
         Tenant,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='leases'
     )
 
     unit = models.ForeignKey(
         Unit,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='leases'
     )
 
