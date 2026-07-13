@@ -231,7 +231,8 @@ function Tenants() {
             <th>National ID</th>
             <th>Phone</th>
             <th>Occupation</th>
-            <th>Emergency Contact</th>
+            <th>Emergency Cont Name</th>
+            <th>Emergency Cont Phone</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -243,11 +244,8 @@ function Tenants() {
               <td>{tenant.national_id}</td>
               <td>{tenant.phone_number}</td>
               <td>{tenant.occupation}</td>
-              <td>
-                {tenant.emergency_contact_name}
-                <br />
-                {tenant.emergency_contact_phone}
-              </td>
+              <td>{tenant.emergency_contact_name}</td>
+              <td>{tenant.emergency_contact_phone}</td>
 
               <td>
                 <button

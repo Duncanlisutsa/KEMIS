@@ -62,11 +62,24 @@ body {
 
 /* Every table in the app becomes horizontally scrollable
    instead of overflowing/breaking the page on narrow screens */
+/* Every table in the app becomes a bounded, independently
+   scrollable box — the header row stays fixed while only
+   the rows scroll, and it still scrolls sideways on narrow screens */
 table {
   display: block;
-  overflow-x: auto;
+  max-height: 65vh;
+  overflow: auto;
   white-space: nowrap;
   -webkit-overflow-scrolling: touch;
+  border-collapse: collapse;
+}
+
+table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #1e293b;
+  color: white;
 }
 
 /* Every form's fields wrap onto new lines instead of
