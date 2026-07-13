@@ -9,7 +9,7 @@ export const PERMISSIONS = {
 
   leases: ["ADMIN", "MANAGER"],
 
-  payments: ["ADMIN", "MANAGER"],
+  payments: ["ADMIN", "MANAGER", "TENANT"],
 
   maintenance: ["ADMIN", "MANAGER", "TENANT"],
 
