@@ -24,4 +24,5 @@ kemis-frontend/node_modules/
 kemis-frontend/dist/
 
 # OS files
-.DS_Storedata_backup.json
+.DS_Store
+data_backup.json
