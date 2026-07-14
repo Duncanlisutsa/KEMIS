@@ -13,6 +13,7 @@ class TenantSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(write_only=True, required=False)
 
     full_name = serializers.SerializerMethodField(read_only=True)
+    user_email = serializers.EmailField(source='user.email', read_only=True)
 
     class Meta:
         model = Tenant
@@ -21,7 +22,7 @@ class TenantSerializer(serializers.ModelSerializer):
             'username',
             'first_name',
             'last_name',
-            'email',
+            'user_email',
             'full_name',
             'national_id',
             'phone_number',
