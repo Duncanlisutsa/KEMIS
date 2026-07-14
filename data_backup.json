@@ -1,0 +1,1878 @@
+[
+{
+  "model": "auth.group",
+  "fields": {
+    "name": "Admin",
+    "permissions": [
+      [
+        "add_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "change_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "delete_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "view_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "add_logentry",
+        "admin",
+        "logentry"
+      ],
+      [
+        "change_logentry",
+        "admin",
+        "logentry"
+      ],
+      [
+        "delete_logentry",
+        "admin",
+        "logentry"
+      ],
+      [
+        "view_logentry",
+        "admin",
+        "logentry"
+      ],
+      [
+        "add_group",
+        "auth",
+        "group"
+      ],
+      [
+        "change_group",
+        "auth",
+        "group"
+      ],
+      [
+        "delete_group",
+        "auth",
+        "group"
+      ],
+      [
+        "view_group",
+        "auth",
+        "group"
+      ],
+      [
+        "add_permission",
+        "auth",
+        "permission"
+      ],
+      [
+        "change_permission",
+        "auth",
+        "permission"
+      ],
+      [
+        "delete_permission",
+        "auth",
+        "permission"
+      ],
+      [
+        "view_permission",
+        "auth",
+        "permission"
+      ],
+      [
+        "add_contenttype",
+        "contenttypes",
+        "contenttype"
+      ],
+      [
+        "change_contenttype",
+        "contenttypes",
+        "contenttype"
+      ],
+      [
+        "delete_contenttype",
+        "contenttypes",
+        "contenttype"
+      ],
+      [
+        "view_contenttype",
+        "contenttypes",
+        "contenttype"
+      ],
+      [
+        "add_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "change_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "delete_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "view_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "add_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "change_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "delete_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "view_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "add_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "change_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "delete_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "view_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "add_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "change_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "delete_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "view_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "add_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "change_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "delete_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "view_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "add_session",
+        "sessions",
+        "session"
+      ],
+      [
+        "change_session",
+        "sessions",
+        "session"
+      ],
+      [
+        "delete_session",
+        "sessions",
+        "session"
+      ],
+      [
+        "view_session",
+        "sessions",
+        "session"
+      ],
+      [
+        "add_tenant",
+        "tenants",
+        "tenant"
+      ],
+      [
+        "change_tenant",
+        "tenants",
+        "tenant"
+      ],
+      [
+        "delete_tenant",
+        "tenants",
+        "tenant"
+      ],
+      [
+        "view_tenant",
+        "tenants",
+        "tenant"
+      ]
+    ]
+  }
+},
+{
+  "model": "auth.group",
+  "fields": {
+    "name": "Manager",
+    "permissions": [
+      [
+        "add_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "change_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "delete_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "view_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "add_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "change_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "delete_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "view_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "add_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "change_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "delete_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "view_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "add_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "change_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "delete_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "view_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "change_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "delete_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "view_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "add_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "change_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "delete_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "view_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "add_tenant",
+        "tenants",
+        "tenant"
+      ],
+      [
+        "change_tenant",
+        "tenants",
+        "tenant"
+      ],
+      [
+        "delete_tenant",
+        "tenants",
+        "tenant"
+      ],
+      [
+        "view_tenant",
+        "tenants",
+        "tenant"
+      ]
+    ]
+  }
+},
+{
+  "model": "auth.group",
+  "fields": {
+    "name": "Tenant",
+    "permissions": [
+      [
+        "view_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "add_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "view_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "view_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "view_tenant",
+        "tenants",
+        "tenant"
+      ]
+    ]
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$dJc5MrTWZ78BSvCFQtLifN$RzKNSAIAF/7VRLxaowVXLsXi6okuF3uVwHKQPh9Nlzw=",
+    "last_login": "2026-07-08T03:45:34.705Z",
+    "is_superuser": true,
+    "username": "Admin",
+    "first_name": "",
+    "last_name": "",
+    "email": "duncanlisutsa@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-06-23T11:28:45Z",
+    "role": "ADMIN",
+    "phone": "",
+    "created_at": "2026-06-23T11:28:45.994Z",
+    "groups": [
+      [
+        "Admin"
+      ]
+    ],
+    "user_permissions": [
+      [
+        "add_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "change_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "delete_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "view_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "add_logentry",
+        "admin",
+        "logentry"
+      ],
+      [
+        "change_logentry",
+        "admin",
+        "logentry"
+      ],
+      [
+        "delete_logentry",
+        "admin",
+        "logentry"
+      ],
+      [
+        "view_logentry",
+        "admin",
+        "logentry"
+      ],
+      [
+        "add_group",
+        "auth",
+        "group"
+      ],
+      [
+        "change_group",
+        "auth",
+        "group"
+      ],
+      [
+        "delete_group",
+        "auth",
+        "group"
+      ],
+      [
+        "view_group",
+        "auth",
+        "group"
+      ],
+      [
+        "add_permission",
+        "auth",
+        "permission"
+      ],
+      [
+        "change_permission",
+        "auth",
+        "permission"
+      ],
+      [
+        "delete_permission",
+        "auth",
+        "permission"
+      ],
+      [
+        "view_permission",
+        "auth",
+        "permission"
+      ],
+      [
+        "add_contenttype",
+        "contenttypes",
+        "contenttype"
+      ],
+      [
+        "change_contenttype",
+        "contenttypes",
+        "contenttype"
+      ],
+      [
+        "delete_contenttype",
+        "contenttypes",
+        "contenttype"
+      ],
+      [
+        "view_contenttype",
+        "contenttypes",
+        "contenttype"
+      ],
+      [
+        "add_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "change_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "delete_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "view_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "add_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "change_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "delete_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "view_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "add_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "change_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "delete_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "view_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "add_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "change_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "delete_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "view_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "add_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "change_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "delete_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "view_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "add_session",
+        "sessions",
+        "session"
+      ],
+      [
+        "change_session",
+        "sessions",
+        "session"
+      ],
+      [
+        "delete_session",
+        "sessions",
+        "session"
+      ],
+      [
+        "view_session",
+        "sessions",
+        "session"
+      ],
+      [
+        "add_tenant",
+        "tenants",
+        "tenant"
+      ],
+      [
+        "change_tenant",
+        "tenants",
+        "tenant"
+      ],
+      [
+        "delete_tenant",
+        "tenants",
+        "tenant"
+      ],
+      [
+        "view_tenant",
+        "tenants",
+        "tenant"
+      ]
+    ]
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$2g3ucp5XTQI2U1ydkOiToQ$IqT6D0qusP0MZx9e/sQuuGEnUo8yd91kmag0kp5ms+g=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "T39",
+    "first_name": "Julaya",
+    "last_name": "Lisusa",
+    "email": "dukdb@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-06-23T11:48:11Z",
+    "role": "TENANT",
+    "phone": "",
+    "created_at": "2026-06-23T11:48:12.206Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$WaFhHl5nNm5wWgvuW7hFvO$hYe2kIJbbrvN9+g6yf0OWmRXo9mmVy9lMSB71bEO92A=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "michelle",
+    "first_name": "Michelle",
+    "last_name": "Mikasa",
+    "email": "duncanlisutsa@gmail.com",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-07-03T07:33:37Z",
+    "role": "MANAGER",
+    "phone": "",
+    "created_at": "2026-07-03T07:33:37.646Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$HjT7b39gyZdKO0ALRiBk1g$I8WD8aPnxWqVyml7LSALLZVnDVUT0+ZqVs+Jsmzq/VM=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "Tom",
+    "first_name": "Tom",
+    "last_name": "Omondi",
+    "email": "duncanlisutsa@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-03T11:13:43.303Z",
+    "role": "TENANT",
+    "phone": "",
+    "created_at": "2026-07-03T11:13:43.307Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$WNC8qY09K7CT10205rbpjT$o6Qbq7NOB6H2+dOUQqxZP2jso0EmcfO5tJtn1R2VzMo=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "Lucky",
+    "first_name": "Lucky",
+    "last_name": "Kingi",
+    "email": "luckykingi@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-07T10:42:32.762Z",
+    "role": "TENANT",
+    "phone": "",
+    "created_at": "2026-07-07T10:42:32.763Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$5cr1hOPTexmVcDQd4KxScn$kKQLzAyl+TPsRQFqDNqofouY4JR+3EDCdY0r2Tuuj/0=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "Bruce",
+    "first_name": "bre",
+    "last_name": "amah",
+    "email": "brteh@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-07T11:14:56.110Z",
+    "role": "LANDLORD",
+    "phone": "",
+    "created_at": "2026-07-07T11:14:56.111Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$lNXgojWOBEIv424y8jRGLT$bdXS8fy82WSCB10w4DEeNFGHJWba+N/WlZFzWmLfO4k=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "Edwin",
+    "first_name": "Edwin",
+    "last_name": "Julaya",
+    "email": "julayed@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-08T03:27:11.178Z",
+    "role": "TENANT",
+    "phone": "",
+    "created_at": "2026-07-08T03:27:11.179Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$ZAjujtdw7Yoq6YMmUIihxU$Qnbvo6DNZ9Refx3cvjjO3iGhLLmYfnK2oyjbqryFBdM=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "july",
+    "first_name": "july",
+    "last_name": "july",
+    "email": "july@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-08T05:35:28Z",
+    "role": "TENANT",
+    "phone": "",
+    "created_at": "2026-07-08T05:35:29.744Z",
+    "groups": [
+      [
+        "Manager"
+      ]
+    ],
+    "user_permissions": [
+      [
+        "add_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "change_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "delete_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "view_user",
+        "accounts",
+        "user"
+      ],
+      [
+        "add_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "change_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "delete_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "view_estate",
+        "estates",
+        "estate"
+      ],
+      [
+        "add_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "change_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "delete_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "view_unit",
+        "estates",
+        "unit"
+      ],
+      [
+        "add_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "change_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "delete_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "view_lease",
+        "leases",
+        "lease"
+      ],
+      [
+        "add_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "change_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "delete_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "view_maintenancerequest",
+        "maintenance",
+        "maintenancerequest"
+      ],
+      [
+        "add_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "change_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "delete_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "view_payment",
+        "payments",
+        "payment"
+      ],
+      [
+        "add_tenant",
+        "tenants",
+        "tenant"
+      ],
+      [
+        "change_tenant",
+        "tenants",
+        "tenant"
+      ],
+      [
+        "delete_tenant",
+        "tenants",
+        "tenant"
+      ],
+      [
+        "view_tenant",
+        "tenants",
+        "tenant"
+      ]
+    ]
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$wzMWRbTZ8n6tiF0uEx5Hbj$+qnWewcVSmJuZosPT6Wzpu3hszNadX4YDkTwTlnEzjw=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "Jakes",
+    "first_name": "Jakes",
+    "last_name": "Rein",
+    "email": "reinj@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-08T07:50:49.344Z",
+    "role": "TENANT",
+    "phone": "",
+    "created_at": "2026-07-08T07:50:49.345Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$nGxmd86fwiO4Zr762GzG8c$TE0AfFhuPeWcq2nkZfsx4ZE7rkxP5c8cuVLPNrEEkFs=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "rghj",
+    "first_name": "cvbnm,",
+    "last_name": "vbnm,",
+    "email": "cvhjkl@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-08T07:58:45.068Z",
+    "role": "TENANT",
+    "phone": "",
+    "created_at": "2026-07-08T07:58:45.068Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$ZWeZhv5up0O4QbV3BarhGO$H2vLH2VEruQ/MiiwBytPfBnkwtlDgDbbSHAdbsaqrXk=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "Hum",
+    "first_name": "Humphrey",
+    "last_name": "Leid",
+    "email": "humleida@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-10T09:22:50.836Z",
+    "role": "",
+    "phone": "",
+    "created_at": "2026-07-10T09:22:50.836Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "accounts.user",
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$9iNYbd6H0DY8vgFjegpy0k$QaTy3lFgaZYf6ECpeYNez+XCCXOzU94GUxWwMctlV8Y=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "jim",
+    "first_name": "jim",
+    "last_name": "ogo",
+    "email": "jimog@gmail.com",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-07-13T13:04:50.271Z",
+    "role": "",
+    "phone": "",
+    "created_at": "2026-07-13T13:04:50.293Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "estates.estate",
+  "pk": 10,
+  "fields": {
+    "name": "Kabras",
+    "location": "Nyayo Teazone",
+    "description": "Residential",
+    "owner": null,
+    "created_at": "2026-07-03T17:16:12.237Z"
+  }
+},
+{
+  "model": "estates.estate",
+  "pk": 15,
+  "fields": {
+    "name": "RICHMOND",
+    "location": "Kakamega",
+    "description": "Residential",
+    "owner": null,
+    "created_at": "2026-07-11T09:32:09.581Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 36,
+  "fields": {
+    "estate": 10,
+    "unit_number": "1",
+    "unit_type": "BEDSITTER",
+    "rent_amount": "5500.00",
+    "status": "OCCUPIED",
+    "description": "",
+    "created_at": "2026-07-03T18:22:52.681Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 37,
+  "fields": {
+    "estate": 10,
+    "unit_number": "2",
+    "unit_type": "BUSINESS",
+    "rent_amount": "5000.00",
+    "status": "OCCUPIED",
+    "description": "",
+    "created_at": "2026-07-03T18:23:59.539Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 38,
+  "fields": {
+    "estate": 10,
+    "unit_number": "3",
+    "unit_type": "SINGLE",
+    "rent_amount": "4500.00",
+    "status": "VACANT",
+    "description": "",
+    "created_at": "2026-07-03T18:24:38.490Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 39,
+  "fields": {
+    "estate": 10,
+    "unit_number": "4",
+    "unit_type": "TWO_BEDROOM",
+    "rent_amount": "5500.00",
+    "status": "RESERVED",
+    "description": "",
+    "created_at": "2026-07-03T18:25:41.534Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 40,
+  "fields": {
+    "estate": 10,
+    "unit_number": "5",
+    "unit_type": "SINGLE",
+    "rent_amount": "4000.00",
+    "status": "OCCUPIED",
+    "description": "",
+    "created_at": "2026-07-07T10:08:36.480Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 41,
+  "fields": {
+    "estate": 10,
+    "unit_number": "6",
+    "unit_type": "SINGLE",
+    "rent_amount": "4000.00",
+    "status": "VACANT",
+    "description": "",
+    "created_at": "2026-07-07T10:09:43.800Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 42,
+  "fields": {
+    "estate": 10,
+    "unit_number": "7",
+    "unit_type": "BEDSITTER",
+    "rent_amount": "6500.00",
+    "status": "VACANT",
+    "description": "",
+    "created_at": "2026-07-07T10:10:12.046Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 43,
+  "fields": {
+    "estate": 10,
+    "unit_number": "8",
+    "unit_type": "BEDSITTER",
+    "rent_amount": "6500.00",
+    "status": "OCCUPIED",
+    "description": "",
+    "created_at": "2026-07-07T10:10:37.311Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 44,
+  "fields": {
+    "estate": 10,
+    "unit_number": "9",
+    "unit_type": "BEDSITTER",
+    "rent_amount": "6500.00",
+    "status": "VACANT",
+    "description": "",
+    "created_at": "2026-07-07T10:11:07.541Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 45,
+  "fields": {
+    "estate": 10,
+    "unit_number": "10",
+    "unit_type": "BEDSITTER",
+    "rent_amount": "6500.00",
+    "status": "OCCUPIED",
+    "description": "",
+    "created_at": "2026-07-07T10:14:13.558Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 46,
+  "fields": {
+    "estate": 10,
+    "unit_number": "11",
+    "unit_type": "BEDSITTER",
+    "rent_amount": "6500.00",
+    "status": "VACANT",
+    "description": "",
+    "created_at": "2026-07-07T10:15:11.641Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 47,
+  "fields": {
+    "estate": 10,
+    "unit_number": "12",
+    "unit_type": "SINGLE",
+    "rent_amount": "4500.00",
+    "status": "VACANT",
+    "description": "",
+    "created_at": "2026-07-07T10:16:42.552Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 48,
+  "fields": {
+    "estate": 10,
+    "unit_number": "13",
+    "unit_type": "BEDSITTER",
+    "rent_amount": "6500.00",
+    "status": "OCCUPIED",
+    "description": "",
+    "created_at": "2026-07-07T10:17:11.587Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 49,
+  "fields": {
+    "estate": 10,
+    "unit_number": "14",
+    "unit_type": "SINGLE",
+    "rent_amount": "4500.00",
+    "status": "OCCUPIED",
+    "description": "",
+    "created_at": "2026-07-07T10:17:45.901Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 50,
+  "fields": {
+    "estate": 10,
+    "unit_number": "15",
+    "unit_type": "BEDSITTER",
+    "rent_amount": "6500.00",
+    "status": "OCCUPIED",
+    "description": "",
+    "created_at": "2026-07-07T10:18:38.362Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 51,
+  "fields": {
+    "estate": 10,
+    "unit_number": "16",
+    "unit_type": "SINGLE",
+    "rent_amount": "4500.00",
+    "status": "VACANT",
+    "description": "",
+    "created_at": "2026-07-07T10:23:52.494Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 52,
+  "fields": {
+    "estate": 10,
+    "unit_number": "17",
+    "unit_type": "BEDSITTER",
+    "rent_amount": "6500.00",
+    "status": "VACANT",
+    "description": "",
+    "created_at": "2026-07-07T10:25:09.832Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 53,
+  "fields": {
+    "estate": 10,
+    "unit_number": "18",
+    "unit_type": "BEDSITTER",
+    "rent_amount": "6500.00",
+    "status": "OCCUPIED",
+    "description": "",
+    "created_at": "2026-07-07T10:33:07.066Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 55,
+  "fields": {
+    "estate": 15,
+    "unit_number": "20",
+    "unit_type": "TWO_BEDROOM",
+    "rent_amount": "17000.00",
+    "status": "VACANT",
+    "description": "",
+    "created_at": "2026-07-11T09:32:47.146Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 56,
+  "fields": {
+    "estate": 10,
+    "unit_number": "21",
+    "unit_type": "BEDSITTER",
+    "rent_amount": "6500.00",
+    "status": "VACANT",
+    "description": "",
+    "created_at": "2026-07-12T17:58:47.547Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 57,
+  "fields": {
+    "estate": 10,
+    "unit_number": "20",
+    "unit_type": "ONE_BEDROOM",
+    "rent_amount": "8000.00",
+    "status": "VACANT",
+    "description": "",
+    "created_at": "2026-07-12T17:59:34.511Z"
+  }
+},
+{
+  "model": "estates.unit",
+  "pk": 58,
+  "fields": {
+    "estate": 15,
+    "unit_number": "2",
+    "unit_type": "TWO_BEDROOM",
+    "rent_amount": "9000.00",
+    "status": "OCCUPIED",
+    "description": "",
+    "created_at": "2026-07-13T11:07:21.453Z"
+  }
+},
+{
+  "model": "tenants.tenant",
+  "pk": 1,
+  "fields": {
+    "user": [
+      "T39"
+    ],
+    "national_id": "12345678",
+    "phone_number": "0712345678",
+    "occupation": "student",
+    "emergency_contact_name": "mercy",
+    "emergency_contact_phone": "0723123456",
+    "created_at": "2026-06-23T11:50:53.020Z"
+  }
+},
+{
+  "model": "tenants.tenant",
+  "pk": 2,
+  "fields": {
+    "user": [
+      "michelle"
+    ],
+    "national_id": "12345673",
+    "phone_number": "0712345678",
+    "occupation": "student",
+    "emergency_contact_name": "Duncan Lisusa",
+    "emergency_contact_phone": "0723123456",
+    "created_at": "2026-07-03T07:33:38.646Z"
+  }
+},
+{
+  "model": "tenants.tenant",
+  "pk": 3,
+  "fields": {
+    "user": [
+      "Tom"
+    ],
+    "national_id": "66575854",
+    "phone_number": "078665674",
+    "occupation": "student",
+    "emergency_contact_name": "Ivarr",
+    "emergency_contact_phone": "07856566",
+    "created_at": "2026-07-03T11:13:44.404Z"
+  }
+},
+{
+  "model": "tenants.tenant",
+  "pk": 4,
+  "fields": {
+    "user": [
+      "Lucky"
+    ],
+    "national_id": "12345674",
+    "phone_number": "0712345678",
+    "occupation": "student",
+    "emergency_contact_name": "Duncan Lisusa",
+    "emergency_contact_phone": "0723123451",
+    "created_at": "2026-07-07T10:42:33.593Z"
+  }
+},
+{
+  "model": "tenants.tenant",
+  "pk": 5,
+  "fields": {
+    "user": [
+      "Bruce"
+    ],
+    "national_id": "4356789",
+    "phone_number": "076783434",
+    "occupation": "student",
+    "emergency_contact_name": "fdyhfh",
+    "emergency_contact_phone": "0785647389",
+    "created_at": "2026-07-07T11:14:56.885Z"
+  }
+},
+{
+  "model": "tenants.tenant",
+  "pk": 6,
+  "fields": {
+    "user": [
+      "Edwin"
+    ],
+    "national_id": "3547586",
+    "phone_number": "074356783",
+    "occupation": "student",
+    "emergency_contact_name": "Dee",
+    "emergency_contact_phone": "074353783",
+    "created_at": "2026-07-08T03:27:12.163Z"
+  }
+},
+{
+  "model": "tenants.tenant",
+  "pk": 7,
+  "fields": {
+    "user": [
+      "Jakes"
+    ],
+    "national_id": "7686754",
+    "phone_number": "5456732",
+    "occupation": "student",
+    "emergency_contact_name": "for",
+    "emergency_contact_phone": "0754646453",
+    "created_at": "2026-07-08T07:50:50.220Z"
+  }
+},
+{
+  "model": "tenants.tenant",
+  "pk": 8,
+  "fields": {
+    "user": [
+      "rghj"
+    ],
+    "national_id": "9887654",
+    "phone_number": "0798764",
+    "occupation": "student",
+    "emergency_contact_name": "asdfghj",
+    "emergency_contact_phone": "06345678",
+    "created_at": "2026-07-08T07:58:46.064Z"
+  }
+},
+{
+  "model": "tenants.tenant",
+  "pk": 9,
+  "fields": {
+    "user": [
+      "Hum"
+    ],
+    "national_id": "0987654",
+    "phone_number": "0797345678",
+    "occupation": "RESIDENT",
+    "emergency_contact_name": "Mike",
+    "emergency_contact_phone": "079847454",
+    "created_at": "2026-07-10T09:22:51.699Z"
+  }
+},
+{
+  "model": "tenants.tenant",
+  "pk": 10,
+  "fields": {
+    "user": [
+      "jim"
+    ],
+    "national_id": "7899753",
+    "phone_number": "078985434",
+    "occupation": "RESIDENT",
+    "emergency_contact_name": "joy bichaa",
+    "emergency_contact_phone": "0723123451",
+    "created_at": "2026-07-13T13:04:51.717Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 7,
+  "fields": {
+    "tenant": 1,
+    "unit": 36,
+    "start_date": "2026-07-03",
+    "end_date": "2026-07-31",
+    "monthly_rent": "3500.00",
+    "security_deposit": "3500.00",
+    "status": "EXPIRED",
+    "created_at": "2026-07-03T18:27:38.781Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 8,
+  "fields": {
+    "tenant": 3,
+    "unit": 38,
+    "start_date": "2026-07-03",
+    "end_date": "2026-07-31",
+    "monthly_rent": "5000.00",
+    "security_deposit": "5000.00",
+    "status": "ACTIVE",
+    "created_at": "2026-07-03T18:28:24.141Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 9,
+  "fields": {
+    "tenant": 2,
+    "unit": 37,
+    "start_date": "2026-07-05",
+    "end_date": "2026-07-31",
+    "monthly_rent": "5567.00",
+    "security_deposit": "7767.00",
+    "status": "ACTIVE",
+    "created_at": "2026-07-05T16:43:36.312Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 10,
+  "fields": {
+    "tenant": 5,
+    "unit": 50,
+    "start_date": "2026-07-07",
+    "end_date": "2026-07-31",
+    "monthly_rent": "4500.00",
+    "security_deposit": "4500.00",
+    "status": "EXPIRED",
+    "created_at": "2026-07-07T17:16:55.657Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 11,
+  "fields": {
+    "tenant": 4,
+    "unit": 40,
+    "start_date": "2026-07-07",
+    "end_date": "2026-09-17",
+    "monthly_rent": "4500.00",
+    "security_deposit": "5677.00",
+    "status": "ACTIVE",
+    "created_at": "2026-07-07T19:41:18.275Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 12,
+  "fields": {
+    "tenant": 3,
+    "unit": 36,
+    "start_date": "2026-07-07",
+    "end_date": "2026-07-15",
+    "monthly_rent": "234567.00",
+    "security_deposit": "234567.00",
+    "status": "TERMINATED",
+    "created_at": "2026-07-07T19:42:33.249Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 13,
+  "fields": {
+    "tenant": 6,
+    "unit": 49,
+    "start_date": "2026-07-08",
+    "end_date": "2026-09-15",
+    "monthly_rent": "4500.00",
+    "security_deposit": "4500.00",
+    "status": "ACTIVE",
+    "created_at": "2026-07-08T03:28:55.227Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 14,
+  "fields": {
+    "tenant": 7,
+    "unit": 50,
+    "start_date": "2026-07-08",
+    "end_date": "2026-09-30",
+    "monthly_rent": "6500.00",
+    "security_deposit": "6500.00",
+    "status": "ACTIVE",
+    "created_at": "2026-07-08T07:53:10.277Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 15,
+  "fields": {
+    "tenant": 7,
+    "unit": 45,
+    "start_date": "2026-07-10",
+    "end_date": "2026-10-15",
+    "monthly_rent": "6500.00",
+    "security_deposit": "6500.00",
+    "status": "ACTIVE",
+    "created_at": "2026-07-10T08:37:08.833Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 16,
+  "fields": {
+    "tenant": 9,
+    "unit": 53,
+    "start_date": "2026-07-10",
+    "end_date": "2026-09-10",
+    "monthly_rent": "6500.00",
+    "security_deposit": "6500.00",
+    "status": "ACTIVE",
+    "created_at": "2026-07-10T09:24:16.800Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 17,
+  "fields": {
+    "tenant": 9,
+    "unit": 43,
+    "start_date": "2026-07-11",
+    "end_date": "2026-09-17",
+    "monthly_rent": "6500.00",
+    "security_deposit": "6500.00",
+    "status": "ACTIVE",
+    "created_at": "2026-07-11T09:34:25.420Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 18,
+  "fields": {
+    "tenant": 5,
+    "unit": 48,
+    "start_date": "2026-06-07",
+    "end_date": "2026-06-30",
+    "monthly_rent": "6500.00",
+    "security_deposit": "6500.00",
+    "status": "ACTIVE",
+    "created_at": "2026-07-11T14:28:26.986Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 19,
+  "fields": {
+    "tenant": 4,
+    "unit": 36,
+    "start_date": "2026-07-12",
+    "end_date": "2026-07-31",
+    "monthly_rent": "5500.00",
+    "security_deposit": "5500.00",
+    "status": "ACTIVE",
+    "created_at": "2026-07-12T18:01:49.204Z"
+  }
+},
+{
+  "model": "leases.lease",
+  "pk": 20,
+  "fields": {
+    "tenant": 10,
+    "unit": 58,
+    "start_date": "2026-07-13",
+    "end_date": "2027-03-25",
+    "monthly_rent": "9000.00",
+    "security_deposit": "9000.00",
+    "status": "ACTIVE",
+    "created_at": "2026-07-13T13:06:23.200Z"
+  }
+},
+{
+  "model": "payments.payment",
+  "pk": 8,
+  "fields": {
+    "lease": 7,
+    "amount": "5000.00",
+    "payment_date": "2026-07-05",
+    "payment_method": "BANK",
+    "payment_type": "DEPOSIT",
+    "reference_number": "QYF4547NH",
+    "status": "PAID",
+    "created_at": "2026-07-03T18:29:10.967Z"
+  }
+},
+{
+  "model": "payments.payment",
+  "pk": 9,
+  "fields": {
+    "lease": 9,
+    "amount": "6667.00",
+    "payment_date": "2026-07-05",
+    "payment_method": "MPESA",
+    "payment_type": "RENT",
+    "reference_number": "QYF4547NHk",
+    "status": "PAID",
+    "created_at": "2026-07-05T16:44:17.850Z"
+  }
+},
+{
+  "model": "payments.payment",
+  "pk": 10,
+  "fields": {
+    "lease": 15,
+    "amount": "5000.00",
+    "payment_date": "2026-07-16",
+    "payment_method": "MPESA",
+    "payment_type": "DEPOSIT",
+    "reference_number": "WERTYUI",
+    "status": "PAID",
+    "created_at": "2026-07-10T08:52:44.893Z"
+  }
+},
+{
+  "model": "payments.payment",
+  "pk": 11,
+  "fields": {
+    "lease": 16,
+    "amount": "16000.00",
+    "payment_date": "2026-07-10",
+    "payment_method": "BANK",
+    "payment_type": "DEPOSIT",
+    "reference_number": "HGYTGDHJD",
+    "status": "PAID",
+    "created_at": "2026-07-10T09:26:15.769Z"
+  }
+},
+{
+  "model": "payments.payment",
+  "pk": 12,
+  "fields": {
+    "lease": 17,
+    "amount": "34567.00",
+    "payment_date": "2026-07-11",
+    "payment_method": "MPESA",
+    "payment_type": "DEPOSIT",
+    "reference_number": "wertgh",
+    "status": "PAID",
+    "created_at": "2026-07-11T09:35:08.558Z"
+  }
+},
+{
+  "model": "payments.payment",
+  "pk": 13,
+  "fields": {
+    "lease": 18,
+    "amount": "6500.00",
+    "payment_date": "2026-06-11",
+    "payment_method": "MPESA",
+    "payment_type": "RENT",
+    "reference_number": "fghjkl",
+    "status": "PAID",
+    "created_at": "2026-07-11T14:29:41.002Z"
+  }
+},
+{
+  "model": "payments.payment",
+  "pk": 14,
+  "fields": {
+    "lease": 19,
+    "amount": "11000.00",
+    "payment_date": "2026-05-14",
+    "payment_method": "MPESA",
+    "payment_type": "RENT",
+    "reference_number": "QYF4547Nb",
+    "status": "PAID",
+    "created_at": "2026-07-12T18:06:36.138Z"
+  }
+},
+{
+  "model": "payments.payment",
+  "pk": 15,
+  "fields": {
+    "lease": 8,
+    "amount": "6700.00",
+    "payment_date": "2026-07-13",
+    "payment_method": "MPESA",
+    "payment_type": "RENT",
+    "reference_number": "xcvbnkj",
+    "status": "PAID",
+    "created_at": "2026-07-13T03:41:06.435Z"
+  }
+},
+{
+  "model": "payments.payment",
+  "pk": 16,
+  "fields": {
+    "lease": 20,
+    "amount": "27000.00",
+    "payment_date": "2026-07-13",
+    "payment_method": "MPESA",
+    "payment_type": "RENT",
+    "reference_number": "tryrr",
+    "status": "PAID",
+    "created_at": "2026-07-13T13:07:41.402Z"
+  }
+},
+{
+  "model": "maintenance.maintenancerequest",
+  "pk": 5,
+  "fields": {
+    "tenant": 3,
+    "unit": 38,
+    "title": "Leakage",
+    "description": "Washroom tap leaking",
+    "priority": "MEDIUM",
+    "status": "COMPLETED",
+    "reported_date": "2026-07-03T18:33:56.284Z",
+    "resolved_date": "2026-07-03T00:00:00Z"
+  }
+},
+{
+  "model": "maintenance.maintenancerequest",
+  "pk": 6,
+  "fields": {
+    "tenant": 1,
+    "unit": 38,
+    "title": "power",
+    "description": "power loss",
+    "priority": "URGENT",
+    "status": "PENDING",
+    "reported_date": "2026-07-06T05:32:02.079Z",
+    "resolved_date": "2026-07-06T00:00:00Z"
+  }
+},
+{
+  "model": "maintenance.maintenancerequest",
+  "pk": 7,
+  "fields": {
+    "tenant": 4,
+    "unit": 40,
+    "title": "Damaged Hinge",
+    "description": "Washroom door hinge detached",
+    "priority": "LOW",
+    "status": "IN_PROGRESS",
+    "reported_date": "2026-07-07T11:34:51.332Z",
+    "resolved_date": "2026-07-07T00:00:00Z"
+  }
+}
+]
