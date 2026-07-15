@@ -22,6 +22,7 @@ class TenantSerializer(serializers.ModelSerializer):
             'username',
             'first_name',
             'last_name',
+            'email',
             'user_email',
             'full_name',
             'national_id',
@@ -115,5 +116,3 @@ class TenantSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
-
-        
