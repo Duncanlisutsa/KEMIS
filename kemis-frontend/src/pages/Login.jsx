@@ -13,12 +13,12 @@ function Login() {
   const { showNotification } = useNotification();
 
   useEffect(() => {
-  const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("access_token");
 
-  if (token) {
-    navigate("/dashboard");
-  }
-}, [navigate]);
+    if (token) {
+      navigate("/dashboard");
+    }
+  }, [navigate]);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -35,39 +35,39 @@ function Login() {
     });
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const response = await api.post("token/", formData);
+    try {
+      const response = await api.post("token/", formData);
 
-    localStorage.setItem("access_token", response.data.access);
-    localStorage.setItem("refresh_token", response.data.refresh);
+      localStorage.setItem("access_token", response.data.access);
+      localStorage.setItem("refresh_token", response.data.refresh);
 
-    await loadUser();
+      await loadUser();
 
-    showNotification("Login successful!", "success");
+      showNotification("Login successful!", "success");
 
-    navigate("/dashboard");
-  } catch (error) {
-    if (error.response?.status === 401) {
-      showNotification("Invalid username or password.", "error");
-    } else if (!error.response) {
-      showNotification(
-        "Unable to connect to the server. Please check your internet connection.",
-        "error"
-      );
-    } else {
-      showNotification("Login failed. Please try again.", "error");
+      navigate("/dashboard");
+    } catch (error) {
+      if (error.response?.status === 401) {
+        showNotification("Invalid username or password.", "error");
+      } else if (!error.response) {
+        showNotification(
+          "Unable to connect to the server. Please check your internet connection.",
+          "error"
+        );
+      } else {
+        showNotification("Login failed. Please try again.", "error");
+      }
+
+      console.log(error);
+    } finally {
+      setLoading(false);
     }
-
-    console.log(error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div
@@ -78,8 +78,7 @@ const handleSubmit = async (e) => {
         height: "100vh",
       }}
     >
-      <form
-        onSubmit={handleSubmit}
+      <div
         style={{
           width: "90%",
           maxWidth: "320px",
@@ -88,91 +87,100 @@ const handleSubmit = async (e) => {
           borderRadius: "10px",
         }}
       >
-        <h1
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: "8px",
-            textAlign: "center",
-            fontSize: "20px",
-            letterSpacing: "1px",
-            marginBottom: "5px",
-            color: BRAND_COLOR,
-          }}
-        >
-          <FaHome /> KABRAS ESTATE
-        </h1>
-
-        <h2 style={{ textAlign: "center", marginTop: 0 }}>Login</h2>
-
-        <input
-          type="text"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={handleChange}
-          required
-          style={{ width: "100%", marginBottom: "15px" }}
-        />
-
         <div
           style={{
-            position: "relative",
-            width: "100%",
-            marginBottom: "15px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            marginBottom: "20px",
           }}
         >
-          <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
+          <h1
             style={{
-              width: "100%",
-              paddingRight: "35px",
-              boxSizing: "border-box",
-            }}
-          />
-
-          <span
-            onClick={() => setShowPassword(!showPassword)}
-            style={{
-              position: "absolute",
-              right: "10px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              cursor: "pointer",
-              color: "#64748b",
               display: "flex",
               alignItems: "center",
+              gap: "8px",
+              fontSize: "20px",
+              letterSpacing: "1px",
+              margin: 0,
+              color: BRAND_COLOR,
             }}
           >
-            {showPassword ? <FaEyeSlash /> : <FaEye />}
-          </span>
+            <FaHome /> KABRAS ESTATE
+          </h1>
+
+          <h2 style={{ margin: "6px 0 0 0" }}>Login</h2>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "10px",
-            cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.7 : 1,
-          }}
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            value={formData.username}
+            onChange={handleChange}
+            required
+            style={{ width: "100%", marginBottom: "15px" }}
+          />
 
-        <p style={{ marginTop: "15px", fontSize: "14px", textAlign: "center" }}>
-          <Link to="/forgot-password" style={{ color: BRAND_COLOR }}>
-            Forgot password?
-          </Link>
-        </p>
-      </form>
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              marginBottom: "15px",
+            }}
+          >
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              style={{
+                width: "100%",
+                paddingRight: "35px",
+                boxSizing: "border-box",
+              }}
+            />
+
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+                color: "#64748b",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: "100%",
+              padding: "10px",
+              cursor: loading ? "not-allowed" : "pointer",
+              opacity: loading ? 0.7 : 1,
+            }}
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
+
+          <p style={{ marginTop: "15px", fontSize: "14px", textAlign: "center" }}>
+            <Link to="/forgot-password" style={{ color: BRAND_COLOR }}>
+              Forgot password?
+            </Link>
+          </p>
+        </form>
+      </div>
     </div>
   );
 }
