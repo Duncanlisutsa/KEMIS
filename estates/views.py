@@ -9,6 +9,7 @@ from accounts.permissions import IsAdmin, IsAdminOrManager
 
 
 class EstateViewSet(viewsets.ModelViewSet):
+    queryset = Estate.objects.all()
     serializer_class = EstateSerializer
 
     def get_permissions(self):
