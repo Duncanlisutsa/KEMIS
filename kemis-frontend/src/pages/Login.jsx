@@ -4,6 +4,7 @@ import { FaEye, FaEyeSlash, FaHome } from "react-icons/fa";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
+import DotCircleSpinner from "../components/DotCircleSpinner";
 
 const BRAND_COLOR = "#2563eb";
 
@@ -12,12 +13,17 @@ function Login() {
   const { loadUser } = useContext(AuthContext);
   const { showNotification } = useNotification();
 
+  const [checkingSession, setCheckingSession] = useState(true);
+
   useEffect(() => {
     const token = localStorage.getItem("access_token");
 
     if (token) {
       navigate("/dashboard");
+      return;
     }
+
+    setCheckingSession(false);
   }, [navigate]);
 
   const [formData, setFormData] = useState({
@@ -64,10 +70,24 @@ function Login() {
       }
 
       console.log(error);
-    } finally {
       setLoading(false);
     }
   };
+
+  if (checkingSession) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <DotCircleSpinner label="Loading..." />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -112,74 +132,84 @@ function Login() {
           <h2 style={{ margin: "6px 0 0 0" }}>Login</h2>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            style={{ width: "100%", marginBottom: "15px" }}
-          />
-
+        {loading ? (
           <div
             style={{
-              position: "relative",
-              width: "100%",
-              marginBottom: "15px",
+              display: "flex",
+              justifyContent: "center",
+              padding: "20px 0",
             }}
           >
+            <DotCircleSpinner label="Logging in..." />
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
             <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              placeholder="Password"
-              value={formData.password}
+              type="text"
+              name="username"
+              placeholder="Username"
+              value={formData.username}
               onChange={handleChange}
               required
-              style={{
-                width: "100%",
-                paddingRight: "35px",
-                boxSizing: "border-box",
-              }}
+              style={{ width: "100%", marginBottom: "15px" }}
             />
 
-            <span
-              onClick={() => setShowPassword(!showPassword)}
+            <div
               style={{
-                position: "absolute",
-                right: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                cursor: "pointer",
-                color: "#64748b",
-                display: "flex",
-                alignItems: "center",
+                position: "relative",
+                width: "100%",
+                marginBottom: "15px",
               }}
             >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
-            </span>
-          </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                style={{
+                  width: "100%",
+                  paddingRight: "35px",
+                  boxSizing: "border-box",
+                }}
+              />
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: "10px",
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.7 : 1,
-            }}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
+              <span
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  cursor: "pointer",
+                  color: "#64748b",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </div>
 
-          <p style={{ marginTop: "15px", fontSize: "14px", textAlign: "center" }}>
-            <Link to="/forgot-password" style={{ color: BRAND_COLOR }}>
-              Forgot password?
-            </Link>
-          </p>
-        </form>
+            <button
+              type="submit"
+              style={{
+                width: "100%",
+                padding: "10px",
+                cursor: "pointer",
+              }}
+            >
+              Login
+            </button>
+
+            <p style={{ marginTop: "15px", fontSize: "14px", textAlign: "center" }}>
+              <Link to="/forgot-password" style={{ color: BRAND_COLOR }}>
+                Forgot password?
+              </Link>
+            </p>
+          </form>
+        )}
       </div>
     </div>
   );

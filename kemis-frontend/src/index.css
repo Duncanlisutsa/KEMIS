@@ -168,3 +168,14 @@ form textarea {
     box-sizing: border-box;
   }
 }
+
+/* ---------- Dot circle spinner ---------- */
+
+@keyframes dotCircleFade {
+  0%, 39%, 100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
