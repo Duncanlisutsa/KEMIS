@@ -15,6 +15,7 @@ from .serializers import (
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
 )
+from accounts.permissions import IsAdmin
 
 User = get_user_model()
 
@@ -104,3 +105,18 @@ def reset_password_confirm(request):
     user.save()
 
     return Response({"detail": "Password reset successful. You can now log in."})
+
+@api_view(['GET'])
+@permission_classes([IsAdmin])
+def list_managers(request):
+    managers = User.objects.filter(role="MANAGER").order_by("first_name", "last_name")
+
+    data = [
+        {
+            "id": m.id,
+            "full_name": m.get_full_name() or m.username,
+        }
+        for m in managers
+    ]
+
+    return Response(data)

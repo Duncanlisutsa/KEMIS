@@ -9,8 +9,20 @@ from accounts.permissions import IsAdminOrManager
 
 class TenantViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrManager]
-    queryset = Tenant.objects.all()
     serializer_class = TenantSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.role == "ADMIN":
+            return Tenant.objects.all()
+
+        if user.role == "MANAGER":
+            return Tenant.objects.filter(
+                leases__unit__estate__manager=user
+            ).distinct()
+
+        return Tenant.objects.none()
 
     def destroy(self, request, *args, **kwargs):
         try:

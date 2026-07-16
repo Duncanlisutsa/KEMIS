@@ -11,11 +11,12 @@ class PaymentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        # Admin and Manager can see all payments
-        if user.role in ["ADMIN", "MANAGER"]:
+        if user.role == "ADMIN":
             return Payment.objects.all()
 
-        # Tenant can only see their own payments
+        if user.role == "MANAGER":
+            return Payment.objects.filter(lease__unit__estate__manager=user)
+
         if user.role == "TENANT":
             return Payment.objects.filter(lease__tenant=user.tenant)
 

@@ -8,15 +8,17 @@ from leases.models import Lease
 
 
 class MaintenanceRequestViewSet(viewsets.ModelViewSet):
-    queryset = MaintenanceRequest.objects.all()
     serializer_class = MaintenanceRequestSerializer
     permission_classes = [IsAdminOrManagerOrTenant]
 
     def get_queryset(self):
         user = self.request.user
 
-        if user.role in ["ADMIN", "MANAGER"]:
+        if user.role == "ADMIN":
             return MaintenanceRequest.objects.all()
+
+        if user.role == "MANAGER":
+            return MaintenanceRequest.objects.filter(unit__estate__manager=user)
 
         if user.role == "TENANT":
             return MaintenanceRequest.objects.filter(tenant=user.tenant)
@@ -43,9 +45,14 @@ class MaintenanceRequestViewSet(viewsets.ModelViewSet):
             serializer.save(tenant=user.tenant, unit=active_lease.unit)
             return
 
-        # Admin/Manager: tenant and unit must be explicitly provided
         if not serializer.validated_data.get("tenant") or not serializer.validated_data.get("unit"):
             raise ValidationError("Both tenant and unit are required.")
+
+        unit = serializer.validated_data.get("unit")
+        if user.role == "MANAGER" and unit.estate.manager_id != user.id:
+            raise ValidationError(
+                {"unit": "You can only file requests for units within your own estate."}
+            )
 
         serializer.save()
 

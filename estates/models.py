@@ -16,6 +16,15 @@ class Estate(models.Model):
         blank=True
     )
 
+    manager = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="managed_estates",
+        limit_choices_to={"role": "MANAGER"},
+        null=True,
+        blank=True
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
