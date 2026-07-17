@@ -4,6 +4,7 @@ from .views import (
     change_password,
     request_password_reset,
     reset_password_confirm,
+    list_managers,
 )
 
 urlpatterns = [
