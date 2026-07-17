@@ -17,9 +17,9 @@ function Tenants() {
     first_name: "",
     last_name: "",
     email: "",
+    password: "",
     national_id: "",
     phone_number: "",
-    occupation: "",
     emergency_contact_name: "",
     emergency_contact_phone: "",
   });
@@ -52,9 +52,9 @@ function Tenants() {
       first_name: "",
       last_name: "",
       email: "",
+      password: "",
       national_id: tenant.national_id,
       phone_number: tenant.phone_number,
-      occupation: tenant.occupation || "",
       emergency_contact_name: tenant.emergency_contact_name,
       emergency_contact_phone: tenant.emergency_contact_phone,
     });
@@ -68,7 +68,6 @@ function Tenants() {
         await api.put(`tenants/${editingId}/`, {
           national_id: formData.national_id,
           phone_number: formData.phone_number,
-          occupation: formData.occupation,
           emergency_contact_name: formData.emergency_contact_name,
           emergency_contact_phone: formData.emergency_contact_phone,
         });
@@ -86,9 +85,9 @@ function Tenants() {
         first_name: "",
         last_name: "",
         email: "",
+        password: "",
         national_id: "",
         phone_number: "",
-        occupation: "",
         emergency_contact_name: "",
         emergency_contact_phone: "",
       });
@@ -97,7 +96,11 @@ function Tenants() {
 
     } catch (error) {
       console.error("Error saving tenant:", error);
-      const message = error.response?.data?.detail || "Failed to save tenant.";
+      const message =
+        error.response?.data?.password?.[0] ||
+        error.response?.data?.national_id?.[0] ||
+        error.response?.data?.detail ||
+        "Failed to save tenant.";
       showNotification(message, "error");
     }
   };
@@ -164,6 +167,19 @@ function Tenants() {
           style={{ marginLeft: "10px" }}
         />
 
+        {!editingId && (
+          <input
+            type="text"
+            name="password"
+            placeholder="Set Login Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            minLength={6}
+            style={{ marginLeft: "10px" }}
+          />
+        )}
+
         <br /><br />
 
         <input
@@ -182,15 +198,6 @@ function Tenants() {
           value={formData.phone_number}
           onChange={handleChange}
           required
-          style={{ marginLeft: "10px" }}
-        />
-
-        <input
-          type="text"
-          name="occupation"
-          placeholder="Occupation"
-          value={formData.occupation}
-          onChange={handleChange}
           style={{ marginLeft: "10px" }}
         />
 
@@ -230,9 +237,8 @@ function Tenants() {
             <th>Full Name</th>
             <th>National ID</th>
             <th>Phone</th>
-            <th>Occupation</th>
-            <th>Emergency Cont Name</th>
-            <th>Emergency Cont Phone</th>
+            <th>Emergency Contact Name</th>
+            <th>Emergency Contact Phone</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -243,7 +249,6 @@ function Tenants() {
               <td>{tenant.full_name}</td>
               <td>{tenant.national_id}</td>
               <td>{tenant.phone_number}</td>
-              <td>{tenant.occupation}</td>
               <td>{tenant.emergency_contact_name}</td>
               <td>{tenant.emergency_contact_phone}</td>
 

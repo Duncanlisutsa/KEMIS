@@ -11,6 +11,7 @@ class TenantSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(write_only=True, required=False)
     last_name = serializers.CharField(write_only=True, required=False)
     email = serializers.EmailField(write_only=True, required=False)
+    password = serializers.CharField(write_only=True, required=False, min_length=6)
 
     full_name = serializers.SerializerMethodField(read_only=True)
     user_email = serializers.EmailField(source='user.email', read_only=True)
@@ -23,11 +24,11 @@ class TenantSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'email',
+            'password',
             'user_email',
             'full_name',
             'national_id',
             'phone_number',
-            'occupation',
             'emergency_contact_name',
             'emergency_contact_phone',
             'created_at'
@@ -38,21 +39,30 @@ class TenantSerializer(serializers.ModelSerializer):
     def get_full_name(self, obj):
         return obj.user.get_full_name()
 
+    def validate(self, attrs):
+        if self.instance is None and not attrs.get('password'):
+            raise serializers.ValidationError(
+                {"password": "A password is required when creating a new tenant."}
+            )
+        return attrs
+
     def create(self, validated_data):
 
         username = validated_data.pop('username')
         first_name = validated_data.pop('first_name')
         last_name = validated_data.pop('last_name')
         email = validated_data.pop('email')
+        password = validated_data.pop('password')
 
         user = User.objects.create(
             username=username,
             first_name=first_name,
             last_name=last_name,
-            email=email
+            email=email,
+            role="TENANT"
         )
 
-        user.set_password("password123")
+        user.set_password(password)
         user.save()
 
         tenant = Tenant.objects.create(
@@ -96,11 +106,6 @@ class TenantSerializer(serializers.ModelSerializer):
         instance.phone_number = validated_data.get(
             'phone_number',
             instance.phone_number
-        )
-
-        instance.occupation = validated_data.get(
-            'occupation',
-            instance.occupation
         )
 
         instance.emergency_contact_name = validated_data.get(

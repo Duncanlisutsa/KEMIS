@@ -18,11 +18,6 @@ class Tenant(models.Model):
         max_length=20
     )
 
-    occupation = models.CharField(
-        max_length=100,
-        blank=True
-    )
-
     emergency_contact_name = models.CharField(
         max_length=100
     )
