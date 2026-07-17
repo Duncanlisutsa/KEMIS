@@ -8,6 +8,7 @@ from leases.models import Lease
 
 
 class MaintenanceRequestViewSet(viewsets.ModelViewSet):
+    queryset = MaintenanceRequest.objects.all()
     serializer_class = MaintenanceRequestSerializer
     permission_classes = [IsAdminOrManagerOrTenant]
 

@@ -8,6 +8,7 @@ from accounts.permissions import IsAdminOrManager
 
 
 class TenantViewSet(viewsets.ModelViewSet):
+    queryset = Tenant.objects.all()
     permission_classes = [IsAdminOrManager]
     serializer_class = TenantSerializer
 

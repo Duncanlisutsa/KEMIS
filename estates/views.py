@@ -39,6 +39,7 @@ class EstateViewSet(viewsets.ModelViewSet):
 
 
 class UnitViewSet(viewsets.ModelViewSet):
+    queryset = Unit.objects.all()
     permission_classes = [IsAdminOrManager]
     serializer_class = UnitSerializer
 
