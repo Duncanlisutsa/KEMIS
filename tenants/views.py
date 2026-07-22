@@ -1,4 +1,4 @@
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, Q
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
@@ -20,7 +20,7 @@ class TenantViewSet(viewsets.ModelViewSet):
 
         if user.role == "MANAGER":
             return Tenant.objects.filter(
-                leases__unit__estate__manager=user
+                Q(leases__unit__estate__manager=user) | Q(leases__isnull=True)
             ).distinct()
 
         return Tenant.objects.none()
