@@ -161,6 +161,42 @@ function Maintenance() {
     }
   };
 
+  const toggleResolved = async (request, checked) => {
+    try {
+      if (checked) {
+        const today = new Date().toISOString();
+
+        await api.patch(`maintenance/${request.id}/`, {
+          status: "COMPLETED",
+          resolved_date: today,
+        });
+
+        showNotification("Marked as resolved.", "success");
+      } else {
+        await api.patch(`maintenance/${request.id}/`, {
+          status: "IN_PROGRESS",
+          resolved_date: null,
+        });
+
+        showNotification("Marked as not yet resolved.", "success");
+      }
+
+      fetchRequests();
+    } catch (error) {
+      console.error("Error updating resolved status:", error);
+      showNotification("Failed to update status.", "error");
+    }
+  };
+
+  const formatDateOnly = (value) => {
+    if (!value) return "-";
+    return new Date(value).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   return (
     <div>
 
@@ -296,11 +332,19 @@ function Maintenance() {
             <th>Status</th>
             <th>Reported</th>
             <th>Resolved</th>
-            <th>Actions</th>
+            {!isTenant && <th>Actions</th>}
           </tr>
         </thead>
 
         <tbody>
+
+          {requests.length === 0 && (
+            <tr>
+              <td colSpan={isTenant ? 7 : 8} style={{ textAlign: "center", padding: "15px" }}>
+                No maintenance requests found.
+              </td>
+            </tr>
+          )}
 
           {requests.map((request) => (
             <tr key={request.id}>
@@ -309,39 +353,68 @@ function Maintenance() {
               <td>{request.title}</td>
               <td>{request.priority}</td>
               <td>{request.status}</td>
-              <td>{request.reported_date}</td>
-              <td>{request.resolved_date || "-"}</td>
+              <td>{formatDateOnly(request.reported_date)}</td>
 
               <td>
-
-                <button
-                  onClick={() => editRequest(request)}
-                  style={{
-                    backgroundColor: "blue",
-                    color: "white",
-                    border: "none",
-                    padding: "5px 10px",
-                    marginRight: "5px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() => deleteRequest(request.id)}
-                  style={{
-                    backgroundColor: "red",
-                    color: "white",
-                    border: "none",
-                    padding: "5px 10px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Delete
-                </button>
-
+                {isTenant ? (
+                  request.status === "COMPLETED" ? (
+                    formatDateOnly(request.resolved_date)
+                  ) : (
+                    "-"
+                  )
+                ) : (
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={request.status === "COMPLETED"}
+                      onChange={(e) => toggleResolved(request, e.target.checked)}
+                    />
+                    {request.status === "COMPLETED"
+                      ? formatDateOnly(request.resolved_date)
+                      : "Not resolved"}
+                  </label>
+                )}
               </td>
+
+              {!isTenant && (
+                <td>
+
+                  <button
+                    onClick={() => editRequest(request)}
+                    style={{
+                      backgroundColor: "blue",
+                      color: "white",
+                      border: "none",
+                      padding: "5px 10px",
+                      marginRight: "5px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => deleteRequest(request.id)}
+                    style={{
+                      backgroundColor: "red",
+                      color: "white",
+                      border: "none",
+                      padding: "5px 10px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Delete
+                  </button>
+
+                </td>
+              )}
             </tr>
           ))}
 
