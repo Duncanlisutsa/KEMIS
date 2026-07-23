@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'reports',
 
     'corsheaders',
+    'anymail',
 
     ]
 
@@ -120,13 +121,14 @@ import os
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
 
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+# Sends email over Brevo's HTTPS API (not SMTP), since Render's free tier
+# blocks outbound SMTP ports 25/465/587. See:
+# https://render.com/changelog/free-web-services-will-no-longer-allow-outbound-traffic-to-smtp-ports
+EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
+ANYMAIL = {
+    "BREVO_API_KEY": env("BREVO_API_KEY", default=""),
+}
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="kabras.estatekk@gmail.com")
 
 
 # Internationalization

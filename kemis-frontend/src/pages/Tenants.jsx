@@ -96,11 +96,12 @@ function Tenants() {
 
     } catch (error) {
       console.error("Error saving tenant:", error);
-      const message =
-        error.response?.data?.password?.[0] ||
-        error.response?.data?.national_id?.[0] ||
-        error.response?.data?.detail ||
-        "Failed to save tenant.";
+      const data = error.response?.data;
+      const firstFieldError =
+        data && typeof data === "object"
+          ? Object.values(data).find((v) => Array.isArray(v) && v.length)?.[0]
+          : null;
+      const message = firstFieldError || data?.detail || "Failed to save tenant.";
       showNotification(message, "error");
     }
   };
