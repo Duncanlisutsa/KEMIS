@@ -8,6 +8,7 @@ function Tenants() {
 
   const [tenants, setTenants] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [originalTenant, setOriginalTenant] = useState(null);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState(null);
@@ -44,14 +45,15 @@ function Tenants() {
     });
   };
 
-  const editTenant = (tenant) => {
+const editTenant = (tenant) => {
     setEditingId(tenant.id);
+    setOriginalTenant(tenant);
 
     setFormData({
-      username: tenant.username,
-      first_name: tenant.first_name,
-      last_name: tenant.last_name,
-      email: tenant.email,
+      username: "",
+      first_name: "",
+      last_name: "",
+      email: "",
       password: "",
       national_id: tenant.national_id,
       phone_number: tenant.phone_number,
@@ -59,17 +61,17 @@ function Tenants() {
       emergency_contact_phone: tenant.emergency_contact_phone,
     });
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       if (editingId) {
         await api.put(`tenants/${editingId}/`, {
-          username: formData.username,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          email: formData.email,
+          username: formData.username || originalTenant?.username,
+          first_name: formData.first_name || originalTenant?.first_name,
+          last_name: formData.last_name || originalTenant?.last_name,
+          email: formData.email || originalTenant?.email,
           national_id: formData.national_id,
           phone_number: formData.phone_number,
           emergency_contact_name: formData.emergency_contact_name,
@@ -78,6 +80,7 @@ function Tenants() {
 
         showNotification("Tenant updated successfully!", "success");
         setEditingId(null);
+        setOriginalTenant(null);
 
       } else {
         await api.post("tenants/", formData);
@@ -133,42 +136,42 @@ function Tenants() {
 
       <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
 
-        <input
+<input
           type="text"
           name="username"
-          placeholder="Username"
+          placeholder={editingId ? originalTenant?.username : "Username"}
           value={formData.username}
           onChange={handleChange}
-          required
+          required={!editingId}
         />
 
         <input
           type="text"
           name="first_name"
-          placeholder="First Name"
+          placeholder={editingId ? originalTenant?.first_name : "First Name"}
           value={formData.first_name}
           onChange={handleChange}
-          required
+          required={!editingId}
           style={{ marginLeft: "10px" }}
         />
 
         <input
           type="text"
           name="last_name"
-          placeholder="Last Name"
+          placeholder={editingId ? originalTenant?.last_name : "Last Name"}
           value={formData.last_name}
           onChange={handleChange}
-          required
+          required={!editingId}
           style={{ marginLeft: "10px" }}
         />
 
         <input
           type="email"
           name="email"
-          placeholder="Email"
+          placeholder={editingId ? originalTenant?.email : "Email"}
           value={formData.email}
           onChange={handleChange}
-          required
+          required={!editingId}
           style={{ marginLeft: "10px" }}
         />
 
