@@ -48,10 +48,10 @@ function Tenants() {
     setEditingId(tenant.id);
 
     setFormData({
-      username: "",
-      first_name: "",
-      last_name: "",
-      email: "",
+      username: tenant.username,
+      first_name: tenant.first_name,
+      last_name: tenant.last_name,
+      email: tenant.email,
       password: "",
       national_id: tenant.national_id,
       phone_number: tenant.phone_number,
@@ -66,6 +66,10 @@ function Tenants() {
     try {
       if (editingId) {
         await api.put(`tenants/${editingId}/`, {
+          username: formData.username,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          email: formData.email,
           national_id: formData.national_id,
           phone_number: formData.phone_number,
           emergency_contact_name: formData.emergency_contact_name,

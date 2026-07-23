@@ -39,6 +39,14 @@ class TenantSerializer(serializers.ModelSerializer):
     def get_full_name(self, obj):
         return obj.user.get_full_name()
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['username'] = instance.user.username
+        data['first_name'] = instance.user.first_name
+        data['last_name'] = instance.user.last_name
+        data['email'] = instance.user.email
+        return data
+
     def validate(self, attrs):
         if self.instance is None and not attrs.get('password'):
             raise serializers.ValidationError(
