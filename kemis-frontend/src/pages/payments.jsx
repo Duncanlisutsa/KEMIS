@@ -27,10 +27,7 @@ function Payments() {
 
   useEffect(() => {
     fetchPayments();
-
-    if (!isTenant) {
-      fetchLeases();
-    }
+    fetchLeases();
   }, [isTenant]);
 
   const fetchPayments = async () => {
@@ -157,10 +154,6 @@ function Payments() {
     }
   };
 
-  const totalPaid = payments
-    .filter((p) => p.status === "PAID")
-    .reduce((sum, p) => sum + Number(p.amount), 0);
-
   return (
     <div>
 
@@ -194,21 +187,39 @@ function Payments() {
         )}
       </div>
 
-      {isTenant && (
-        <div
-          style={{
-            background: "#16a34a",
-            color: "white",
-            padding: "16px 20px",
-            borderRadius: "10px",
-            maxWidth: "260px",
-            margin: "15px 0 25px 0",
-          }}
-        >
-          <div style={{ fontSize: "13px" }}>Total Paid To Date</div>
-          <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-            KES {totalPaid.toLocaleString()}
-          </div>
+      {isTenant && leases.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", margin: "15px 0 25px 0" }}>
+          {leases.map((lease) => {
+            const balance = Number(lease.rent_balance);
+            const isCredit = balance >= 0;
+
+            return (
+              <div
+                key={lease.id}
+                style={{
+                  background: isCredit ? "#16a34a" : "#f97316",
+                  color: "white",
+                  padding: "16px 20px",
+                  borderRadius: "10px",
+                  minWidth: "240px",
+                }}
+              >
+                <div style={{ fontSize: "13px" }}>
+                  {lease.unit_number} &middot; {lease.duration_months} month lease
+                </div>
+                <div style={{ fontSize: "24px", fontWeight: "bold" }}>
+                  KES {Math.abs(balance).toLocaleString()}
+                </div>
+                <div style={{ fontSize: "13px" }}>
+                  {isCredit ? "Credit (paid ahead)" : "Debit (balance owed)"}
+                </div>
+                <div style={{ fontSize: "12px", marginTop: "6px", opacity: 0.9 }}>
+                  Due: KES {Number(lease.total_rent_due).toLocaleString()} &middot; Paid: KES{" "}
+                  {Number(lease.total_rent_paid).toLocaleString()}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -261,16 +272,6 @@ function Payments() {
             <option value="CASH">Cash</option>
           </select>
 
-          <select
-            name="payment_type"
-            value={formData.payment_type}
-            onChange={handleChange}
-            style={{ marginLeft: "10px" }}
-          >
-            <option value="RENT">Rent</option>
-            <option value="DEPOSIT">Deposit</option>
-          </select>
-
           <input
             type="text"
             name="reference_number"
@@ -316,11 +317,70 @@ function Payments() {
               <p>Tenant: {selectedLease.tenant_name}</p>
               <p>Unit: {selectedLease.unit_number}</p>
               <p>Monthly Rent: KES {selectedLease.monthly_rent}</p>
+              <p>Lease Duration: {selectedLease.duration_months} month(s)</p>
+              <p>Total Rent Due: KES {Number(selectedLease.total_rent_due).toLocaleString()}</p>
+              <p>Total Rent Paid: KES {Number(selectedLease.total_rent_paid).toLocaleString()}</p>
+              <p>
+                Balance:{" "}
+                <span
+                  style={{
+                    color: Number(selectedLease.rent_balance) >= 0 ? "#16a34a" : "#f97316",
+                    fontWeight: "bold",
+                  }}
+                >
+                  KES {Number(selectedLease.rent_balance).toLocaleString()}{" "}
+                  ({Number(selectedLease.rent_balance) >= 0 ? "Credit" : "Debit"})
+                </span>
+              </p>
               <p>Lease Status: {selectedLease.status}</p>
             </div>
           )}
 
         </form>
+      )}
+
+      {!isTenant && leases.length > 0 && (
+        <div style={{ marginBottom: "30px" }}>
+          <h3>Lease Balances</h3>
+
+          <table border="1" cellPadding="10" width="100%">
+            <thead>
+              <tr>
+                <th>Tenant</th>
+                <th>Unit</th>
+                <th>Duration</th>
+                <th>Rent Due</th>
+                <th>Rent Paid</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {leases.map((lease) => {
+                const balance = Number(lease.rent_balance);
+                const isCredit = balance >= 0;
+
+                return (
+                  <tr key={lease.id}>
+                    <td>{lease.tenant_name}</td>
+                    <td>{lease.unit_number}</td>
+                    <td>{lease.duration_months} month(s)</td>
+                    <td>KES {Number(lease.total_rent_due).toLocaleString()}</td>
+                    <td>KES {Number(lease.total_rent_paid).toLocaleString()}</td>
+                    <td
+                      style={{
+                        color: isCredit ? "#16a34a" : "#f97316",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      KES {Math.abs(balance).toLocaleString()} ({isCredit ? "Credit" : "Debit"})
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <table border="1" cellPadding="10" width="100%">
@@ -332,7 +392,6 @@ function Payments() {
             <th>Amount</th>
             <th>Date</th>
             <th>Method</th>
-            <th>Type</th>
             <th>Reference</th>
             <th>Status</th>
             {!isTenant && <th>Actions</th>}
@@ -343,7 +402,7 @@ function Payments() {
 
           {payments.length === 0 && (
             <tr>
-              <td colSpan={isTenant ? 7 : 9} style={{ textAlign: "center", padding: "15px" }}>
+              <td colSpan={isTenant ? 6 : 8} style={{ textAlign: "center", padding: "15px" }}>
                 No payment records found.
               </td>
             </tr>
@@ -356,7 +415,6 @@ function Payments() {
               <td>KES {payment.amount}</td>
               <td>{payment.payment_date}</td>
               <td>{payment.payment_method}</td>
-              <td>{payment.payment_type}</td>
               <td>{payment.reference_number}</td>
               <td>{payment.status}</td>
 

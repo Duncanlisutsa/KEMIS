@@ -43,5 +43,23 @@ class Lease(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def duration_months(self):
+        """
+        Number of months the lease covers, rounded up for any
+        partial trailing month (e.g. Jan 1 - Apr 20 counts as 4 months).
+        """
+        from dateutil.relativedelta import relativedelta
+
+        rd = relativedelta(self.end_date, self.start_date)
+        months = rd.years * 12 + rd.months
+        if rd.days > 0:
+            months += 1
+        return max(months, 1)
+
+    @property
+    def total_rent_due(self):
+        return self.monthly_rent * self.duration_months
+
     def __str__(self):
         return f"{self.tenant} - {self.unit}"
