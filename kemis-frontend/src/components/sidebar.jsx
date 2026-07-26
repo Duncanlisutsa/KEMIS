@@ -50,7 +50,7 @@ function Sidebar({ isOpen, onNavigate }) {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
 
-    window.location.href = "/login";
+    window.location.href = "/";
   };
 
   return (
