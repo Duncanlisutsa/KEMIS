@@ -14,6 +14,7 @@ import Payments from "./pages/payments";
 import Maintenance from "./pages/maintenance";
 import Reports from "./pages/Reports";
 import Login from "./pages/Login";
+import Landing from "./pages/Landing";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
@@ -23,6 +24,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const hideSidebar =
+    location.pathname === "/" ||
     location.pathname === "/login" ||
     location.pathname === "/forgot-password" ||
     location.pathname.startsWith("/reset-password");
@@ -58,7 +60,7 @@ function App() {
         }}
       >
         <Routes>
-          <Route path="/" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.dashboard}><Dashboard /></RoleProtectedRoute>} />
+          <Route path="/" element={<Landing />} />
           <Route path="/dashboard" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.dashboard}><Dashboard /></RoleProtectedRoute>} />
           <Route path="/estates" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.estates}><Estates /></RoleProtectedRoute>} />
           <Route path="/units" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.units}><Units /></RoleProtectedRoute>} />
