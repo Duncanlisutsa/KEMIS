@@ -5,12 +5,12 @@ from rest_framework.response import Response
 
 from .models import Lease
 from .serializers import LeaseSerializer
-from accounts.permissions import IsAdminOrManagerOrTenant
+from accounts.permissions import IsAdminOrManagerOrTenantOrLandlordReadOnly
 
 
 class LeaseViewSet(viewsets.ModelViewSet):
     serializer_class = LeaseSerializer
-    permission_classes = [IsAdminOrManagerOrTenant]
+    permission_classes = [IsAdminOrManagerOrTenantOrLandlordReadOnly]
 
     def get_queryset(self):
         user = self.request.user
@@ -23,6 +23,9 @@ class LeaseViewSet(viewsets.ModelViewSet):
 
         if user.role == "TENANT":
             return Lease.objects.filter(tenant=user.tenant)
+
+        if user.role == "LANDLORD":
+            return Lease.objects.filter(unit__estate__owner=user)
 
         return Lease.objects.none()
 

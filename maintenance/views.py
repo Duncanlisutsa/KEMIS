@@ -3,14 +3,14 @@ from rest_framework.exceptions import ValidationError
 
 from .models import MaintenanceRequest
 from .serializers import MaintenanceRequestSerializer
-from accounts.permissions import IsAdminOrManagerOrTenant
+from accounts.permissions import IsAdminOrManagerOrTenantOrLandlordReadOnly
 from leases.models import Lease
 
 
 class MaintenanceRequestViewSet(viewsets.ModelViewSet):
     queryset = MaintenanceRequest.objects.all()
     serializer_class = MaintenanceRequestSerializer
-    permission_classes = [IsAdminOrManagerOrTenant]
+    permission_classes = [IsAdminOrManagerOrTenantOrLandlordReadOnly]
 
     def get_queryset(self):
         user = self.request.user
@@ -23,6 +23,9 @@ class MaintenanceRequestViewSet(viewsets.ModelViewSet):
 
         if user.role == "TENANT":
             return MaintenanceRequest.objects.filter(tenant=user.tenant)
+
+        if user.role == "LANDLORD":
+            return MaintenanceRequest.objects.filter(unit__estate__owner=user)
 
         return MaintenanceRequest.objects.none()
 

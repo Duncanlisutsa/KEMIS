@@ -4,12 +4,12 @@ from rest_framework.response import Response
 
 from .models import Tenant
 from .serializers import TenantSerializer
-from accounts.permissions import IsAdminOrManager
+from accounts.permissions import IsAdminOrManagerOrLandlordReadOnly
 
 
 class TenantViewSet(viewsets.ModelViewSet):
     queryset = Tenant.objects.all()
-    permission_classes = [IsAdminOrManager]
+    permission_classes = [IsAdminOrManagerOrLandlordReadOnly]
     serializer_class = TenantSerializer
 
     def get_queryset(self):
@@ -21,6 +21,11 @@ class TenantViewSet(viewsets.ModelViewSet):
         if user.role == "MANAGER":
             return Tenant.objects.filter(
                 Q(leases__unit__estate__manager=user) | Q(leases__isnull=True)
+            ).distinct()
+
+        if user.role == "LANDLORD":
+            return Tenant.objects.filter(
+                leases__unit__estate__owner=user
             ).distinct()
 
         return Tenant.objects.none()

@@ -7,7 +7,13 @@ from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
-from accounts.permissions import IsAdminOrManager, IsAdminOrManagerOrTenant, IsTenant
+from accounts.permissions import (
+    IsAdminOrManager,
+    IsAdminOrManagerOrTenant,
+    IsTenant,
+    IsAdminOrManagerOrLandlordReadOnly,
+    IsAdminOrManagerOrTenantOrLandlordReadOnly,
+)
 
 from estates.models import Estate, Unit
 from tenants.models import Tenant
@@ -27,9 +33,39 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 
 
 @api_view(['GET'])
-@permission_classes([IsAdminOrManagerOrTenant])
+@permission_classes([IsAdminOrManagerOrTenantOrLandlordReadOnly])
 def dashboard_statistics(request):
     user = request.user
+
+    if user.role == "LANDLORD":
+        owned_estates = Estate.objects.filter(owner=user)
+        owned_units = Unit.objects.filter(estate__in=owned_estates)
+
+        total_revenue = (
+            Payment.objects.filter(
+                lease__unit__estate__in=owned_estates,
+                status='PAID',
+            )
+            .aggregate(total=Sum('amount'))
+            .get('total')
+            or 0
+        )
+
+        return Response({
+            "role": "LANDLORD",
+            "total_estates": owned_estates.count(),
+            "total_units": owned_units.count(),
+            "vacant_units": owned_units.filter(status='VACANT').count(),
+            "occupied_units": owned_units.filter(status='OCCUPIED').count(),
+            "total_tenants": Tenant.objects.filter(
+                leases__unit__estate__in=owned_estates
+            ).distinct().count(),
+            "active_leases": Lease.objects.filter(
+                unit__estate__in=owned_estates,
+                status='ACTIVE',
+            ).count(),
+            "total_revenue": total_revenue,
+        })
 
     if user.role == "TENANT":
         lease = Lease.objects.filter(
@@ -99,9 +135,14 @@ def dashboard_statistics(request):
     })
 
 
-def _monthly_revenue_data():
+def _monthly_revenue_data(estates=None):
+    payments = Payment.objects.filter(status='PAID')
+
+    if estates is not None:
+        payments = payments.filter(lease__unit__estate__in=estates)
+
     revenue = (
-        Payment.objects.filter(status='PAID')
+        payments
         .annotate(month=TruncMonth('payment_date'))
         .values('month')
         .annotate(total=Sum('amount'))
@@ -121,16 +162,26 @@ def _monthly_revenue_data():
     return data
 
 
+def _owned_estates_or_none(user):
+    """Returns the landlord's own estates, or None for non-landlords
+    (meaning: no estate filter should be applied)."""
+    if user.role == "LANDLORD":
+        return Estate.objects.filter(owner=user)
+    return None
+
+
 @api_view(['GET'])
-@permission_classes([IsAdminOrManager])
+@permission_classes([IsAdminOrManagerOrLandlordReadOnly])
 def monthly_revenue_report(request):
-    return Response(_monthly_revenue_data())
+    estates = _owned_estates_or_none(request.user)
+    return Response(_monthly_revenue_data(estates))
 
 
 @api_view(['GET'])
-@permission_classes([IsAdminOrManager])
+@permission_classes([IsAdminOrManagerOrLandlordReadOnly])
 def monthly_revenue_pdf(request):
-    data = _monthly_revenue_data()
+    estates = _owned_estates_or_none(request.user)
+    data = _monthly_revenue_data(estates)
     total_revenue = sum(item["total"] for item in data)
 
     buffer = BytesIO()
@@ -207,12 +258,17 @@ def _get_year_month(request):
     return year, month
 
 
-def _monthly_revenue_detail_data(year, month):
+def _monthly_revenue_detail_data(year, month, estates=None):
+    payments = Payment.objects.filter(
+        payment_date__year=year,
+        payment_date__month=month,
+    )
+
+    if estates is not None:
+        payments = payments.filter(lease__unit__estate__in=estates)
+
     payments = (
-        Payment.objects.filter(
-            payment_date__year=year,
-            payment_date__month=month,
-        )
+        payments
         .select_related("lease__tenant__user", "lease__unit__estate")
         .order_by("payment_date")
     )
@@ -270,18 +326,20 @@ def _monthly_revenue_detail_data(year, month):
 
 
 @api_view(['GET'])
-@permission_classes([IsAdminOrManager])
+@permission_classes([IsAdminOrManagerOrLandlordReadOnly])
 def monthly_revenue_detail(request):
     year, month = _get_year_month(request)
-    data = _monthly_revenue_detail_data(year, month)
+    estates = _owned_estates_or_none(request.user)
+    data = _monthly_revenue_detail_data(year, month, estates)
     return Response(data)
 
 
 @api_view(['GET'])
-@permission_classes([IsAdminOrManager])
+@permission_classes([IsAdminOrManagerOrLandlordReadOnly])
 def monthly_revenue_detail_pdf(request):
     year, month = _get_year_month(request)
-    data = _monthly_revenue_detail_data(year, month)
+    estates = _owned_estates_or_none(request.user)
+    data = _monthly_revenue_detail_data(year, month, estates)
 
     buffer = BytesIO()
 
@@ -383,8 +441,6 @@ def monthly_revenue_detail_pdf(request):
     filename = f"KEMIS_Financial_Report_{data['month_label'].replace(' ', '_')}.pdf"
 
     return FileResponse(buffer, as_attachment=True, filename=filename)
-
-    from accounts.permissions import IsAdminOrManager, IsAdminOrManagerOrTenant, IsTenant
 
 
 @api_view(['GET'])

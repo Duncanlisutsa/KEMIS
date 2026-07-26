@@ -5,7 +5,11 @@ from rest_framework.response import Response
 
 from .models import Estate, Unit
 from .serializers import EstateSerializer, UnitSerializer
-from accounts.permissions import IsAdmin, IsAdminOrManager
+from accounts.permissions import (
+    IsAdmin,
+    IsAdminOrManager,
+    IsAdminOrManagerOrLandlordReadOnly,
+)
 
 
 class EstateViewSet(viewsets.ModelViewSet):
@@ -15,7 +19,7 @@ class EstateViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
             return [IsAdmin()]
-        return [IsAdminOrManager()]
+        return [IsAdminOrManagerOrLandlordReadOnly()]
 
     def get_queryset(self):
         user = self.request.user
@@ -25,6 +29,9 @@ class EstateViewSet(viewsets.ModelViewSet):
 
         if user.role == "MANAGER":
             return Estate.objects.filter(manager=user)
+
+        if user.role == "LANDLORD":
+            return Estate.objects.filter(owner=user)
 
         return Estate.objects.none()
 
@@ -40,7 +47,7 @@ class EstateViewSet(viewsets.ModelViewSet):
 
 class UnitViewSet(viewsets.ModelViewSet):
     queryset = Unit.objects.all()
-    permission_classes = [IsAdminOrManager]
+    permission_classes = [IsAdminOrManagerOrLandlordReadOnly]
     serializer_class = UnitSerializer
 
     def get_queryset(self):
@@ -51,6 +58,9 @@ class UnitViewSet(viewsets.ModelViewSet):
 
         if user.role == "MANAGER":
             return Unit.objects.filter(estate__manager=user)
+
+        if user.role == "LANDLORD":
+            return Unit.objects.filter(estate__owner=user)
 
         return Unit.objects.none()
 

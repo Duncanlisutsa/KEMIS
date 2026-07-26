@@ -5,6 +5,10 @@ from .views import (
     monthly_revenue_pdf,
     monthly_revenue_detail,
     monthly_revenue_detail_pdf,
+    occupancy_report,
+    occupancy_report_pdf,
+    maintenance_summary,
+    maintenance_summary_pdf,
     my_payments_pdf,
 )
 
@@ -14,5 +18,9 @@ urlpatterns = [
     path('monthly-revenue/pdf/', monthly_revenue_pdf, name='monthly-revenue-pdf'),
     path('monthly-revenue/detail/', monthly_revenue_detail, name='monthly-revenue-detail'),
     path('monthly-revenue/detail/pdf/', monthly_revenue_detail_pdf, name='monthly-revenue-detail-pdf'),
+    path('occupancy/', occupancy_report, name='occupancy-report'),
+    path('occupancy/pdf/', occupancy_report_pdf, name='occupancy-report-pdf'),
+    path('maintenance-summary/', maintenance_summary, name='maintenance-summary'),
+    path('maintenance-summary/pdf/', maintenance_summary_pdf, name='maintenance-summary-pdf'),
     path('my-payments/pdf/', my_payments_pdf, name='my-payments-pdf'),
 ]
