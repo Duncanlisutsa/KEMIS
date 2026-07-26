@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { FaEye, FaEyeSlash, FaHome } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import logo from "../assets/logo.png";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
@@ -115,6 +116,12 @@ function Login() {
             marginBottom: "20px",
           }}
         >
+          <img
+            src={logo}
+            alt="Kabras Estate logo"
+            style={{ height: "60px", marginBottom: "8px" }}
+          />
+
           <h1
             style={{
               display: "flex",
@@ -126,7 +133,7 @@ function Login() {
               color: BRAND_COLOR,
             }}
           >
-            <FaHome /> KABRAS ESTATE
+            KABRAS ESTATE
           </h1>
 
           <h2 style={{ margin: "6px 0 0 0" }}>Login</h2>

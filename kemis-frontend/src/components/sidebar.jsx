@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import { PERMISSIONS } from "../config/permissions";
 
 import { Link } from "react-router-dom";
+import logo from "../assets/logo.png";
 import {
   FaHome,
   FaBuilding,
@@ -73,6 +74,12 @@ function Sidebar({ isOpen, onNavigate }) {
       }}
     >
       <>
+        <img
+          src={logo}
+          alt="Kabras Estate logo"
+          style={{ height: "60px", marginBottom: "10px" }}
+        />
+
         <h2
           style={{
             marginBottom: "5px",
