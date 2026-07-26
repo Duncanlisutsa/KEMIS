@@ -14,6 +14,7 @@ import {
   FaMoneyBillWave,
   FaTools,
   FaChartBar,
+  FaUserTie,
 } from "react-icons/fa";
 
 function Sidebar({ isOpen, onNavigate }) {
@@ -187,6 +188,14 @@ function Sidebar({ isOpen, onNavigate }) {
             <li style={{ margin: "20px 0" }}>
               <Link to="/reports" style={linkStyle} onClick={onNavigate}>
                 <FaChartBar /> Reports
+              </Link>
+            </li>
+          )}
+
+          {PERMISSIONS.staffAccounts.includes(user.role) && (
+            <li style={{ margin: "20px 0" }}>
+              <Link to="/staff-accounts" style={linkStyle} onClick={onNavigate}>
+                <FaUserTie /> Managers & Landlords
               </Link>
             </li>
           )}

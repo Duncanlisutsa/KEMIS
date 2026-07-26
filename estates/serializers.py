@@ -22,6 +22,12 @@ class EstateSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
 
+    owner = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.filter(role="LANDLORD"),
+        required=False,
+        allow_null=True,
+    )
+
     class Meta:
         model = Estate
         fields = [

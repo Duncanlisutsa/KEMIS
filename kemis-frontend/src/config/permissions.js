@@ -15,5 +15,7 @@ export const PERMISSIONS = {
 
   reports: ["ADMIN", "MANAGER"],
 
+  staffAccounts: ["ADMIN"],
+
   profile: ["ADMIN", "MANAGER", "TENANT"],
 };

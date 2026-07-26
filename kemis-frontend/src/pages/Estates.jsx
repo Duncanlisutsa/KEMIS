@@ -12,6 +12,7 @@ function Estates() {
 
   const [estates, setEstates] = useState([]);
   const [managers, setManagers] = useState([]);
+  const [landlords, setLandlords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
 
@@ -20,6 +21,7 @@ function Estates() {
     location: "",
     description: "",
     manager: "",
+    owner: "",
   });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -30,6 +32,7 @@ function Estates() {
 
     if (isAdmin) {
       fetchManagers();
+      fetchLandlords();
     }
   }, [isAdmin]);
 
@@ -52,6 +55,15 @@ function Estates() {
       setManagers(response.data);
     } catch (error) {
       console.error("Error fetching managers:", error);
+    }
+  };
+
+  const fetchLandlords = async () => {
+    try {
+      const response = await api.get("accounts/landlords/");
+      setLandlords(response.data);
+    } catch (error) {
+      console.error("Error fetching landlords:", error);
     }
   };
 
@@ -78,6 +90,7 @@ function Estates() {
       location: estate.location,
       description: estate.description,
       manager: estate.manager || "",
+      owner: estate.owner || "",
     });
 
     setEditingId(estate.id);
@@ -97,6 +110,7 @@ function Estates() {
       const payload = {
         ...formData,
         manager: formData.manager || null,
+        owner: formData.owner || null,
       };
 
       if (editingId) {
@@ -112,6 +126,7 @@ function Estates() {
         location: "",
         description: "",
         manager: "",
+        owner: "",
       });
 
       setEditingId(null);
@@ -176,6 +191,20 @@ function Estates() {
             ))}
           </select>
 
+          <select
+            name="owner"
+            value={formData.owner}
+            onChange={handleChange}
+            style={{ marginLeft: "10px" }}
+          >
+            <option value="">No Owner Assigned</option>
+            {landlords.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.full_name}
+              </option>
+            ))}
+          </select>
+
           <button
             type="submit"
             style={{ marginLeft: "10px" }}
@@ -192,6 +221,7 @@ function Estates() {
             <th>Name</th>
             <th>Location</th>
             <th>Description</th>
+            <th>Owner</th>
             <th>Manager</th>
             {isAdmin && <th>Actions</th>}
           </tr>
@@ -200,7 +230,7 @@ function Estates() {
         <tbody>
           {estates.length === 0 && (
             <tr>
-              <td colSpan={isAdmin ? 6 : 5} style={{ textAlign: "center", padding: "15px" }}>
+              <td colSpan={isAdmin ? 7 : 6} style={{ textAlign: "center", padding: "15px" }}>
                 {isAdmin ? "No estates found." : "You are not currently assigned to an estate."}
               </td>
             </tr>
@@ -212,6 +242,7 @@ function Estates() {
               <td>{estate.name}</td>
               <td>{estate.location}</td>
               <td>{estate.description}</td>
+              <td>{estate.owner_name || "Unassigned"}</td>
               <td>{estate.manager_name || "Unassigned"}</td>
 
               {isAdmin && (
