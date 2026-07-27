@@ -443,6 +443,306 @@ def monthly_revenue_detail_pdf(request):
     return FileResponse(buffer, as_attachment=True, filename=filename)
 
 
+def _occupancy_data(estates=None):
+    estates_qs = Estate.objects.all() if estates is None else estates
+
+    rows = []
+    total_units = 0
+    total_occupied = 0
+    total_vacant = 0
+    total_reserved = 0
+    total_maintenance = 0
+
+    for estate in estates_qs.order_by("name"):
+        units = Unit.objects.filter(estate=estate)
+        unit_count = units.count()
+        occupied = units.filter(status="OCCUPIED").count()
+        vacant = units.filter(status="VACANT").count()
+        reserved = units.filter(status="RESERVED").count()
+        maintenance = units.filter(status="MAINTENANCE").count()
+
+        occupancy_rate = round((occupied / unit_count) * 100, 1) if unit_count else 0
+
+        rows.append({
+            "estate_id": estate.id,
+            "estate_name": estate.name,
+            "location": estate.location,
+            "total_units": unit_count,
+            "occupied": occupied,
+            "vacant": vacant,
+            "reserved": reserved,
+            "maintenance": maintenance,
+            "occupancy_rate": occupancy_rate,
+        })
+
+        total_units += unit_count
+        total_occupied += occupied
+        total_vacant += vacant
+        total_reserved += reserved
+        total_maintenance += maintenance
+
+    overall_occupancy_rate = round((total_occupied / total_units) * 100, 1) if total_units else 0
+
+    return {
+        "estates": rows,
+        "summary": {
+            "total_units": total_units,
+            "occupied": total_occupied,
+            "vacant": total_vacant,
+            "reserved": total_reserved,
+            "maintenance": total_maintenance,
+            "occupancy_rate": overall_occupancy_rate,
+        },
+    }
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminOrManagerOrLandlordReadOnly])
+def occupancy_report(request):
+    estates = _owned_estates_or_none(request.user)
+    return Response(_occupancy_data(estates))
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminOrManagerOrLandlordReadOnly])
+def occupancy_report_pdf(request):
+    estates = _owned_estates_or_none(request.user)
+    data = _occupancy_data(estates)
+    summary = data["summary"]
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        topMargin=2 * cm,
+        bottomMargin=2 * cm,
+    )
+
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("KABRAS ESTATE", styles["Title"]))
+    elements.append(Paragraph("Occupancy Report", styles["Heading2"]))
+    elements.append(
+        Paragraph(
+            f"Generated on {timezone.now().strftime('%d %B %Y, %H:%M')}",
+            styles["Normal"],
+        )
+    )
+    elements.append(Spacer(1, 10))
+    elements.append(
+        Paragraph(
+            f"Overall Occupancy Rate: {summary['occupancy_rate']}% "
+            f"({summary['occupied']} of {summary['total_units']} units occupied)",
+            styles["Normal"],
+        )
+    )
+    elements.append(Spacer(1, 16))
+
+    table_data = [[
+        "Estate", "Location", "Total Units", "Occupied",
+        "Vacant", "Reserved", "Maintenance", "Occupancy %"
+    ]]
+
+    for row in data["estates"]:
+        table_data.append([
+            row["estate_name"],
+            row["location"],
+            row["total_units"],
+            row["occupied"],
+            row["vacant"],
+            row["reserved"],
+            row["maintenance"],
+            f"{row['occupancy_rate']}%",
+        ])
+
+    if len(table_data) == 1:
+        table_data.append(["No estates found."] + [""] * 7)
+
+    table_data.append([
+        "TOTAL", "", summary["total_units"], summary["occupied"],
+        summary["vacant"], summary["reserved"], summary["maintenance"],
+        f"{summary['occupancy_rate']}%",
+    ])
+
+    table = Table(
+        table_data,
+        colWidths=[3.5 * cm, 3.5 * cm, 2.2 * cm, 2.2 * cm, 2.2 * cm, 2.2 * cm, 2.5 * cm, 2.5 * cm],
+        repeatRows=1,
+    )
+
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("ALIGN", (2, 0), (-1, -1), "RIGHT"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -2), [colors.white, colors.HexColor("#f1f5f9")]),
+        ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#2563eb")),
+        ("TEXTCOLOR", (0, -1), (-1, -1), colors.white),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+
+    elements.append(table)
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    filename = f"KEMIS_Occupancy_Report_{timezone.now().strftime('%Y%m%d')}.pdf"
+
+    return FileResponse(buffer, as_attachment=True, filename=filename)
+
+
+def _maintenance_summary_data(estates=None):
+    requests_qs = MaintenanceRequest.objects.all()
+
+    if estates is not None:
+        requests_qs = requests_qs.filter(unit__estate__in=estates)
+
+    requests_qs = requests_qs.select_related(
+        "tenant__user", "unit__estate"
+    ).order_by("-reported_date")
+
+    items = []
+    status_counts = {}
+    priority_counts = {}
+
+    for r in requests_qs:
+        items.append({
+            "id": r.id,
+            "title": r.title,
+            "tenant_name": r.tenant.user.get_full_name() or r.tenant.user.username,
+            "estate_name": r.unit.estate.name,
+            "unit_number": r.unit.unit_number,
+            "priority": r.priority,
+            "status": r.status,
+            "reported_date": r.reported_date,
+            "resolved_date": r.resolved_date,
+        })
+
+        status_counts[r.status] = status_counts.get(r.status, 0) + 1
+        priority_counts[r.priority] = priority_counts.get(r.priority, 0) + 1
+
+    total_requests = len(items)
+    open_requests = sum(
+        count for status, count in status_counts.items() if status != "COMPLETED"
+    )
+
+    return {
+        "summary": {
+            "total_requests": total_requests,
+            "open_requests": open_requests,
+            "status_counts": status_counts,
+            "priority_counts": priority_counts,
+        },
+        "requests": items,
+    }
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminOrManagerOrLandlordReadOnly])
+def maintenance_summary(request):
+    estates = _owned_estates_or_none(request.user)
+    return Response(_maintenance_summary_data(estates))
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminOrManagerOrLandlordReadOnly])
+def maintenance_summary_pdf(request):
+    estates = _owned_estates_or_none(request.user)
+    data = _maintenance_summary_data(estates)
+    summary = data["summary"]
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        topMargin=1.5 * cm,
+        bottomMargin=1.5 * cm,
+    )
+
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("KABRAS ESTATE", styles["Title"]))
+    elements.append(Paragraph("Maintenance Activity Report", styles["Heading2"]))
+    elements.append(
+        Paragraph(
+            f"Generated on {timezone.now().strftime('%d %B %Y, %H:%M')}",
+            styles["Normal"],
+        )
+    )
+    elements.append(Spacer(1, 10))
+
+    summary_lines = [
+        f"Total Requests: {summary['total_requests']}",
+        f"Open (Not Completed): {summary['open_requests']}",
+    ]
+
+    if summary["status_counts"]:
+        status_str = ", ".join(f"{k}: {v}" for k, v in summary["status_counts"].items())
+        summary_lines.append(f"By Status — {status_str}")
+
+    if summary["priority_counts"]:
+        priority_str = ", ".join(f"{k}: {v}" for k, v in summary["priority_counts"].items())
+        summary_lines.append(f"By Priority — {priority_str}")
+
+    for line in summary_lines:
+        elements.append(Paragraph(line, styles["Normal"]))
+
+    elements.append(Spacer(1, 16))
+
+    table_data = [[
+        "Title", "Tenant", "Estate", "Unit", "Priority",
+        "Status", "Reported", "Resolved"
+    ]]
+
+    for r in data["requests"]:
+        table_data.append([
+            r["title"],
+            r["tenant_name"],
+            r["estate_name"],
+            r["unit_number"],
+            r["priority"],
+            r["status"],
+            r["reported_date"].strftime("%d %b %Y"),
+            r["resolved_date"].strftime("%d %b %Y") if r["resolved_date"] else "-",
+        ])
+
+    if len(table_data) == 1:
+        table_data.append(["No maintenance requests found."] + [""] * 7)
+
+    table = Table(
+        table_data,
+        colWidths=[3.5 * cm, 3 * cm, 3 * cm, 2 * cm, 2.2 * cm, 2.5 * cm, 2.5 * cm, 2.5 * cm],
+        repeatRows=1,
+    )
+
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f1f5f9")]),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+
+    elements.append(table)
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    filename = f"KEMIS_Maintenance_Report_{timezone.now().strftime('%Y%m%d')}.pdf"
+
+    return FileResponse(buffer, as_attachment=True, filename=filename)
+
+
 @api_view(['GET'])
 @permission_classes([IsTenant])
 def my_payments_pdf(request):
