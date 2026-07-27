@@ -13,6 +13,7 @@ class TenantSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(write_only=True, required=False)
     email = serializers.EmailField(write_only=True, required=False)
     password = serializers.CharField(write_only=True, required=False, min_length=6)
+    national_id = serializers.CharField()
 
     full_name = serializers.SerializerMethodField(read_only=True)
     user_email = serializers.EmailField(source='user.email', read_only=True)
@@ -73,6 +74,19 @@ class TenantSerializer(serializers.ModelSerializer):
         if existing.exists():
             raise serializers.ValidationError(
                 "A user with this email already exists."
+            )
+
+        return value
+
+    def validate_national_id(self, value):
+        existing = Tenant.objects.filter(national_id=value)
+
+        if self.instance is not None:
+            existing = existing.exclude(pk=self.instance.pk)
+
+        if existing.exists():
+            raise serializers.ValidationError(
+                "A tenant with this national ID already exists."
             )
 
         return value
