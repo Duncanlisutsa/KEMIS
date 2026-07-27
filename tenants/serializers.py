@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Tenant
@@ -47,19 +48,56 @@ class TenantSerializer(serializers.ModelSerializer):
         data['email'] = instance.user.email
         return data
 
-    def validate(self, attrs):
-        if self.instance is None and not attrs.get('password'):
+    def validate_username(self, value):
+        existing = User.objects.filter(username=value)
+
+        if self.instance is not None:
+            existing = existing.exclude(pk=self.instance.user_id)
+
+        if existing.exists():
             raise serializers.ValidationError(
-                {"password": "A password is required when creating a new tenant."}
+                "A user with this username already exists."
             )
+
+        return value
+
+    def validate_email(self, value):
+        if not value:
+            return value
+
+        existing = User.objects.filter(email=value)
+
+        if self.instance is not None:
+            existing = existing.exclude(pk=self.instance.user_id)
+
+        if existing.exists():
+            raise serializers.ValidationError(
+                "A user with this email already exists."
+            )
+
+        return value
+
+    def validate(self, attrs):
+        if self.instance is None:
+            if not attrs.get('password'):
+                raise serializers.ValidationError(
+                    {"password": "A password is required when creating a new tenant."}
+                )
+
+            if not attrs.get('username'):
+                raise serializers.ValidationError(
+                    {"username": "Username is required when creating a new tenant."}
+                )
+
         return attrs
 
+    @transaction.atomic
     def create(self, validated_data):
 
         username = validated_data.pop('username')
-        first_name = validated_data.pop('first_name')
-        last_name = validated_data.pop('last_name')
-        email = validated_data.pop('email')
+        first_name = validated_data.pop('first_name', '')
+        last_name = validated_data.pop('last_name', '')
+        email = validated_data.pop('email', '')
         password = validated_data.pop('password')
 
         user = User.objects.create(
@@ -80,6 +118,7 @@ class TenantSerializer(serializers.ModelSerializer):
 
         return tenant
 
+    @transaction.atomic
     def update(self, instance, validated_data):
 
         user = instance.user
