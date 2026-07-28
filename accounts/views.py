@@ -33,6 +33,12 @@ def current_user(request):
         "last_name": user.last_name,
         "email": user.email,
         "role": user.role,
+        # Admins are never forced through the reset flow, no matter what
+        # the raw flag says (belt-and-suspenders in case it's ever set
+        # on an Admin account by mistake, e.g. via createsuperuser).
+        "must_change_password": bool(
+            user.must_change_password and user.role != "ADMIN"
+        ),
     })
 
 
@@ -47,6 +53,7 @@ def change_password(request):
 
     user = request.user
     user.set_password(serializer.validated_data["new_password"])
+    user.must_change_password = False
     user.save()
 
     return Response({"detail": "Password changed successfully."})
@@ -103,6 +110,7 @@ def reset_password_confirm(request):
 
     user = serializer.validated_data["user"]
     user.set_password(serializer.validated_data["new_password"])
+    user.must_change_password = False
     user.save()
 
     return Response({"detail": "Password reset successful. You can now log in."})

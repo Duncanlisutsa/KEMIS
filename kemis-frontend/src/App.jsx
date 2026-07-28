@@ -18,6 +18,7 @@ import Login from "./pages/Login";
 import Landing from "./pages/Landing";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import ChangePasswordRequired from "./pages/ChangePasswordRequired";
 import Profile from "./pages/Profile";
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
     location.pathname === "/" ||
     location.pathname === "/login" ||
     location.pathname === "/forgot-password" ||
+    location.pathname === "/change-password-required" ||
     location.pathname.startsWith("/reset-password");
 
   return (
@@ -72,6 +74,14 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
+          <Route
+            path="/change-password-required"
+            element={
+              <RoleProtectedRoute allowedRoles={["ADMIN", "MANAGER", "TENANT", "LANDLORD"]}>
+                <ChangePasswordRequired />
+              </RoleProtectedRoute>
+            }
+          />
           <Route path="/profile" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.profile}><Profile /></RoleProtectedRoute>} />
           <Route path="/reports" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.reports}><Reports /></RoleProtectedRoute>} />
           <Route path="/staff-accounts" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.staffAccounts}><StaffAccounts /></RoleProtectedRoute>} />

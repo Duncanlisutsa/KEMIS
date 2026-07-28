@@ -52,6 +52,9 @@ class StaffUserSerializer(serializers.ModelSerializer):
 
         if password:
             instance.set_password(password)
+            # Admin just handed this person a new temp password —
+            # they must set their own before using the system again.
+            instance.must_change_password = True
 
         instance.save()
         return instance

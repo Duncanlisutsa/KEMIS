@@ -16,6 +16,16 @@ class User(AbstractUser):
         choices=ROLE_CHOICES
     )
 
+    must_change_password = models.BooleanField(
+        default=True,
+        help_text=(
+            "If True, the user is required to set a new password before "
+            "they can use the system. Set automatically whenever an Admin "
+            "or Manager creates an account or resets someone's password. "
+            "Never enforced for ADMIN accounts, regardless of this value."
+        )
+    )
+
     phone = models.CharField(
         max_length=20,
         blank=True

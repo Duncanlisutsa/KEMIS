@@ -1,5 +1,5 @@
-import { useState, useEffect, useContext } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import api from "../services/api";
@@ -9,90 +9,69 @@ import DotCircleSpinner from "../components/DotCircleSpinner";
 
 const BRAND_COLOR = "#2563eb";
 
-function Login() {
+function ChangePasswordRequired() {
   const navigate = useNavigate();
-  const { loadUser } = useContext(AuthContext);
+  const { user, loadUser, setUser } = useContext(AuthContext);
   const { showNotification } = useNotification();
 
-  const [checkingSession, setCheckingSession] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem("access_token");
-
-    if (token) {
-      navigate("/dashboard");
-      return;
-    }
-
-    setCheckingSession(false);
-  }, [navigate]);
-
   const [formData, setFormData] = useState({
-    username: "",
-    password: "",
+    old_password: "",
+    new_password: "",
+    confirm_password: "",
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    setUser(null);
+    navigate("/login");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+
+    if (formData.new_password !== formData.confirm_password) {
+      setErrorMessage("New passwords do not match.");
+      return;
+    }
 
     setLoading(true);
 
     try {
-      const response = await api.post("token/", formData);
+      await api.post("accounts/change-password/", {
+        old_password: formData.old_password,
+        new_password: formData.new_password,
+      });
 
-      localStorage.setItem("access_token", response.data.access);
-      localStorage.setItem("refresh_token", response.data.refresh);
+      await loadUser();
 
-      const loggedInUser = await loadUser();
+      showNotification("Password set. Welcome to KEMIS!", "success");
 
-      showNotification("Login successful!", "success");
-
-      if (loggedInUser?.must_change_password) {
-        navigate("/change-password-required");
-      } else {
-        navigate("/dashboard");
-      }
+      navigate("/dashboard");
     } catch (error) {
-      if (error.response?.status === 401) {
-        showNotification("Invalid username or password.", "error");
-      } else if (!error.response) {
-        showNotification(
-          "Unable to connect to the server. Please check your internet connection.",
-          "error"
-        );
-      } else {
-        showNotification("Login failed. Please try again.", "error");
-      }
+      const data = error.response?.data;
 
-      console.log(error);
+      const firstError =
+        data?.old_password?.[0] ||
+        data?.new_password?.[0] ||
+        data?.detail ||
+        "Failed to change password. Please try again.";
+
+      setErrorMessage(firstError);
+      console.error(error);
+    } finally {
       setLoading(false);
     }
   };
-
-  if (checkingSession) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <DotCircleSpinner label="Loading..." />
-      </div>
-    );
-  }
 
   return (
     <div
@@ -106,7 +85,7 @@ function Login() {
       <div
         style={{
           width: "90%",
-          maxWidth: "320px",
+          maxWidth: "360px",
           padding: "30px",
           boxShadow: "0 0 10px #ccc",
           borderRadius: "10px",
@@ -128,9 +107,6 @@ function Login() {
 
           <h1
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
               fontSize: "20px",
               letterSpacing: "1px",
               margin: 0,
@@ -140,8 +116,16 @@ function Login() {
             KABRAS ESTATE
           </h1>
 
-          <h2 style={{ margin: "6px 0 0 0" }}>Login</h2>
+          <h2 style={{ margin: "6px 0 0 0", textAlign: "center" }}>
+            Set Your Password
+          </h2>
         </div>
+
+        <p style={{ fontSize: "14px", color: "#475569", marginBottom: "20px" }}>
+          {user?.first_name ? `Welcome, ${user.first_name}. ` : "Welcome. "}
+          This is your first time signing in, so please set a password only
+          you know before continuing into KEMIS.
+        </p>
 
         {loading ? (
           <div
@@ -151,17 +135,28 @@ function Login() {
               padding: "20px 0",
             }}
           >
-            <DotCircleSpinner label="Logging in..." />
+            <DotCircleSpinner label="Saving..." />
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
             <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              value={formData.username}
+              type={showPassword ? "text" : "password"}
+              name="old_password"
+              placeholder="Temporary password (given by admin)"
+              value={formData.old_password}
               onChange={handleChange}
               required
+              style={{ width: "100%", marginBottom: "15px" }}
+            />
+
+            <input
+              type={showPassword ? "text" : "password"}
+              name="new_password"
+              placeholder="New password"
+              value={formData.new_password}
+              onChange={handleChange}
+              required
+              minLength={8}
               style={{ width: "100%", marginBottom: "15px" }}
             />
 
@@ -174,11 +169,12 @@ function Login() {
             >
               <input
                 type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="Password"
-                value={formData.password}
+                name="confirm_password"
+                placeholder="Confirm new password"
+                value={formData.confirm_password}
                 onChange={handleChange}
                 required
+                minLength={8}
                 style={{
                   width: "100%",
                   paddingRight: "35px",
@@ -211,13 +207,33 @@ function Login() {
                 cursor: "pointer",
               }}
             >
-              Login
+              Set Password &amp; Continue
             </button>
 
-            <p style={{ marginTop: "15px", fontSize: "14px", textAlign: "center" }}>
-              <Link to="/forgot-password" style={{ color: BRAND_COLOR }}>
-                Forgot password?
-              </Link>
+            {errorMessage && (
+              <p
+                style={{
+                  marginTop: "15px",
+                  fontSize: "14px",
+                  color: "#b91c1c",
+                }}
+              >
+                {errorMessage}
+              </p>
+            )}
+
+            <p style={{ marginTop: "15px", fontSize: "13px", textAlign: "center" }}>
+              Not you?{" "}
+              <span
+                onClick={handleLogout}
+                style={{
+                  color: BRAND_COLOR,
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                }}
+              >
+                Log out
+              </span>
             </p>
           </form>
         )}
@@ -226,4 +242,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default ChangePasswordRequired;

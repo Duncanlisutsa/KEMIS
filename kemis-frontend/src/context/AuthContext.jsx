@@ -12,12 +12,14 @@ export function AuthProvider({ children }) {
 
     if (!token) {
       setLoading(false);
-      return;
+      return null;
     }
 
     try {
       const response = await api.get("accounts/me/");
       setUser(response.data);
+      setLoading(false);
+      return response.data;
     } catch (error) {
       console.error("Failed to load user", error);
 
@@ -25,9 +27,9 @@ export function AuthProvider({ children }) {
       localStorage.removeItem("refresh_token");
 
       setUser(null);
+      setLoading(false);
+      return null;
     }
-
-    setLoading(false);
   };
 
   useEffect(() => {
