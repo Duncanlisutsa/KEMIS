@@ -236,9 +236,9 @@ function Estates() {
             </tr>
           )}
 
-          {estates.map((estate) => (
+          {estates.map((estate, index) => (
             <tr key={estate.id}>
-              <td>{String(estate.id).padStart(2, "0")}</td>
+              <td>{String(index + 1).padStart(2, "0")}</td>
               <td>{estate.name}</td>
               <td>{estate.location}</td>
               <td>{estate.description}</td>
