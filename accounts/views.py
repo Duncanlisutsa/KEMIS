@@ -147,7 +147,8 @@ def list_landlords(request):
     return Response(data)
 
 
-class StaffUserViewSet(AuditLogMixin, viewsets.ModelViewSet):    """
+class StaffUserViewSet(AuditLogMixin, viewsets.ModelViewSet):
+    """
     Admin-only CRUD for Manager and Landlord accounts.
     """
     serializer_class = StaffUserSerializer
