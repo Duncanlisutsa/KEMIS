@@ -5,9 +5,10 @@ from rest_framework.response import Response
 from .models import Tenant
 from .serializers import TenantSerializer
 from accounts.permissions import IsAdminOrManagerOrLandlordReadOnly
+from audit.mixins import AuditLogMixin
 
 
-class TenantViewSet(viewsets.ModelViewSet):
+class TenantViewSet(AuditLogMixin, viewsets.ModelViewSet):
     queryset = Tenant.objects.all()
     permission_classes = [IsAdminOrManagerOrLandlordReadOnly]
     serializer_class = TenantSerializer

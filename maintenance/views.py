@@ -6,9 +6,10 @@ from .serializers import MaintenanceRequestSerializer
 from accounts.permissions import IsAdminOrManagerOrTenantOrLandlordReadOnly
 from leases.models import Lease
 from notifications_app.models import Notification
+from audit.mixins import AuditLogMixin
 
 
-class MaintenanceRequestViewSet(viewsets.ModelViewSet):
+class MaintenanceRequestViewSet(AuditLogMixin, viewsets.ModelViewSet):
     queryset = MaintenanceRequest.objects.all()
     serializer_class = MaintenanceRequestSerializer
     permission_classes = [IsAdminOrManagerOrTenantOrLandlordReadOnly]
@@ -47,7 +48,8 @@ class MaintenanceRequestViewSet(viewsets.ModelViewSet):
                     "You don't have an active lease, so you can't file a maintenance request."
                 )
 
-            serializer.save(tenant=user.tenant, unit=active_lease.unit)
+            instance = serializer.save(tenant=user.tenant, unit=active_lease.unit)
+            self._audit_log("CREATE", instance)
             return
 
         if not serializer.validated_data.get("tenant") or not serializer.validated_data.get("unit"):
@@ -59,24 +61,29 @@ class MaintenanceRequestViewSet(viewsets.ModelViewSet):
                 {"unit": "You can only file requests for units within your own estate."}
             )
 
-        serializer.save()
+        instance = serializer.save()
+        self._audit_log("CREATE", instance)
 
     def perform_update(self, serializer):
         user = self.request.user
 
         if user.role == "TENANT":
             active_lease = self._tenants_active_lease(user)
+            old_snapshot = self._audit_snapshot(serializer.instance)
 
-            serializer.save(
+            instance = serializer.save(
                 tenant=user.tenant,
                 unit=active_lease.unit if active_lease else serializer.instance.unit,
                 status=serializer.instance.status,
                 resolved_date=serializer.instance.resolved_date,
             )
+            self._audit_log("UPDATE", instance, old_snapshot=old_snapshot)
             return
 
         old_status = serializer.instance.status
+        old_snapshot = self._audit_snapshot(serializer.instance)
         maintenance_request = serializer.save()
+        self._audit_log("UPDATE", maintenance_request, old_snapshot=old_snapshot)
 
         if maintenance_request.status != old_status:
             Notification.objects.create(

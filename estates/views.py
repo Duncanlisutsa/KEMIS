@@ -11,9 +11,10 @@ from accounts.permissions import (
     IsAdminOrManagerOrLandlordReadOnly,
 )
 from leases.utils import auto_expire_leases
+from audit.mixins import AuditLogMixin
 
 
-class EstateViewSet(viewsets.ModelViewSet):
+class EstateViewSet(AuditLogMixin, viewsets.ModelViewSet):
     queryset = Estate.objects.all()
     serializer_class = EstateSerializer
 
@@ -46,7 +47,7 @@ class EstateViewSet(viewsets.ModelViewSet):
             )
 
 
-class UnitViewSet(viewsets.ModelViewSet):
+class UnitViewSet(AuditLogMixin, viewsets.ModelViewSet):
     queryset = Unit.objects.all()
     permission_classes = [IsAdminOrManagerOrLandlordReadOnly]
     serializer_class = UnitSerializer
@@ -78,14 +79,17 @@ class UnitViewSet(viewsets.ModelViewSet):
         estate = serializer.validated_data.get("estate")
 
         self._check_estate_ownership(user, estate)
-        serializer.save()
+        instance = serializer.save()
+        self._audit_log("CREATE", instance)
 
     def perform_update(self, serializer):
         user = self.request.user
         estate = serializer.validated_data.get("estate", serializer.instance.estate)
 
         self._check_estate_ownership(user, estate)
-        serializer.save()
+        old_snapshot = self._audit_snapshot(serializer.instance)
+        instance = serializer.save()
+        self._audit_log("UPDATE", instance, old_snapshot=old_snapshot)
 
     def destroy(self, request, *args, **kwargs):
         try:

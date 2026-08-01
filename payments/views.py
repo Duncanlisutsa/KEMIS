@@ -2,9 +2,10 @@ from rest_framework import viewsets
 from .models import Payment
 from .serializers import PaymentSerializer
 from accounts.permissions import IsAdminOrManagerOrTenantOrLandlordReadOnly
+from audit.mixins import AuditLogMixin
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     serializer_class = PaymentSerializer
     permission_classes = [IsAdminOrManagerOrTenantOrLandlordReadOnly]
 

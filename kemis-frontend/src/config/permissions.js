@@ -17,5 +17,7 @@ export const PERMISSIONS = {
 
   staffAccounts: ["ADMIN"],
 
+  auditLog: ["ADMIN"],
+
   profile: ["ADMIN", "MANAGER", "TENANT", "LANDLORD"],
 };

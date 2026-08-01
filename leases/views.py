@@ -7,9 +7,10 @@ from .models import Lease
 from .serializers import LeaseSerializer
 from .utils import auto_expire_leases
 from accounts.permissions import IsAdminOrManagerOrTenantOrLandlordReadOnly
+from audit.mixins import AuditLogMixin
 
 
-class LeaseViewSet(viewsets.ModelViewSet):
+class LeaseViewSet(AuditLogMixin, viewsets.ModelViewSet):
     serializer_class = LeaseSerializer
     permission_classes = [IsAdminOrManagerOrTenantOrLandlordReadOnly]
 
@@ -43,14 +44,17 @@ class LeaseViewSet(viewsets.ModelViewSet):
         unit = serializer.validated_data.get("unit")
 
         self._check_unit_ownership(user, unit)
-        serializer.save()
+        instance = serializer.save()
+        self._audit_log("CREATE", instance)
 
     def perform_update(self, serializer):
         user = self.request.user
         unit = serializer.validated_data.get("unit", serializer.instance.unit)
 
         self._check_unit_ownership(user, unit)
-        serializer.save()
+        old_snapshot = self._audit_snapshot(serializer.instance)
+        instance = serializer.save()
+        self._audit_log("UPDATE", instance, old_snapshot=old_snapshot)
 
     def destroy(self, request, *args, **kwargs):
         try:

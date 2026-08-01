@@ -14,6 +14,7 @@ import Payments from "./pages/payments";
 import Maintenance from "./pages/maintenance";
 import Reports from "./pages/Reports";
 import StaffAccounts from "./pages/StaffAccounts";
+import AuditLog from "./pages/AuditLog";
 import Login from "./pages/Login";
 import Landing from "./pages/Landing";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -85,6 +86,7 @@ function App() {
           <Route path="/profile" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.profile}><Profile /></RoleProtectedRoute>} />
           <Route path="/reports" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.reports}><Reports /></RoleProtectedRoute>} />
           <Route path="/staff-accounts" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.staffAccounts}><StaffAccounts /></RoleProtectedRoute>} />
+          <Route path="/audit-log" element={<RoleProtectedRoute allowedRoles={PERMISSIONS.auditLog}><AuditLog /></RoleProtectedRoute>} />
         </Routes>
       </div>
     </div>

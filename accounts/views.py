@@ -17,6 +17,7 @@ from .serializers import (
     StaffUserSerializer,
 )
 from accounts.permissions import IsAdmin
+from audit.mixins import AuditLogMixin
 
 User = get_user_model()
 
@@ -146,8 +147,7 @@ def list_landlords(request):
     return Response(data)
 
 
-class StaffUserViewSet(viewsets.ModelViewSet):
-    """
+class StaffUserViewSet(AuditLogMixin, viewsets.ModelViewSet):    """
     Admin-only CRUD for Manager and Landlord accounts.
     """
     serializer_class = StaffUserSerializer
