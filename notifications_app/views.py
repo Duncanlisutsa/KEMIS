@@ -1,10 +1,13 @@
 from rest_framework import viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from accounts.permissions import IsAdminOrManager
+
 from .models import Notification
 from .serializers import NotificationSerializer
+from .utils import generate_rent_reminders, generate_lease_expiry_alerts
 
 
 class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
@@ -35,3 +38,17 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
         notification.is_read = True
         notification.save(update_fields=["is_read"])
         return Response(NotificationSerializer(notification).data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminOrManager])
+def send_rent_reminders(request):
+    sent = generate_rent_reminders()
+    return Response({"detail": f"Rent reminders sent: {sent}", "sent": sent})
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminOrManager])
+def send_lease_expiry_alerts(request):
+    sent = generate_lease_expiry_alerts()
+    return Response({"detail": f"Lease expiry alerts sent: {sent}", "sent": sent})

@@ -1,9 +1,17 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import api from "../services/api";
+import { AuthContext } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
 
 function Reports() {
+  const { user } = useContext(AuthContext);
+  const { showNotification } = useNotification();
+  const canSendReminders = user?.role === "ADMIN" || user?.role === "MANAGER";
+
   const [revenue, setRevenue] = useState([]);
   const [downloading, setDownloading] = useState(false);
+  const [sendingRentReminders, setSendingRentReminders] = useState(false);
+  const [sendingLeaseAlerts, setSendingLeaseAlerts] = useState(false);
 
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -49,6 +57,35 @@ function Reports() {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
+  };
+
+
+  const sendRentReminders = async () => {
+    setSendingRentReminders(true);
+
+    try {
+      const response = await api.post("notifications/send-rent-reminders/");
+      showNotification(response.data.detail, "success");
+    } catch (error) {
+      console.error("Error sending rent reminders:", error);
+      showNotification("Failed to send rent reminders.", "error");
+    } finally {
+      setSendingRentReminders(false);
+    }
+  };
+
+  const sendLeaseExpiryAlerts = async () => {
+    setSendingLeaseAlerts(true);
+
+    try {
+      const response = await api.post("notifications/send-lease-expiry-alerts/");
+      showNotification(response.data.detail, "success");
+    } catch (error) {
+      console.error("Error sending lease expiry alerts:", error);
+      showNotification("Failed to send lease expiry alerts.", "error");
+    } finally {
+      setSendingLeaseAlerts(false);
+    }
   };
 
   const openMonth = async (item) => {
@@ -115,21 +152,59 @@ function Reports() {
       >
         <h1>Reports</h1>
 
-        <button
-          onClick={downloadPdf}
-          disabled={downloading}
-          style={{
-            background: "#2563eb",
-            color: "white",
-            border: "none",
-            padding: "10px 20px",
-            borderRadius: "6px",
-            cursor: downloading ? "not-allowed" : "pointer",
-            opacity: downloading ? 0.7 : 1,
-          }}
-        >
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+          {canSendReminders && (
+            <>
+              <button
+                onClick={sendRentReminders}
+                disabled={sendingRentReminders}
+                style={{
+                  background: "#f97316",
+                  color: "white",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "6px",
+                  cursor: sendingRentReminders ? "not-allowed" : "pointer",
+                  opacity: sendingRentReminders ? 0.7 : 1,
+                }}
+              >
+                {sendingRentReminders ? "Sending..." : "Send Rent Reminders"}
+              </button>
+
+              <button
+                onClick={sendLeaseExpiryAlerts}
+                disabled={sendingLeaseAlerts}
+                style={{
+                  background: "#0f3a5f",
+                  color: "white",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "6px",
+                  cursor: sendingLeaseAlerts ? "not-allowed" : "pointer",
+                  opacity: sendingLeaseAlerts ? 0.7 : 1,
+                }}
+              >
+                {sendingLeaseAlerts ? "Sending..." : "Send Lease Expiry Alerts"}
+              </button>
+            </>
+          )}
+
+          <button
+            onClick={downloadPdf}
+            disabled={downloading}
+            style={{
+              background: "#2563eb",
+              color: "white",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "6px",
+              cursor: downloading ? "not-allowed" : "pointer",
+              opacity: downloading ? 0.7 : 1,
+            }}
+          >
           {downloading ? "Generating..." : "Download PDF"}
         </button>
+        </div>
       </div>
 
       <h2>Monthly Revenue Report</h2>
