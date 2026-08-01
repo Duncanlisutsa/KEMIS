@@ -33,6 +33,63 @@ from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 
 
+def _vacant_units_by_estate(estates=None):
+    """Per-estate vacancy breakdown, for the 'vacant units per estate'
+    dashboard panel."""
+    from django.db.models import Count, Q
+
+    units_qs = Unit.objects.select_related('estate')
+    if estates is not None:
+        units_qs = units_qs.filter(estate__in=estates)
+
+    data = (
+        units_qs
+        .values('estate__id', 'estate__name')
+        .annotate(
+            total=Count('id'),
+            vacant=Count('id', filter=Q(status='VACANT')),
+        )
+        .order_by('-vacant', 'estate__name')
+    )
+
+    return [
+        {
+            "estate_id": item["estate__id"],
+            "estate_name": item["estate__name"],
+            "vacant": item["vacant"],
+            "total": item["total"],
+        }
+        for item in data
+    ]
+
+
+def _top_debtors(estates=None, limit=5):
+    """Tenants with the largest outstanding rent balance on an active
+    lease, for the 'top tenants in debt' dashboard panel."""
+    leases_qs = (
+        Lease.objects.filter(status='ACTIVE')
+        .select_related('tenant__user', 'unit__estate')
+    )
+    if estates is not None:
+        leases_qs = leases_qs.filter(unit__estate__in=estates)
+
+    debtors = []
+    for lease in leases_qs:
+        balance = lease.rent_balance
+        if balance < 0:
+            tenant_user = lease.tenant.user
+            name = tenant_user.get_full_name() or tenant_user.username
+            debtors.append({
+                "tenant_name": name,
+                "unit_number": lease.unit.unit_number,
+                "estate_name": lease.unit.estate.name,
+                "amount_owed": abs(balance),
+            })
+
+    debtors.sort(key=lambda d: d["amount_owed"], reverse=True)
+    return debtors[:limit]
+
+
 @api_view(['GET'])
 @permission_classes([IsAdminOrManagerOrTenantOrLandlordReadOnly])
 def dashboard_statistics(request):
@@ -68,6 +125,8 @@ def dashboard_statistics(request):
                 status='ACTIVE',
             ).count(),
             "total_revenue": total_revenue,
+            "vacant_units_by_estate": _vacant_units_by_estate(owned_estates),
+            "top_debtors": _top_debtors(owned_estates),
         })
 
     if user.role == "TENANT":
@@ -134,7 +193,9 @@ def dashboard_statistics(request):
         "occupied_units": occupied_units,
         "total_tenants": total_tenants,
         "active_leases": active_leases,
-        "total_revenue": total_revenue
+        "total_revenue": total_revenue,
+        "vacant_units_by_estate": _vacant_units_by_estate(),
+        "top_debtors": _top_debtors(),
     })
 
 
