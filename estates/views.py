@@ -10,6 +10,7 @@ from accounts.permissions import (
     IsAdminOrManager,
     IsAdminOrManagerOrLandlordReadOnly,
 )
+from leases.utils import auto_expire_leases
 
 
 class EstateViewSet(viewsets.ModelViewSet):
@@ -51,6 +52,8 @@ class UnitViewSet(viewsets.ModelViewSet):
     serializer_class = UnitSerializer
 
     def get_queryset(self):
+        auto_expire_leases()
+
         user = self.request.user
 
         if user.role == "ADMIN":

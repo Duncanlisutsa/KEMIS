@@ -15,6 +15,7 @@ urlpatterns = [
     path('api/payments/', include('payments.urls')),
     path('api/maintenance/', include('maintenance.urls')),
     path('api/accounts/', include('accounts.urls')),
+    path('api/notifications/', include('notifications_app.urls')),
 
     # JWT Authentication URLs
     path(

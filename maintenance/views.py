@@ -5,6 +5,7 @@ from .models import MaintenanceRequest
 from .serializers import MaintenanceRequestSerializer
 from accounts.permissions import IsAdminOrManagerOrTenantOrLandlordReadOnly
 from leases.models import Lease
+from notifications_app.models import Notification
 
 
 class MaintenanceRequestViewSet(viewsets.ModelViewSet):
@@ -74,4 +75,15 @@ class MaintenanceRequestViewSet(viewsets.ModelViewSet):
             )
             return
 
-        serializer.save()
+        old_status = serializer.instance.status
+        maintenance_request = serializer.save()
+
+        if maintenance_request.status != old_status:
+            Notification.objects.create(
+                recipient=maintenance_request.tenant.user,
+                notification_type="MAINTENANCE_UPDATE",
+                message=(
+                    f'Your maintenance request "{maintenance_request.title}" '
+                    f'is now {maintenance_request.get_status_display()}.'
+                ),
+            )

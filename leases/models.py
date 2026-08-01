@@ -61,5 +61,24 @@ class Lease(models.Model):
     def total_rent_due(self):
         return self.monthly_rent * self.duration_months
 
+    @property
+    def total_rent_paid(self):
+        from django.db.models import Sum
+
+        total = self.payments.filter(
+            status="PAID",
+            payment_type="RENT",
+        ).aggregate(total=Sum("amount"))["total"]
+
+        return total or 0
+
+    @property
+    def rent_balance(self):
+        """
+        Positive = credit (tenant has paid more than owed so far).
+        Negative = debit (tenant still owes rent).
+        """
+        return self.total_rent_paid - self.total_rent_due
+
     def __str__(self):
         return f"{self.tenant} - {self.unit}"

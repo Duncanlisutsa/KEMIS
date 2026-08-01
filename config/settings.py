@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'payments',
     'maintenance',
     'reports',
+    'notifications_app',
 
     'corsheaders',
     'anymail',

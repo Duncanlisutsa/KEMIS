@@ -18,6 +18,7 @@ from accounts.permissions import (
 from estates.models import Estate, Unit
 from tenants.models import Tenant
 from leases.models import Lease
+from leases.utils import auto_expire_leases
 from payments.models import Payment
 
 from django.db.models import Sum
@@ -35,6 +36,8 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 @api_view(['GET'])
 @permission_classes([IsAdminOrManagerOrTenantOrLandlordReadOnly])
 def dashboard_statistics(request):
+    auto_expire_leases()
+
     user = request.user
 
     if user.role == "LANDLORD":

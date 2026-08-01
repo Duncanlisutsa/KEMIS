@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.db.models import Sum
 from rest_framework import serializers
 
 from .models import Lease
@@ -22,8 +21,12 @@ class LeaseSerializer(serializers.ModelSerializer):
     total_rent_due = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
     )
-    total_rent_paid = serializers.SerializerMethodField(read_only=True)
-    rent_balance = serializers.SerializerMethodField(read_only=True)
+    total_rent_paid = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True
+    )
+    rent_balance = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True
+    )
 
     class Meta:
         model = Lease
@@ -44,20 +47,6 @@ class LeaseSerializer(serializers.ModelSerializer):
             "rent_balance",
             "created_at",
         ]
-
-    def get_total_rent_paid(self, obj):
-        total = obj.payments.filter(
-            status="PAID",
-            payment_type="RENT",
-        ).aggregate(total=Sum("amount"))["total"]
-        return total or 0
-
-    def get_rent_balance(self, obj):
-        """
-        Positive = credit (tenant has paid more than owed so far).
-        Negative = debit (tenant still owes rent).
-        """
-        return self.get_total_rent_paid(obj) - obj.total_rent_due
 
     def validate(self, attrs):
         """

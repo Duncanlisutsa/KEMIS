@@ -5,6 +5,7 @@ import { PERMISSIONS } from "../config/permissions";
 
 import { Link } from "react-router-dom";
 import logo from "../assets/logo.png";
+import NotificationBell from "./NotificationBell";
 import {
   FaHome,
   FaBuilding,
@@ -120,6 +121,8 @@ function Sidebar({ isOpen, onNavigate }) {
         <br />
         <small>{user.role}</small>
       </p>
+
+      <NotificationBell />
 
       <nav
         style={{

@@ -5,6 +5,7 @@ from rest_framework.response import Response
 
 from .models import Lease
 from .serializers import LeaseSerializer
+from .utils import auto_expire_leases
 from accounts.permissions import IsAdminOrManagerOrTenantOrLandlordReadOnly
 
 
@@ -13,6 +14,8 @@ class LeaseViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrManagerOrTenantOrLandlordReadOnly]
 
     def get_queryset(self):
+        auto_expire_leases()
+
         user = self.request.user
 
         if user.role == "ADMIN":
