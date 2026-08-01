@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import ConfirmDialog from "../components/ConfirmDialog";
+import Pagination from "../components/Pagination";
 import { useNotification } from "../context/NotificationContext";
 
 
@@ -10,6 +11,10 @@ function Units() {
   const [units, setUnits] = useState([]);
   const [estates, setEstates] = useState([]);
   const [estateFilter, setEstateFilter] = useState("");
+
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [formData, setFormData] = useState({
     estate: "",
@@ -144,9 +149,35 @@ function Units() {
     });
   }, [units]);
 
-  const visibleUnits = estateFilter
+  const estateFilteredUnits = estateFilter
     ? sortedUnits.filter((u) => u.estate === Number(estateFilter))
     : sortedUnits;
+
+  const query = search.trim().toLowerCase();
+  const visibleUnits = query
+    ? estateFilteredUnits.filter((u) => {
+        const haystack = [u.estate_name, u.unit_number, u.unit_type, u.status]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(query);
+      })
+    : estateFilteredUnits;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, estateFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(visibleUnits.length / pageSize));
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+
+  const paginatedUnits = visibleUnits.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <div>
@@ -266,6 +297,14 @@ function Units() {
             Clear Filter
           </button>
         )}
+
+        <input
+          type="text"
+          placeholder="Search by unit number, type, or status..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ padding: "6px 8px", minWidth: "260px" }}
+        />
       </div>
 
       <table border="1" cellPadding="10" width="100%">
@@ -284,15 +323,15 @@ function Units() {
           {visibleUnits.length === 0 && (
             <tr>
               <td colSpan="6" style={{ textAlign: "center", padding: "15px" }}>
-                No units found.
+                {search ? "No units match your search." : "No units found."}
               </td>
             </tr>
           )}
 
-          {visibleUnits.map((unit, index) => {
+          {paginatedUnits.map((unit, index) => {
             const isNewEstateGroup =
               !estateFilter &&
-              (index === 0 || visibleUnits[index - 1].estate_name !== unit.estate_name);
+              (index === 0 || paginatedUnits[index - 1].estate_name !== unit.estate_name);
 
             return (
               <>
@@ -374,6 +413,16 @@ function Units() {
           })}
         </tbody>
       </table>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={visibleUnits.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+      />
+
       <ConfirmDialog
         open={confirmOpen}
         title="Delete Unit"

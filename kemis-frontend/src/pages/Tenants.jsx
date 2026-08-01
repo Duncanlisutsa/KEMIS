@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import ConfirmDialog from "../components/ConfirmDialog";
+import Pagination from "../components/Pagination";
 import { useNotification } from "../context/NotificationContext";
 
 function Tenants() {
@@ -12,6 +13,10 @@ function Tenants() {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState(null);
+
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -130,6 +135,41 @@ const editTenant = (tenant) => {
     }
   };
 
+  const filteredTenants = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return tenants;
+
+    return tenants.filter((tenant) => {
+      const haystack = [
+        tenant.full_name,
+        tenant.national_id,
+        tenant.phone_number,
+        tenant.emergency_contact_name,
+        tenant.emergency_contact_phone,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query);
+    });
+  }, [tenants, search]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTenants.length / pageSize));
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+
+  const paginatedTenants = filteredTenants.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   return (
     <div>
       <h1>Tenants</h1>
@@ -239,6 +279,16 @@ const editTenant = (tenant) => {
 
       </form>
 
+      <div style={{ marginBottom: "15px" }}>
+        <input
+          type="text"
+          placeholder="Search by name, national ID, or phone..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ width: "100%", maxWidth: "400px", padding: "8px" }}
+        />
+      </div>
+
       <table border="1" cellPadding="10" width="100%">
         <thead>
           <tr>
@@ -252,7 +302,15 @@ const editTenant = (tenant) => {
         </thead>
 
         <tbody>
-          {tenants.map((tenant) => (
+          {filteredTenants.length === 0 && (
+            <tr>
+              <td colSpan={6} style={{ textAlign: "center", padding: "15px" }}>
+                {search ? "No tenants match your search." : "No tenants found."}
+              </td>
+            </tr>
+          )}
+
+          {paginatedTenants.map((tenant) => (
             <tr key={tenant.id}>
               <td>{tenant.full_name}</td>
               <td>{tenant.national_id}</td>
@@ -295,6 +353,15 @@ const editTenant = (tenant) => {
           ))}
         </tbody>
       </table>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredTenants.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+      />
 
       <ConfirmDialog
         open={confirmOpen}

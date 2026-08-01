@@ -1,7 +1,8 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
+import Pagination from "../components/Pagination";
 
 function Payments() {
   const { user } = useContext(AuthContext);
@@ -14,6 +15,10 @@ function Payments() {
   const [downloading, setDownloading] = useState(false);
 
   const [selectedLease, setSelectedLease] = useState(null);
+
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [formData, setFormData] = useState({
     lease: "",
@@ -153,6 +158,43 @@ function Payments() {
       setDownloading(false);
     }
   };
+
+  const filteredPayments = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return payments;
+
+    return payments.filter((payment) => {
+      const haystack = [
+        payment.tenant_name,
+        payment.unit_number,
+        payment.amount,
+        payment.payment_date,
+        payment.payment_method,
+        payment.reference_number,
+        payment.status,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query);
+    });
+  }, [payments, search]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPayments.length / pageSize));
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+
+  const paginatedPayments = filteredPayments.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <div>
@@ -383,6 +425,20 @@ function Payments() {
         </div>
       )}
 
+      <div style={{ marginBottom: "15px" }}>
+        <input
+          type="text"
+          placeholder={
+            isTenant
+              ? "Search by unit, date, or reference..."
+              : "Search by tenant, unit, date, or reference..."
+          }
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ width: "100%", maxWidth: "400px", padding: "8px" }}
+        />
+      </div>
+
       <table border="1" cellPadding="10" width="100%">
 
         <thead>
@@ -400,15 +456,15 @@ function Payments() {
 
         <tbody>
 
-          {payments.length === 0 && (
+          {filteredPayments.length === 0 && (
             <tr>
               <td colSpan={isTenant ? 6 : 8} style={{ textAlign: "center", padding: "15px" }}>
-                No payment records found.
+                {search ? "No payments match your search." : "No payment records found."}
               </td>
             </tr>
           )}
 
-          {payments.map((payment) => (
+          {paginatedPayments.map((payment) => (
             <tr key={payment.id}>
               {!isTenant && <td>{payment.tenant_name}</td>}
               <td>{payment.unit_number}</td>
@@ -454,6 +510,15 @@ function Payments() {
         </tbody>
 
       </table>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredPayments.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+      />
 
     </div>
   );

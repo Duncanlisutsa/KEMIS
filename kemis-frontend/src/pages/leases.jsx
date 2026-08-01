@@ -1,7 +1,8 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import { useNotification } from "../context/NotificationContext";
 import UnitDropdown from "../components/UnitDropdown";
+import Pagination from "../components/Pagination";
 
 function Leases() {
   const { showNotification } = useNotification();
@@ -13,6 +14,10 @@ function Leases() {
 
   const [selectedTenant, setSelectedTenant] = useState(null);
   const [selectedUnit, setSelectedUnit] = useState(null);
+
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [formData, setFormData] = useState({
     tenant: "",
@@ -162,6 +167,41 @@ function Leases() {
     }
   };
 
+  const filteredLeases = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return leases;
+
+    return leases.filter((lease) => {
+      const haystack = [
+        lease.tenant_name,
+        lease.unit_number,
+        lease.start_date,
+        lease.end_date,
+        lease.status,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query);
+    });
+  }, [leases, search]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredLeases.length / pageSize));
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+
+  const paginatedLeases = filteredLeases.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   return (
     <div>
       <h1>Leases</h1>
@@ -291,6 +331,16 @@ function Leases() {
 
       </form>
 
+      <div style={{ marginBottom: "15px" }}>
+        <input
+          type="text"
+          placeholder="Search by tenant, unit, or status..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ width: "100%", maxWidth: "400px", padding: "8px" }}
+        />
+      </div>
+
       <table border="1" cellPadding="10" width="100%">
         <thead>
           <tr>
@@ -306,7 +356,15 @@ function Leases() {
         </thead>
 
         <tbody>
-          {leases.map((lease) => (
+          {filteredLeases.length === 0 && (
+            <tr>
+              <td colSpan={8} style={{ textAlign: "center", padding: "15px" }}>
+                {search ? "No leases match your search." : "No leases found."}
+              </td>
+            </tr>
+          )}
+
+          {paginatedLeases.map((lease) => (
             <tr key={lease.id}>
               <td>{lease.tenant_name}</td>
               <td>{lease.unit_number}</td>
@@ -348,6 +406,15 @@ function Leases() {
           ))}
         </tbody>
       </table>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredLeases.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+      />
     </div>
   );
 }
