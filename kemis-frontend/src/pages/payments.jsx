@@ -1,8 +1,275 @@
 import { useContext, useEffect, useMemo, useState } from "react";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  Button,
+} from "@mui/material";
+import {
+  FaPlus,
+  FaEdit,
+  FaTrash,
+  FaReceipt,
+  FaFileDownload,
+  FaMoneyBillWave,
+  FaClock,
+  FaTimesCircle,
+  FaUndoAlt,
+  FaWallet,
+  FaSearch,
+  FaExclamationCircle,
+} from "react-icons/fa";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
 import Pagination from "../components/Pagination";
+import ConfirmDialog from "../components/ConfirmDialog";
+
+const EMPTY_FORM = {
+  lease: "",
+  amount: "",
+  payment_date: "",
+  payment_method: "MPESA",
+  payment_type: "RENT",
+  reference_number: "",
+  status: "PAID",
+};
+
+const currency = (value, decimals = 0) =>
+  `KES ${Number(value || 0).toLocaleString("en-KE", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
+
+const formatDate = (value) => {
+  if (!value) return "\u2014";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("en-KE", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+// ---------- Reusable pieces ----------
+
+function StatCard({ icon, label, value, tone = "default" }) {
+  return (
+    <div className={`stat-card tone-${tone}`}>
+      <div className="stat-icon">{icon}</div>
+      <div className="stat-body">
+        <span className="stat-label">{label}</span>
+        <span className="stat-value">{value}</span>
+      </div>
+    </div>
+  );
+}
+
+const STATUS_META = {
+  PAID: { label: "Paid", tone: "success" },
+  PENDING: { label: "Pending", tone: "warning" },
+  FAILED: { label: "Failed", tone: "danger" },
+  REFUNDED: { label: "Refunded", tone: "neutral" },
+};
+
+function StatusBadge({ status }) {
+  const meta = STATUS_META[status] || { label: status, tone: "neutral" };
+  return <span className={`badge badge-${meta.tone}`}>{meta.label}</span>;
+}
+
+const METHOD_META = {
+  MPESA: { label: "M-Pesa", tone: "success" },
+  BANK: { label: "Bank", tone: "info" },
+  CASH: { label: "Cash", tone: "neutral" },
+};
+
+function MethodBadge({ method }) {
+  const meta = METHOD_META[method] || { label: method, tone: "neutral" };
+  return <span className={`badge badge-${meta.tone}`}>{meta.label}</span>;
+}
+
+function PaymentsSkeleton({ isTenant }) {
+  return (
+    <div>
+      <div className="skeleton skeleton-title" />
+      <div className="dashboard-grid" style={{ marginBottom: "30px" }}>
+        {Array.from({ length: isTenant ? 3 : 4 }).map((_, i) => (
+          <div className="skeleton skeleton-card" key={i} />
+        ))}
+      </div>
+      <div className="skeleton" style={{ height: "300px" }} />
+    </div>
+  );
+}
+
+function PaymentFormModal({
+  open,
+  onClose,
+  onSubmit,
+  formData,
+  onChange,
+  leases,
+  selectedLease,
+  editingId,
+  submitting,
+}) {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{editingId ? "Update Payment" : "Record a Payment"}</DialogTitle>
+
+      <DialogContent>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "16px",
+            marginTop: "8px",
+          }}
+        >
+          <TextField
+            select
+            label="Lease"
+            name="lease"
+            value={formData.lease}
+            onChange={onChange}
+            required
+            fullWidth
+            style={{ gridColumn: "1 / -1" }}
+          >
+            <MenuItem value="">Select lease</MenuItem>
+            {leases.map((lease) => (
+              <MenuItem key={lease.id} value={lease.id}>
+                {lease.tenant_name} \u2014 {lease.unit_number}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            label="Amount (KES)"
+            type="number"
+            name="amount"
+            value={formData.amount}
+            onChange={onChange}
+            required
+            fullWidth
+          />
+
+          <TextField
+            label="Payment Date"
+            type="date"
+            name="payment_date"
+            value={formData.payment_date}
+            onChange={onChange}
+            required
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+          />
+
+          <TextField
+            select
+            label="Payment Method"
+            name="payment_method"
+            value={formData.payment_method}
+            onChange={onChange}
+            fullWidth
+          >
+            <MenuItem value="MPESA">M-Pesa</MenuItem>
+            <MenuItem value="BANK">Bank</MenuItem>
+            <MenuItem value="CASH">Cash</MenuItem>
+          </TextField>
+
+          <TextField
+            select
+            label="Payment Type"
+            name="payment_type"
+            value={formData.payment_type}
+            onChange={onChange}
+            fullWidth
+          >
+            <MenuItem value="RENT">Rent</MenuItem>
+            <MenuItem value="DEPOSIT">Deposit</MenuItem>
+          </TextField>
+
+          <TextField
+            label="Reference Number"
+            name="reference_number"
+            value={formData.reference_number}
+            onChange={onChange}
+            required
+            fullWidth
+          />
+
+          <TextField
+            select
+            label="Status"
+            name="status"
+            value={formData.status}
+            onChange={onChange}
+            fullWidth
+          >
+            <MenuItem value="PAID">Paid</MenuItem>
+            <MenuItem value="PENDING">Pending</MenuItem>
+            <MenuItem value="FAILED">Failed</MenuItem>
+            <MenuItem value="REFUNDED">Refunded</MenuItem>
+          </TextField>
+        </div>
+
+        {selectedLease && (
+          <div
+            style={{
+              border: "1px solid #e2e8f0",
+              padding: "14px 16px",
+              marginTop: "18px",
+              borderRadius: "8px",
+              background: "#f8fafc",
+            }}
+          >
+            <strong style={{ display: "block", marginBottom: "8px", color: "#0f172a" }}>
+              Lease Information
+            </strong>
+
+            <div style={{ fontSize: "14px", color: "#334155", lineHeight: 1.7 }}>
+              <div>Tenant: {selectedLease.tenant_name}</div>
+              <div>Unit: {selectedLease.unit_number}</div>
+              <div>Monthly Rent: {currency(selectedLease.monthly_rent, 2)}</div>
+              <div>Lease Duration: {selectedLease.duration_months} month(s)</div>
+              <div>Total Rent Due: {currency(selectedLease.total_rent_due)}</div>
+              <div>Total Rent Paid: {currency(selectedLease.total_rent_paid)}</div>
+              <div>
+                Balance:{" "}
+                <span
+                  style={{
+                    color: Number(selectedLease.rent_balance) >= 0 ? "#16a34a" : "#f97316",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {currency(Math.abs(Number(selectedLease.rent_balance)))}{" "}
+                  ({Number(selectedLease.rent_balance) >= 0 ? "Credit" : "Debit"})
+                </span>
+              </div>
+              <div>Lease Status: {selectedLease.status}</div>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+
+      <DialogActions style={{ padding: "16px 24px" }}>
+        <Button onClick={onClose} disabled={submitting}>
+          Cancel
+        </Button>
+        <Button variant="contained" onClick={onSubmit} disabled={submitting}>
+          {submitting ? "Saving..." : editingId ? "Update Payment" : "Add Payment"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// ---------- Main component ----------
 
 function Payments() {
   const { user } = useContext(AuthContext);
@@ -11,55 +278,61 @@ function Payments() {
 
   const [payments, setPayments] = useState([]);
   const [leases, setLeases] = useState([]);
-  const [editingId, setEditingId] = useState(null);
-  const [downloading, setDownloading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [selectedLease, setSelectedLease] = useState(null);
+  const [formData, setFormData] = useState(EMPTY_FORM);
+
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [downloading, setDownloading] = useState(false);
+  const [receiptLoadingId, setReceiptLoadingId] = useState(null);
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [formData, setFormData] = useState({
-    lease: "",
-    amount: "",
-    payment_date: "",
-    payment_method: "MPESA",
-    payment_type: "RENT",
-    reference_number: "",
-    status: "PAID",
-  });
-
-  useEffect(() => {
-    fetchPayments();
-    fetchLeases();
-  }, [isTenant]);
+  const fetchAll = async () => {
+    setError(null);
+    try {
+      const [paymentsRes, leasesRes] = await Promise.all([
+        api.get("payments/"),
+        api.get("leases/"),
+      ]);
+      setPayments(paymentsRes.data);
+      setLeases(leasesRes.data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching payments:", err);
+      setError("We couldn't load payments right now. Please try again.");
+      setLoading(false);
+    }
+  };
 
   const fetchPayments = async () => {
     try {
       const response = await api.get("payments/");
       setPayments(response.data);
-    } catch (error) {
-      console.error("Error fetching payments:", error);
+    } catch (err) {
+      console.error("Error fetching payments:", err);
     }
   };
 
-  const fetchLeases = async () => {
-    try {
-      const response = await api.get("leases/");
-      setLeases(response.data);
-    } catch (error) {
-      console.error("Error fetching leases:", error);
-    }
-  };
+  useEffect(() => {
+    setLoading(true);
+    fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTenant]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (name === "lease") {
       const lease = leases.find((l) => l.id === Number(value));
@@ -67,40 +340,14 @@ function Payments() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      if (editingId) {
-        await api.put(`payments/${editingId}/`, formData);
-        showNotification("Payment updated successfully!", "success");
-      } else {
-        await api.post("payments/", formData);
-        showNotification("Payment added successfully!", "success");
-      }
-
-      setFormData({
-        lease: "",
-        amount: "",
-        payment_date: "",
-        payment_method: "MPESA",
-        payment_type: "RENT",
-        reference_number: "",
-        status: "PAID",
-      });
-
-      setEditingId(null);
-      setSelectedLease(null);
-      fetchPayments();
-
-    } catch (error) {
-      console.error("Error saving payment:", error);
-      const message = error.response?.data?.detail || "Failed to save payment.";
-      showNotification(message, "error");
-    }
+  const openAddModal = () => {
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+    setSelectedLease(null);
+    setModalOpen(true);
   };
 
-  const editPayment = (payment) => {
+  const openEditModal = (payment) => {
     setFormData({
       lease: payment.lease,
       amount: payment.amount,
@@ -113,50 +360,94 @@ function Payments() {
 
     const lease = leases.find((l) => l.id === payment.lease);
     setSelectedLease(lease || null);
-
     setEditingId(payment.id);
+    setModalOpen(true);
   };
 
-  const deletePayment = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this payment?"
-    );
+  const closeModal = () => {
+    if (submitting) return;
+    setModalOpen(false);
+    setEditingId(null);
+    setSelectedLease(null);
+    setFormData(EMPTY_FORM);
+  };
 
-    if (!confirmDelete) return;
+  const handleSubmit = async () => {
+    setSubmitting(true);
 
     try {
-      await api.delete(`payments/${id}/`);
-      showNotification("Payment deleted successfully!", "success");
+      if (editingId) {
+        await api.put(`payments/${editingId}/`, formData);
+        showNotification("Payment updated successfully!", "success");
+      } else {
+        await api.post("payments/", formData);
+        showNotification("Payment added successfully!", "success");
+      }
+
+      closeModal();
       fetchPayments();
-    } catch (error) {
-      console.error("Error deleting payment:", error);
-      const message = error.response?.data?.detail || "Failed to delete payment.";
+    } catch (err) {
+      console.error("Error saving payment:", err);
+      const message = err.response?.data?.detail || "Failed to save payment.";
       showNotification(message, "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const downloadMyPaymentsPdf = async () => {
-    setDownloading(true);
+  const handleDeleteConfirmed = async () => {
+    if (!deleteTarget) return;
 
+    setDeleting(true);
     try {
-      const response = await api.get("reports/my-payments/pdf/", {
-        responseType: "blob",
-      });
+      await api.delete(`payments/${deleteTarget.id}/`);
+      showNotification("Payment deleted successfully!", "success");
+      setDeleteTarget(null);
+      fetchPayments();
+    } catch (err) {
+      console.error("Error deleting payment:", err);
+      const message = err.response?.data?.detail || "Failed to delete payment.";
+      showNotification(message, "error");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+  const downloadFile = async (url, filename, onDone) => {
+    try {
+      const response = await api.get(url, { responseType: "blob" });
+      const objectUrl = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "KEMIS_My_Payment_History.pdf");
+      link.href = objectUrl;
+      link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading payment report:", error);
-      showNotification("Failed to download report.", "error");
+      window.URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error("Error downloading file:", err);
+      showNotification("Failed to download file.", "error");
     } finally {
-      setDownloading(false);
+      onDone();
     }
+  };
+
+  const downloadMyPaymentsPdf = () => {
+    setDownloading(true);
+    downloadFile(
+      "reports/my-payments/pdf/",
+      "KEMIS_My_Payment_History.pdf",
+      () => setDownloading(false)
+    );
+  };
+
+  const downloadReceipt = (payment) => {
+    setReceiptLoadingId(payment.id);
+    downloadFile(
+      `reports/payment-receipt/${payment.id}/pdf/`,
+      `KEMIS_Receipt_${payment.reference_number}.pdf`,
+      () => setReceiptLoadingId(null)
+    );
   };
 
   const filteredPayments = useMemo(() => {
@@ -196,194 +487,136 @@ function Payments() {
     currentPage * pageSize
   );
 
+  const staffStats = useMemo(() => {
+    const collected = payments
+      .filter((p) => p.status === "PAID")
+      .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+    const pending = payments.filter((p) => p.status === "PENDING");
+    const pendingAmount = pending.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+    const failedOrRefunded = payments.filter(
+      (p) => p.status === "FAILED" || p.status === "REFUNDED"
+    ).length;
+
+    return {
+      collected,
+      pendingAmount,
+      pendingCount: pending.length,
+      failedOrRefunded,
+      total: payments.length,
+    };
+  }, [payments]);
+
+  if (loading) {
+    return (
+      <div>
+        <h1>{isTenant ? "My Payments" : "Payments"}</h1>
+        <PaymentsSkeleton isTenant={isTenant} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <h1>{isTenant ? "My Payments" : "Payments"}</h1>
+        <div className="panel error-panel">
+          <FaExclamationCircle />
+          <span>{error}</span>
+          <button className="retry-btn" onClick={fetchAll}>
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
+      <div className="payments-toolbar">
+        <div className="dashboard-header">
+          <h1>{isTenant ? "My Payments" : "Payments"}</h1>
+          <p className="dashboard-subtitle">
+            {isTenant
+              ? "Track your rent payments and download receipts."
+              : "Record, review, and manage tenant payments."}
+          </p>
+        </div>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "10px",
-        }}
-      >
-        <h1>{isTenant ? "My Payments" : "Payments"}</h1>
+        <div className="payments-toolbar-actions">
+          {isTenant && (
+            <button
+              className="btn-outline"
+              onClick={downloadMyPaymentsPdf}
+              disabled={downloading}
+            >
+              <FaFileDownload />
+              {downloading ? "Generating..." : "Download My Payment Report"}
+            </button>
+          )}
 
-        {isTenant && (
-          <button
-            onClick={downloadMyPaymentsPdf}
-            disabled={downloading}
-            style={{
-              background: "#2563eb",
-              color: "white",
-              border: "none",
-              padding: "10px 20px",
-              borderRadius: "6px",
-              cursor: downloading ? "not-allowed" : "pointer",
-              opacity: downloading ? 0.7 : 1,
-            }}
-          >
-            {downloading ? "Generating..." : "Download My Payment Report"}
-          </button>
-        )}
+          {!isTenant && (
+            <button className="btn-primary" onClick={openAddModal}>
+              <FaPlus /> Add Payment
+            </button>
+          )}
+        </div>
       </div>
 
       {isTenant && leases.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", margin: "15px 0 25px 0" }}>
+        <div className="dashboard-grid" style={{ marginBottom: "30px" }}>
           {leases.map((lease) => {
             const balance = Number(lease.rent_balance);
             const isCredit = balance >= 0;
 
             return (
-              <div
+              <StatCard
                 key={lease.id}
-                style={{
-                  background: isCredit ? "#16a34a" : "#f97316",
-                  color: "white",
-                  padding: "16px 20px",
-                  borderRadius: "10px",
-                  minWidth: "240px",
-                }}
-              >
-                <div style={{ fontSize: "13px" }}>
-                  {lease.unit_number} &middot; {lease.duration_months} month lease
-                </div>
-                <div style={{ fontSize: "24px", fontWeight: "bold" }}>
-                  KES {Math.abs(balance).toLocaleString()}
-                </div>
-                <div style={{ fontSize: "13px" }}>
-                  {isCredit ? "Credit (paid ahead)" : "Debit (balance owed)"}
-                </div>
-                <div style={{ fontSize: "12px", marginTop: "6px", opacity: 0.9 }}>
-                  Due: KES {Number(lease.total_rent_due).toLocaleString()} &middot; Paid: KES{" "}
-                  {Number(lease.total_rent_paid).toLocaleString()}
-                </div>
-              </div>
+                icon={<FaWallet />}
+                tone={isCredit ? "green" : "amber"}
+                label={`${lease.unit_number} \u00b7 ${lease.duration_months}-month lease \u00b7 ${
+                  isCredit ? "Credit (paid ahead)" : "Debit (balance owed)"
+                }`}
+                value={currency(Math.abs(balance))}
+              />
             );
           })}
         </div>
       )}
 
       {!isTenant && (
-        <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
-
-          <select
-            name="lease"
-            value={formData.lease}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select Lease</option>
-
-            {leases.map((lease) => (
-              <option key={lease.id} value={lease.id}>
-                {lease.tenant_name} - {lease.unit_number}
-              </option>
-            ))}
-          </select>
-
-          <input
-            type="number"
-            name="amount"
-            placeholder="Amount"
-            value={formData.amount}
-            onChange={handleChange}
-            required
-            style={{ marginLeft: "10px" }}
+        <div className="dashboard-grid" style={{ marginBottom: "30px" }}>
+          <StatCard
+            icon={<FaMoneyBillWave />}
+            tone="green"
+            label="Total Collected"
+            value={currency(staffStats.collected)}
           />
-
-          <input
-            type="date"
-            name="payment_date"
-            value={formData.payment_date}
-            onChange={handleChange}
-            required
-            style={{ marginLeft: "10px" }}
+          <StatCard
+            icon={<FaClock />}
+            tone="amber"
+            label={`Pending (${staffStats.pendingCount})`}
+            value={currency(staffStats.pendingAmount)}
           />
-
-          <br /><br />
-
-          <select
-            name="payment_method"
-            value={formData.payment_method}
-            onChange={handleChange}
-          >
-            <option value="MPESA">M-Pesa</option>
-            <option value="BANK">Bank</option>
-            <option value="CASH">Cash</option>
-          </select>
-
-          <input
-            type="text"
-            name="reference_number"
-            placeholder="Reference Number"
-            value={formData.reference_number}
-            onChange={handleChange}
-            required
-            style={{ marginLeft: "10px" }}
+          <StatCard
+            icon={<FaTimesCircle />}
+            tone="red"
+            label="Failed / Refunded"
+            value={staffStats.failedOrRefunded}
           />
-
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            style={{ marginLeft: "10px" }}
-          >
-            <option value="PAID">Paid</option>
-            <option value="PENDING">Pending</option>
-            <option value="FAILED">Failed</option>
-            <option value="REFUNDED">Refunded</option>
-          </select>
-
-          <button
-            type="submit"
-            style={{ marginLeft: "10px" }}
-          >
-            {editingId ? "Update Payment" : "Add Payment"}
-          </button>
-
-          {selectedLease && (
-            <div
-              style={{
-                border: "1px solid #ccc",
-                padding: "10px",
-                marginTop: "10px",
-                marginBottom: "10px",
-                borderRadius: "5px",
-                background: "#f8fafc",
-              }}
-            >
-              <strong>Lease Information</strong>
-
-              <p>Tenant: {selectedLease.tenant_name}</p>
-              <p>Unit: {selectedLease.unit_number}</p>
-              <p>Monthly Rent: KES {selectedLease.monthly_rent}</p>
-              <p>Lease Duration: {selectedLease.duration_months} month(s)</p>
-              <p>Total Rent Due: KES {Number(selectedLease.total_rent_due).toLocaleString()}</p>
-              <p>Total Rent Paid: KES {Number(selectedLease.total_rent_paid).toLocaleString()}</p>
-              <p>
-                Balance:{" "}
-                <span
-                  style={{
-                    color: Number(selectedLease.rent_balance) >= 0 ? "#16a34a" : "#f97316",
-                    fontWeight: "bold",
-                  }}
-                >
-                  KES {Number(selectedLease.rent_balance).toLocaleString()}{" "}
-                  ({Number(selectedLease.rent_balance) >= 0 ? "Credit" : "Debit"})
-                </span>
-              </p>
-              <p>Lease Status: {selectedLease.status}</p>
-            </div>
-          )}
-
-        </form>
+          <StatCard
+            icon={<FaUndoAlt />}
+            tone="blue"
+            label="Total Payment Records"
+            value={staffStats.total}
+          />
+        </div>
       )}
 
       {!isTenant && leases.length > 0 && (
-        <div style={{ marginBottom: "30px" }}>
-          <h3>Lease Balances</h3>
+        <>
+          <h3 className="section-title">Lease Balances</h3>
 
           <table border="1" cellPadding="10" width="100%">
             <thead>
@@ -407,25 +640,25 @@ function Payments() {
                     <td>{lease.tenant_name}</td>
                     <td>{lease.unit_number}</td>
                     <td>{lease.duration_months} month(s)</td>
-                    <td>KES {Number(lease.total_rent_due).toLocaleString()}</td>
-                    <td>KES {Number(lease.total_rent_paid).toLocaleString()}</td>
-                    <td
-                      style={{
-                        color: isCredit ? "#16a34a" : "#f97316",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      KES {Math.abs(balance).toLocaleString()} ({isCredit ? "Credit" : "Debit"})
+                    <td>{currency(lease.total_rent_due)}</td>
+                    <td>{currency(lease.total_rent_paid)}</td>
+                    <td>
+                      <span className={`badge badge-${isCredit ? "success" : "warning"}`}>
+                        {currency(Math.abs(balance))} ({isCredit ? "Credit" : "Debit"})
+                      </span>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-        </div>
+        </>
       )}
 
-      <div style={{ marginBottom: "15px" }}>
+      <h3 className="section-title">{isTenant ? "Payment History" : "All Payments"}</h3>
+
+      <div className="search-bar">
+        <FaSearch />
         <input
           type="text"
           placeholder={
@@ -435,12 +668,10 @@ function Payments() {
           }
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ width: "100%", maxWidth: "400px", padding: "8px" }}
         />
       </div>
 
       <table border="1" cellPadding="10" width="100%">
-
         <thead>
           <tr>
             {!isTenant && <th>Tenant</th>}
@@ -450,15 +681,14 @@ function Payments() {
             <th>Method</th>
             <th>Reference</th>
             <th>Status</th>
-            {!isTenant && <th>Actions</th>}
+            <th>Actions</th>
           </tr>
         </thead>
 
         <tbody>
-
           {filteredPayments.length === 0 && (
             <tr>
-              <td colSpan={isTenant ? 6 : 8} style={{ textAlign: "center", padding: "15px" }}>
+              <td colSpan={isTenant ? 7 : 8} style={{ textAlign: "center", padding: "15px" }}>
                 {search ? "No payments match your search." : "No payment records found."}
               </td>
             </tr>
@@ -468,47 +698,50 @@ function Payments() {
             <tr key={payment.id}>
               {!isTenant && <td>{payment.tenant_name}</td>}
               <td>{payment.unit_number}</td>
-              <td>KES {payment.amount}</td>
-              <td>{payment.payment_date}</td>
-              <td>{payment.payment_method}</td>
+              <td>{currency(payment.amount, 2)}</td>
+              <td>{formatDate(payment.payment_date)}</td>
+              <td>
+                <MethodBadge method={payment.payment_method} />
+              </td>
               <td>{payment.reference_number}</td>
-              <td>{payment.status}</td>
-
-              {!isTenant && (
-                <td>
+              <td>
+                <StatusBadge status={payment.status} />
+              </td>
+              <td>
+                {payment.status === "PAID" && (
                   <button
-                    onClick={() => editPayment(payment)}
-                    style={{
-                      backgroundColor: "blue",
-                      color: "white",
-                      border: "none",
-                      padding: "5px 10px",
-                      marginRight: "5px",
-                      cursor: "pointer",
-                    }}
+                    className="icon-btn receipt"
+                    title="Download receipt"
+                    onClick={() => downloadReceipt(payment)}
+                    disabled={receiptLoadingId === payment.id}
                   >
-                    Edit
+                    <FaReceipt />
                   </button>
+                )}
 
-                  <button
-                    onClick={() => deletePayment(payment.id)}
-                    style={{
-                      backgroundColor: "red",
-                      color: "white",
-                      border: "none",
-                      padding: "5px 10px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Delete
-                  </button>
-                </td>
-              )}
+                {!isTenant && (
+                  <>
+                    <button
+                      className="icon-btn edit"
+                      title="Edit payment"
+                      onClick={() => openEditModal(payment)}
+                    >
+                      <FaEdit />
+                    </button>
+
+                    <button
+                      className="icon-btn delete"
+                      title="Delete payment"
+                      onClick={() => setDeleteTarget(payment)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </>
+                )}
+              </td>
             </tr>
           ))}
-
         </tbody>
-
       </table>
 
       <Pagination
@@ -520,6 +753,32 @@ function Payments() {
         onPageSizeChange={setPageSize}
       />
 
+      <PaymentFormModal
+        open={modalOpen}
+        onClose={closeModal}
+        onSubmit={handleSubmit}
+        formData={formData}
+        onChange={handleChange}
+        leases={leases}
+        selectedLease={selectedLease}
+        editingId={editingId}
+        submitting={submitting}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Payment"
+        message={
+          deleteTarget
+            ? `Are you sure you want to delete the payment of ${currency(
+                deleteTarget.amount,
+                2
+              )} (ref: ${deleteTarget.reference_number})? This cannot be undone.`
+            : ""
+        }
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => !deleting && setDeleteTarget(null)}
+      />
     </div>
   );
 }

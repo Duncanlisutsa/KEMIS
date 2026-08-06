@@ -3,6 +3,7 @@ from io import BytesIO
 
 from django.http import FileResponse, Http404
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -896,5 +897,105 @@ def my_payments_pdf(request):
     buffer.seek(0)
 
     filename = f"KEMIS_Payment_History_{user.username}_{timezone.now().strftime('%Y%m%d')}.pdf"
+
+    
+
+    return FileResponse(buffer, as_attachment=True, filename=filename)
+
+    @api_view(['GET'])
+@permission_classes([IsAdminOrManagerOrTenantOrLandlordReadOnly])
+def payment_receipt_pdf(request, payment_id):
+    user = request.user
+
+    if user.role == "ADMIN":
+        queryset = Payment.objects.all()
+    elif user.role == "MANAGER":
+        queryset = Payment.objects.filter(lease__unit__estate__manager=user)
+    elif user.role == "TENANT":
+        queryset = Payment.objects.filter(lease__tenant=user.tenant)
+    elif user.role == "LANDLORD":
+        queryset = Payment.objects.filter(lease__unit__estate__owner=user)
+    else:
+        queryset = Payment.objects.none()
+
+    payment = get_object_or_404(
+        queryset.select_related("lease__unit__estate", "lease__tenant__user"),
+        pk=payment_id,
+    )
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        topMargin=2.5 * cm,
+        bottomMargin=2.5 * cm,
+        leftMargin=2.5 * cm,
+        rightMargin=2.5 * cm,
+    )
+
+    styles = getSampleStyleSheet()
+    elements = []
+
+    tenant = payment.lease.tenant
+    tenant_name = tenant.user.get_full_name() or tenant.user.username
+    unit = payment.lease.unit
+
+    elements.append(Paragraph("KABRAS ESTATE", styles["Title"]))
+    elements.append(Paragraph("Official Payment Receipt", styles["Heading2"]))
+    elements.append(Spacer(1, 4))
+    elements.append(
+        Paragraph(f"Issued on {timezone.now().strftime('%d %B %Y, %H:%M')}", styles["Normal"])
+    )
+    elements.append(Spacer(1, 20))
+
+    status_colors = {
+        "PAID": colors.HexColor("#16a34a"),
+        "PENDING": colors.HexColor("#d97706"),
+        "FAILED": colors.HexColor("#b91c1c"),
+        "REFUNDED": colors.HexColor("#475569"),
+    }
+
+    details = [
+        ["Receipt No.", payment.reference_number],
+        ["Tenant", tenant_name],
+        ["Unit", f"{unit.unit_number} \u2014 {unit.estate.name}"],
+        ["Payment Date", payment.payment_date.strftime("%d %B %Y")],
+        ["Payment Type", payment.get_payment_type_display()],
+        ["Payment Method", payment.get_payment_method_display()],
+        ["Status", payment.get_status_display()],
+        ["Amount Paid", f"KES {payment.amount:,.2f}"],
+    ]
+
+    table = Table(details, colWidths=[5 * cm, 10 * cm])
+    table.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+        ("FONTNAME", (1, 0), (1, -1), "Helvetica"),
+        ("FONTSIZE", (0, 0), (-1, -1), 10.5),
+        ("TEXTCOLOR", (0, 0), (0, -1), colors.HexColor("#475569")),
+        ("TEXTCOLOR", (1, 0), (1, -1), colors.HexColor("#0f172a")),
+        ("LINEBELOW", (0, 0), (-1, -2), 0.5, colors.HexColor("#e2e8f0")),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("TEXTCOLOR", (1, 6), (1, 6), status_colors.get(payment.status, colors.HexColor("#0f172a"))),
+        ("FONTNAME", (1, 6), (1, 6), "Helvetica-Bold"),
+        ("FONTSIZE", (1, 7), (1, 7), 14),
+        ("FONTNAME", (1, 7), (1, 7), "Helvetica-Bold"),
+    ]))
+    elements.append(table)
+
+    elements.append(Spacer(1, 30))
+    elements.append(
+        Paragraph(
+            "This receipt was generated automatically by KEMIS (Kabras Estate "
+            "Management Information System) and is valid without a signature.",
+            styles["Normal"],
+        )
+    )
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    filename = f"KEMIS_Receipt_{payment.reference_number}.pdf"
 
     return FileResponse(buffer, as_attachment=True, filename=filename)

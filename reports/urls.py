@@ -10,6 +10,7 @@ from .views import (
     maintenance_summary,
     maintenance_summary_pdf,
     my_payments_pdf,
+    payment_receipt_pdf,
 )
 
 urlpatterns = [
@@ -23,4 +24,5 @@ urlpatterns = [
     path('maintenance-summary/', maintenance_summary, name='maintenance-summary'),
     path('maintenance-summary/pdf/', maintenance_summary_pdf, name='maintenance-summary-pdf'),
     path('my-payments/pdf/', my_payments_pdf, name='my-payments-pdf'),
+    path('payment-receipt/<int:payment_id>/pdf/', payment_receipt_pdf, name='payment-receipt-pdf'),
 ]

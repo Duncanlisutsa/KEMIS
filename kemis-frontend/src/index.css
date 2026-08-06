@@ -224,6 +224,7 @@ form textarea {
 .stat-card.tone-teal .stat-icon { background: #0d9488; }
 .stat-card.tone-amber .stat-icon { background: #d97706; }
 .stat-card.tone-purple .stat-icon { background: #7c3aed; }
+.stat-card.tone-red .stat-icon { background: #dc2626; }
 .stat-card.tone-default .stat-icon { background: #475569; }
 
 .stat-body {
@@ -595,4 +596,158 @@ form textarea {
 
 table td, table th {
   color: #0f172a;
+}
+
+/* ---------- Badges ---------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.badge-success { background: #dcfce7; color: #16a34a; }
+.badge-warning { background: #fef3c7; color: #d97706; }
+.badge-danger  { background: #fee2e2; color: #b91c1c; }
+.badge-info    { background: #dbeafe; color: #2563eb; }
+.badge-neutral { background: #e2e8f0; color: #475569; }
+
+/* ---------- Payments page ---------- */
+
+.payments-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.payments-toolbar-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  color: #2563eb;
+  border: 1px solid #2563eb;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.btn-outline:hover {
+  background: #eff6ff;
+}
+
+.btn-outline:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  margin-right: 6px;
+}
+
+.icon-btn:last-child {
+  margin-right: 0;
+}
+
+.icon-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.icon-btn.edit { background: #2563eb; }
+.icon-btn.edit:hover { background: #1d4ed8; }
+
+.icon-btn.delete { background: #dc2626; }
+.icon-btn.delete:hover { background: #b91c1c; }
+
+.icon-btn.receipt { background: #16a34a; }
+.icon-btn.receipt:hover { background: #15803d; }
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  max-width: 420px;
+  margin-bottom: 16px;
+}
+
+.search-bar svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.search-bar input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 14px;
+}
+
+.section-title {
+  margin: 30px 0 12px;
+  color: #0f172a;
+  font-size: 16px;
 }
