@@ -902,7 +902,7 @@ def my_payments_pdf(request):
 
     return FileResponse(buffer, as_attachment=True, filename=filename)
 
-    @api_view(['GET'])
+@api_view(['GET'])
 @permission_classes([IsAdminOrManagerOrTenantOrLandlordReadOnly])
 def payment_receipt_pdf(request, payment_id):
     user = request.user
