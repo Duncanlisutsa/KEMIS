@@ -1,5 +1,6 @@
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 import { PERMISSIONS } from "../config/permissions";
 
@@ -16,11 +17,14 @@ import {
   FaChartBar,
   FaUserTie,
   FaClipboardList,
+  FaSun,
+  FaMoon,
 } from "react-icons/fa";
 
 function Sidebar({ isOpen, onNavigate }) {
 
   const { user, loading } = useContext(AuthContext);
+  const { theme, toggleTheme } = useTheme();
 
   if (loading) {
     return (
@@ -107,7 +111,37 @@ function Sidebar({ isOpen, onNavigate }) {
         <small>{user.role}</small>
       </p>
 
-      <NotificationBell />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "10px",
+        }}
+      >
+        <NotificationBell />
+
+        <button
+          onClick={toggleTheme}
+          aria-label="Toggle light/dark mode"
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "34px",
+            height: "34px",
+            borderRadius: "6px",
+            border: "1px solid #334155",
+            background: "transparent",
+            color: "white",
+            cursor: "pointer",
+            fontSize: "14px",
+          }}
+        >
+          {theme === "dark" ? <FaSun /> : <FaMoon />}
+        </button>
+      </div>
 
       <nav
         style={{
