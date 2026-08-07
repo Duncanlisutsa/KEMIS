@@ -17,9 +17,8 @@ import {
   FaChartBar,
   FaUserTie,
   FaClipboardList,
-  FaSun,
-  FaMoon,
 } from "react-icons/fa";
+import { IoSunny, IoMoonOutline } from "react-icons/io5";
 
 function Sidebar({ isOpen, onNavigate }) {
 
@@ -139,7 +138,7 @@ function Sidebar({ isOpen, onNavigate }) {
             fontSize: "14px",
           }}
         >
-          {theme === "dark" ? <FaSun /> : <FaMoon />}
+          {theme === "dark" ? <IoSunny /> : <IoMoonOutline />}
         </button>
       </div>
 
