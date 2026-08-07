@@ -209,6 +209,12 @@ function Login() {
                 width: "100%",
                 padding: "10px",
                 cursor: "pointer",
+                background: BRAND_COLOR,
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                fontSize: "14px",
+                fontWeight: 600,
               }}
             >
               Login
