@@ -4,7 +4,6 @@ import { AuthContext } from "../context/AuthContext";
 import { PERMISSIONS } from "../config/permissions";
 
 import { Link } from "react-router-dom";
-import logo from "../assets/logo.png";
 import NotificationBell from "./NotificationBell";
 import {
   FaHome,
@@ -77,34 +76,19 @@ function Sidebar({ isOpen, onNavigate }) {
       }}
     >
       <>
-        <img
-          src={logo}
-          alt="Kabras Estate logo"
-          style={{ height: "60px", marginBottom: "10px" }}
-        />
-
         <h2
           style={{
-            marginBottom: "5px",
+            marginTop: 0,
+            marginBottom: "10px",
           }}
         >
           KEMIS
         </h2>
 
-        <p
-          style={{
-            fontSize: "12px",
-            color: "#94a3b8",
-            marginBottom: "20px",
-          }}
-        >
-          Kabras Estate Management Information System
-        </p>
-
         <hr
           style={{
             borderColor: "#334155",
-            marginBottom: "20px",
+            marginBottom: "10px",
           }}
         />
       </>
@@ -113,7 +97,7 @@ function Sidebar({ isOpen, onNavigate }) {
         style={{
           fontSize: "14px",
           color: "#cbd5e1",
-          marginBottom: "20px",
+          marginBottom: "10px",
         }}
       >
         Welcome,
@@ -133,7 +117,7 @@ function Sidebar({ isOpen, onNavigate }) {
       >
         <ul style={{ listStyle: "none", padding: 0 }}>
           {PERMISSIONS.dashboard.includes(user.role) && (
-            <li style={{ margin: "20px 0" }}>
+            <li style={{ margin: "10px 0" }}>
               <Link to="/" style={linkStyle} onClick={onNavigate}>
                 <FaHome /> Dashboard
               </Link>
@@ -141,7 +125,7 @@ function Sidebar({ isOpen, onNavigate }) {
           )}
 
           {PERMISSIONS.estates.includes(user.role) && (
-            <li style={{ margin: "20px 0" }}>
+            <li style={{ margin: "10px 0" }}>
               <Link to="/estates" style={linkStyle} onClick={onNavigate}>
                 <FaBuilding /> Estates
               </Link>
@@ -149,7 +133,7 @@ function Sidebar({ isOpen, onNavigate }) {
           )}
 
           {PERMISSIONS.units.includes(user.role) && (
-            <li style={{ margin: "20px 0" }}>
+            <li style={{ margin: "10px 0" }}>
               <Link to="/units" style={linkStyle} onClick={onNavigate}>
                 <FaDoorOpen /> Units
               </Link>
@@ -157,7 +141,7 @@ function Sidebar({ isOpen, onNavigate }) {
           )}
 
           {PERMISSIONS.tenants.includes(user.role) && (
-            <li style={{ margin: "20px 0" }}>
+            <li style={{ margin: "10px 0" }}>
               <Link to="/tenants" style={linkStyle} onClick={onNavigate}>
                 <FaUsers /> Tenants
               </Link>
@@ -165,7 +149,7 @@ function Sidebar({ isOpen, onNavigate }) {
           )}
 
           {PERMISSIONS.leases.includes(user.role) && (
-            <li style={{ margin: "20px 0" }}>
+            <li style={{ margin: "10px 0" }}>
               <Link to="/leases" style={linkStyle} onClick={onNavigate}>
                 <FaFileContract /> Leases
               </Link>
@@ -173,7 +157,7 @@ function Sidebar({ isOpen, onNavigate }) {
           )}
 
           {PERMISSIONS.payments.includes(user.role) && (
-            <li style={{ margin: "20px 0" }}>
+            <li style={{ margin: "10px 0" }}>
               <Link to="/payments" style={linkStyle} onClick={onNavigate}>
                 <FaMoneyBillWave /> Payments
               </Link>
@@ -181,7 +165,7 @@ function Sidebar({ isOpen, onNavigate }) {
           )}
 
           {PERMISSIONS.maintenance.includes(user.role) && (
-            <li style={{ margin: "20px 0" }}>
+            <li style={{ margin: "10px 0" }}>
               <Link to="/maintenance" style={linkStyle} onClick={onNavigate}>
                 <FaTools /> Maintenance
               </Link>
@@ -189,7 +173,7 @@ function Sidebar({ isOpen, onNavigate }) {
           )}
 
           {PERMISSIONS.reports.includes(user.role) && (
-            <li style={{ margin: "20px 0" }}>
+            <li style={{ margin: "10px 0" }}>
               <Link to="/reports" style={linkStyle} onClick={onNavigate}>
                 <FaChartBar /> Reports
               </Link>
@@ -197,7 +181,7 @@ function Sidebar({ isOpen, onNavigate }) {
           )}
 
           {PERMISSIONS.staffAccounts.includes(user.role) && (
-            <li style={{ margin: "20px 0" }}>
+            <li style={{ margin: "10px 0" }}>
               <Link to="/staff-accounts" style={linkStyle} onClick={onNavigate}>
                 <FaUserTie /> Managers & Landlords
               </Link>
@@ -205,7 +189,7 @@ function Sidebar({ isOpen, onNavigate }) {
           )}
 
           {PERMISSIONS.auditLog.includes(user.role) && (
-            <li style={{ margin: "20px 0" }}>
+            <li style={{ margin: "10px 0" }}>
               <Link to="/audit-log" style={linkStyle} onClick={onNavigate}>
                 <FaClipboardList /> Audit Log
               </Link>
