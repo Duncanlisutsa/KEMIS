@@ -158,6 +158,12 @@ STORAGES = {
 
 AUTH_USER_MODEL = 'accounts.User'
 
+# Shared M-Pesa paybill details shown on every tenant's payment dashboard.
+# Both are env-overridable so they can be swapped once a dedicated
+# Safaricom Till/Paybill is registered, without a code change.
+KEMIS_PAYBILL_NUMBER = env('KEMIS_PAYBILL_NUMBER', default='222111')
+KEMIS_ACCOUNT_NUMBER = env('KEMIS_ACCOUNT_NUMBER', default='12345678')
+
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
     "http://localhost:5173",
     "http://127.0.0.1:5173",

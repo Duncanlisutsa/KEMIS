@@ -21,6 +21,9 @@ import {
   FaWallet,
   FaSearch,
   FaExclamationCircle,
+  FaCopy,
+  FaCheckCircle,
+  FaBan,
 } from "react-icons/fa";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
@@ -36,6 +39,17 @@ const EMPTY_FORM = {
   payment_type: "RENT",
   reference_number: "",
   status: "PAID",
+};
+
+const EMPTY_SUBMIT_FORM = {
+  reference_number: "",
+  payment_type: "RENT",
+};
+
+const EMPTY_APPROVE_FORM = {
+  amount: "",
+  payment_date: new Date().toISOString().slice(0, 10),
+  payment_type: "RENT",
 };
 
 const currency = (value, decimals = 0) =>
@@ -71,8 +85,8 @@ function StatCard({ icon, label, value, tone = "default" }) {
 
 const STATUS_META = {
   PAID: { label: "Paid", tone: "success" },
-  PENDING: { label: "Pending", tone: "warning" },
-  FAILED: { label: "Failed", tone: "danger" },
+  PENDING: { label: "Pending Approval", tone: "warning" },
+  FAILED: { label: "Rejected", tone: "danger" },
   REFUNDED: { label: "Refunded", tone: "neutral" },
 };
 
@@ -103,6 +117,241 @@ function PaymentsSkeleton({ isTenant }) {
       </div>
       <div className="skeleton" style={{ height: "300px" }} />
     </div>
+  );
+}
+
+// ---------- Tenant: paybill panel + submit-payment modal ----------
+
+function PaybillPanel({ paybillInfo, onOpenSubmit, onCopy }) {
+  if (!paybillInfo) return null;
+
+  return (
+    <div className="panel" style={{ marginBottom: "30px" }}>
+      <strong className="panel-title" style={{ display: "block" }}>
+        Pay Your Rent via M-Pesa
+      </strong>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "16px",
+          marginBottom: "18px",
+        }}
+      >
+        <div>
+          <span style={{ display: "block", fontSize: "13px", color: "var(--text-muted)" }}>
+            Paybill Number
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "22px", fontWeight: 700 }}>
+              {paybillInfo.paybill_number}
+            </span>
+            <button
+              type="button"
+              className="icon-btn edit"
+              title="Copy paybill number"
+              onClick={() => onCopy(paybillInfo.paybill_number, "Paybill number")}
+            >
+              <FaCopy />
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <span style={{ display: "block", fontSize: "13px", color: "var(--text-muted)" }}>
+            Account Number
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "22px", fontWeight: 700 }}>
+              {paybillInfo.account_number}
+            </span>
+            <button
+              type="button"
+              className="icon-btn edit"
+              title="Copy account number"
+              onClick={() => onCopy(paybillInfo.account_number, "Account number")}
+            >
+              <FaCopy />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "16px" }}>
+        Go to M-Pesa &rarr; Lipa na M-Pesa &rarr; Pay Bill, enter the paybill and account
+        numbers above, then come back and submit the M-Pesa transaction code below. Your
+        payment will show as <strong>Pending Approval</strong> until your manager confirms
+        it.
+      </p>
+
+      <button className="btn-primary" onClick={onOpenSubmit}>
+        <FaCheckCircle /> I've Paid - Submit Transaction Code
+      </button>
+    </div>
+  );
+}
+
+function SubmitPaymentModal({ open, onClose, onSubmit, formData, onChange, submitting }) {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Submit Your Payment</DialogTitle>
+
+      <DialogContent>
+        <div style={{ display: "grid", gap: "16px", marginTop: "8px" }}>
+          <TextField
+            label="M-Pesa Transaction Code"
+            name="reference_number"
+            value={formData.reference_number}
+            onChange={onChange}
+            placeholder="e.g. QCX1A2B3C4"
+            required
+            fullWidth
+            autoFocus
+          />
+
+          <TextField
+            select
+            label="What is this payment for?"
+            name="payment_type"
+            value={formData.payment_type}
+            onChange={onChange}
+            fullWidth
+          >
+            <MenuItem value="RENT">Rent</MenuItem>
+            <MenuItem value="DEPOSIT">Deposit</MenuItem>
+          </TextField>
+        </div>
+
+        <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "16px" }}>
+          This will be marked <strong>Pending Approval</strong> until your manager confirms
+          the amount against the M-Pesa statement.
+        </p>
+      </DialogContent>
+
+      <DialogActions style={{ padding: "16px 24px" }}>
+        <Button onClick={onClose} disabled={submitting}>
+          Cancel
+        </Button>
+        <Button variant="contained" onClick={onSubmit} disabled={submitting}>
+          {submitting ? "Submitting..." : "Submit Payment"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+// ---------- Manager/Admin: approve + reject modals ----------
+
+function ApprovePaymentModal({ open, onClose, onSubmit, formData, onChange, target, submitting }) {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Approve Payment</DialogTitle>
+
+      <DialogContent>
+        {target && (
+          <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "16px" }}>
+            {target.tenant_name} - {target.unit_number} - transaction code{" "}
+            <strong>{target.reference_number}</strong>
+          </p>
+        )}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "16px",
+          }}
+        >
+          <TextField
+            label="Amount (KES)"
+            type="number"
+            name="amount"
+            value={formData.amount}
+            onChange={onChange}
+            required
+            fullWidth
+            autoFocus
+            style={{ gridColumn: "1 / -1" }}
+          />
+
+          <TextField
+            label="Payment Date"
+            type="date"
+            name="payment_date"
+            value={formData.payment_date}
+            onChange={onChange}
+            required
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+          />
+
+          <TextField
+            select
+            label="Payment Type"
+            name="payment_type"
+            value={formData.payment_type}
+            onChange={onChange}
+            fullWidth
+          >
+            <MenuItem value="RENT">Rent</MenuItem>
+            <MenuItem value="DEPOSIT">Deposit</MenuItem>
+          </TextField>
+        </div>
+
+        <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "16px" }}>
+          Confirm these figures against the M-Pesa statement. Once approved, the tenant
+          will see this payment as Paid.
+        </p>
+      </DialogContent>
+
+      <DialogActions style={{ padding: "16px 24px" }}>
+        <Button onClick={onClose} disabled={submitting}>
+          Cancel
+        </Button>
+        <Button variant="contained" color="success" onClick={onSubmit} disabled={submitting}>
+          {submitting ? "Approving..." : "Approve Payment"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function RejectPaymentModal({ open, onClose, onSubmit, reason, onChangeReason, target, submitting }) {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Reject Payment</DialogTitle>
+
+      <DialogContent>
+        {target && (
+          <p style={{ fontSize: "14px", color: "var(--text-muted)", marginBottom: "16px" }}>
+            {target.tenant_name} - {target.unit_number} - transaction code{" "}
+            <strong>{target.reference_number}</strong>
+          </p>
+        )}
+
+        <TextField
+          label="Reason for rejection"
+          value={reason}
+          onChange={onChangeReason}
+          placeholder="e.g. Transaction code not found in the M-Pesa statement"
+          required
+          fullWidth
+          multiline
+          minRows={3}
+          autoFocus
+        />
+      </DialogContent>
+
+      <DialogActions style={{ padding: "16px 24px" }}>
+        <Button onClick={onClose} disabled={submitting}>
+          Cancel
+        </Button>
+        <Button variant="contained" color="error" onClick={onSubmit} disabled={submitting}>
+          {submitting ? "Rejecting..." : "Reject Payment"}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
@@ -275,9 +524,11 @@ function Payments() {
   const { user } = useContext(AuthContext);
   const { showNotification } = useNotification();
   const isTenant = user?.role === "TENANT";
+  const canApprove = user?.role === "MANAGER" || user?.role === "ADMIN";
 
   const [payments, setPayments] = useState([]);
   const [leases, setLeases] = useState([]);
+  const [paybillInfo, setPaybillInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -297,15 +548,29 @@ function Payments() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  // Tenant: submit-payment modal
+  const [submitModalOpen, setSubmitModalOpen] = useState(false);
+  const [submitForm, setSubmitForm] = useState(EMPTY_SUBMIT_FORM);
+  const [submittingPayment, setSubmittingPayment] = useState(false);
+
+  // Manager/Admin: approve modal
+  const [approveTarget, setApproveTarget] = useState(null);
+  const [approveForm, setApproveForm] = useState(EMPTY_APPROVE_FORM);
+  const [approving, setApproving] = useState(false);
+
+  // Manager/Admin: reject modal
+  const [rejectTarget, setRejectTarget] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejecting, setRejecting] = useState(false);
+
   const fetchAll = async () => {
     setError(null);
     try {
-      const [paymentsRes, leasesRes] = await Promise.all([
-        api.get("payments/"),
-        api.get("leases/"),
-      ]);
+      const calls = [api.get("payments/"), api.get("leases/"), api.get("payments/info/")];
+      const [paymentsRes, leasesRes, infoRes] = await Promise.all(calls);
       setPayments(paymentsRes.data);
       setLeases(leasesRes.data);
+      setPaybillInfo(infoRes.data);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching payments:", err);
@@ -350,8 +615,8 @@ function Payments() {
   const openEditModal = (payment) => {
     setFormData({
       lease: payment.lease,
-      amount: payment.amount,
-      payment_date: payment.payment_date,
+      amount: payment.amount ?? "",
+      payment_date: payment.payment_date ?? "",
       payment_method: payment.payment_method,
       payment_type: payment.payment_type,
       reference_number: payment.reference_number,
@@ -450,6 +715,143 @@ function Payments() {
     );
   };
 
+  // ---- Tenant: submit payment ----
+
+  const openSubmitModal = () => {
+    setSubmitForm(EMPTY_SUBMIT_FORM);
+    setSubmitModalOpen(true);
+  };
+
+  const closeSubmitModal = () => {
+    if (submittingPayment) return;
+    setSubmitModalOpen(false);
+    setSubmitForm(EMPTY_SUBMIT_FORM);
+  };
+
+  const handleSubmitFormChange = (e) => {
+    const { name, value } = e.target;
+    setSubmitForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmitPayment = async () => {
+    if (!submitForm.reference_number.trim()) {
+      showNotification("Enter the M-Pesa transaction code.", "error");
+      return;
+    }
+
+    setSubmittingPayment(true);
+    try {
+      await api.post("payments/", submitForm);
+      showNotification(
+        "Payment submitted! It will show as paid once your manager approves it.",
+        "success"
+      );
+      closeSubmitModal();
+      fetchPayments();
+    } catch (err) {
+      console.error("Error submitting payment:", err);
+      const data = err.response?.data;
+      const message =
+        data?.reference_number?.[0] || data?.detail || "Failed to submit payment.";
+      showNotification(message, "error");
+    } finally {
+      setSubmittingPayment(false);
+    }
+  };
+
+  const handleCopy = async (value, label) => {
+    try {
+      await navigator.clipboard.writeText(String(value));
+      showNotification(`${label} copied to clipboard.`, "success");
+    } catch (err) {
+      console.error("Clipboard copy failed:", err);
+    }
+  };
+
+  // ---- Manager/Admin: approve payment ----
+
+  const openApproveModal = (payment) => {
+    setApproveTarget(payment);
+    setApproveForm({
+      amount: "",
+      payment_date: new Date().toISOString().slice(0, 10),
+      payment_type: payment.payment_type || "RENT",
+    });
+  };
+
+  const closeApproveModal = () => {
+    if (approving) return;
+    setApproveTarget(null);
+    setApproveForm(EMPTY_APPROVE_FORM);
+  };
+
+  const handleApproveFormChange = (e) => {
+    const { name, value } = e.target;
+    setApproveForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleApprove = async () => {
+    if (!approveTarget) return;
+
+    if (!approveForm.amount || Number(approveForm.amount) <= 0) {
+      showNotification("Enter the amount the tenant paid.", "error");
+      return;
+    }
+
+    setApproving(true);
+    try {
+      await api.post(`payments/${approveTarget.id}/approve/`, approveForm);
+      showNotification("Payment approved and marked as paid.", "success");
+      closeApproveModal();
+      fetchPayments();
+    } catch (err) {
+      console.error("Error approving payment:", err);
+      const data = err.response?.data;
+      const message = data?.amount?.[0] || data?.detail || "Failed to approve payment.";
+      showNotification(message, "error");
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  // ---- Manager/Admin: reject payment ----
+
+  const openRejectModal = (payment) => {
+    setRejectTarget(payment);
+    setRejectReason("");
+  };
+
+  const closeRejectModal = () => {
+    if (rejecting) return;
+    setRejectTarget(null);
+    setRejectReason("");
+  };
+
+  const handleReject = async () => {
+    if (!rejectTarget) return;
+
+    if (!rejectReason.trim()) {
+      showNotification("Let the tenant know why it was rejected.", "error");
+      return;
+    }
+
+    setRejecting(true);
+    try {
+      await api.post(`payments/${rejectTarget.id}/reject/`, {
+        rejection_reason: rejectReason,
+      });
+      showNotification("Payment rejected.", "success");
+      closeRejectModal();
+      fetchPayments();
+    } catch (err) {
+      console.error("Error rejecting payment:", err);
+      const message = err.response?.data?.detail || "Failed to reject payment.";
+      showNotification(message, "error");
+    } finally {
+      setRejecting(false);
+    }
+  };
+
   const filteredPayments = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return payments;
@@ -492,8 +894,7 @@ function Payments() {
       .filter((p) => p.status === "PAID")
       .reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
-    const pending = payments.filter((p) => p.status === "PENDING");
-    const pendingAmount = pending.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const pendingCount = payments.filter((p) => p.status === "PENDING").length;
 
     const failedOrRefunded = payments.filter(
       (p) => p.status === "FAILED" || p.status === "REFUNDED"
@@ -501,8 +902,7 @@ function Payments() {
 
     return {
       collected,
-      pendingAmount,
-      pendingCount: pending.length,
+      pendingCount,
       failedOrRefunded,
       total: payments.length,
     };
@@ -539,8 +939,8 @@ function Payments() {
           <h1>{isTenant ? "My Payments" : "Payments"}</h1>
           <p className="dashboard-subtitle">
             {isTenant
-              ? "Track your rent payments and download receipts."
-              : "Record, review, and manage tenant payments."}
+              ? "Pay your rent via M-Pesa and track your payment history."
+              : "Approve tenant payments and record manual entries."}
           </p>
         </div>
 
@@ -563,6 +963,14 @@ function Payments() {
           )}
         </div>
       </div>
+
+      {isTenant && (
+        <PaybillPanel
+          paybillInfo={paybillInfo}
+          onOpenSubmit={openSubmitModal}
+          onCopy={handleCopy}
+        />
+      )}
 
       {isTenant && leases.length > 0 && (
         <div className="dashboard-grid" style={{ marginBottom: "30px" }}>
@@ -596,13 +1004,13 @@ function Payments() {
           <StatCard
             icon={<FaClock />}
             tone="amber"
-            label={`Pending (${staffStats.pendingCount})`}
-            value={currency(staffStats.pendingAmount)}
+            label="Awaiting Approval"
+            value={staffStats.pendingCount}
           />
           <StatCard
             icon={<FaTimesCircle />}
             tone="red"
-            label="Failed / Refunded"
+            label="Rejected / Refunded"
             value={staffStats.failedOrRefunded}
           />
           <StatCard
@@ -679,7 +1087,7 @@ function Payments() {
             <th>Amount</th>
             <th>Date</th>
             <th>Method</th>
-            <th>Reference</th>
+            <th>Transaction Code</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -698,7 +1106,9 @@ function Payments() {
             <tr key={payment.id}>
               {!isTenant && <td>{payment.tenant_name}</td>}
               <td>{payment.unit_number}</td>
-              <td>{currency(payment.amount, 2)}</td>
+              <td>
+                {payment.amount != null ? currency(payment.amount, 2) : "\u2014"}
+              </td>
               <td>{formatDate(payment.payment_date)}</td>
               <td>
                 <MethodBadge method={payment.payment_method} />
@@ -706,6 +1116,11 @@ function Payments() {
               <td>{payment.reference_number}</td>
               <td>
                 <StatusBadge status={payment.status} />
+                {payment.status === "FAILED" && payment.rejection_reason && (
+                  <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "4px" }}>
+                    {payment.rejection_reason}
+                  </div>
+                )}
               </td>
               <td>
                 {payment.status === "PAID" && (
@@ -717,6 +1132,26 @@ function Payments() {
                   >
                     <FaReceipt />
                   </button>
+                )}
+
+                {canApprove && payment.status === "PENDING" && (
+                  <>
+                    <button
+                      className="icon-btn receipt"
+                      title="Approve payment"
+                      onClick={() => openApproveModal(payment)}
+                    >
+                      <FaCheckCircle />
+                    </button>
+
+                    <button
+                      className="icon-btn delete"
+                      title="Reject payment"
+                      onClick={() => openRejectModal(payment)}
+                    >
+                      <FaBan />
+                    </button>
+                  </>
                 )}
 
                 {!isTenant && (
@@ -765,15 +1200,41 @@ function Payments() {
         submitting={submitting}
       />
 
+      <SubmitPaymentModal
+        open={submitModalOpen}
+        onClose={closeSubmitModal}
+        onSubmit={handleSubmitPayment}
+        formData={submitForm}
+        onChange={handleSubmitFormChange}
+        submitting={submittingPayment}
+      />
+
+      <ApprovePaymentModal
+        open={!!approveTarget}
+        onClose={closeApproveModal}
+        onSubmit={handleApprove}
+        formData={approveForm}
+        onChange={handleApproveFormChange}
+        target={approveTarget}
+        submitting={approving}
+      />
+
+      <RejectPaymentModal
+        open={!!rejectTarget}
+        onClose={closeRejectModal}
+        onSubmit={handleReject}
+        reason={rejectReason}
+        onChangeReason={(e) => setRejectReason(e.target.value)}
+        target={rejectTarget}
+        submitting={rejecting}
+      />
+
       <ConfirmDialog
         open={!!deleteTarget}
         title="Delete Payment"
         message={
           deleteTarget
-            ? `Are you sure you want to delete the payment of ${currency(
-                deleteTarget.amount,
-                2
-              )} (ref: ${deleteTarget.reference_number})? This cannot be undone.`
+            ? `Are you sure you want to delete the payment (ref: ${deleteTarget.reference_number})? This cannot be undone.`
             : ""
         }
         onConfirm={handleDeleteConfirmed}

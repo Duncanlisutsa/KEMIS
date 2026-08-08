@@ -923,6 +923,12 @@ def payment_receipt_pdf(request, payment_id):
         pk=payment_id,
     )
 
+    if payment.status != "PAID" or payment.amount is None or payment.payment_date is None:
+        return Response(
+            {"detail": "A receipt is only available once this payment has been approved."},
+            status=400,
+        )
+
     buffer = BytesIO()
 
     doc = SimpleDocTemplate(
