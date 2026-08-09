@@ -17,6 +17,11 @@ class LeaseSerializer(serializers.ModelSerializer):
         read_only=True,
     )
 
+    electricity_token_number = serializers.CharField(
+        source="unit.electricity_token_number",
+        read_only=True,
+    )
+
     duration_months = serializers.IntegerField(read_only=True)
     total_rent_due = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
@@ -36,6 +41,7 @@ class LeaseSerializer(serializers.ModelSerializer):
             "tenant_name",
             "unit",
             "unit_number",
+            "electricity_token_number",
             "start_date",
             "end_date",
             "monthly_rent",

@@ -13,6 +13,7 @@ import {
   FaCalendarAlt,
   FaExclamationCircle,
   FaCheckCircle,
+  FaBolt,
 } from "react-icons/fa";
 
 const currency = (value) =>
@@ -318,6 +319,12 @@ function Dashboard() {
             label="Unit"
             value={stats.unit_number}
             tone="indigo"
+          />
+          <StatCard
+            icon={<FaBolt />}
+            label="Electricity Token Number"
+            value={stats.electricity_token_number || "Not set"}
+            tone="amber"
           />
           <StatCard
             icon={<FaMoneyBillWave />}

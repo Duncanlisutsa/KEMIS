@@ -160,6 +160,7 @@ def dashboard_statistics(request):
             "has_active_lease": True,
             "estate_name": lease.unit.estate.name,
             "unit_number": lease.unit.unit_number,
+            "electricity_token_number": lease.unit.electricity_token_number,
             "monthly_rent": lease.monthly_rent,
             "lease_start": lease.start_date,
             "lease_end": lease.end_date,

@@ -22,6 +22,7 @@ function Units() {
     unit_type: "",
     rent_amount: "",
     status: "VACANT",
+    electricity_token_number: "",
   });
 
   const [editingId, setEditingId] = useState(null);
@@ -86,6 +87,7 @@ function Units() {
         unit_type: "",
         rent_amount: "",
         status: "VACANT",
+        electricity_token_number: "",
       });
 
       fetchUnits();
@@ -113,6 +115,7 @@ function Units() {
       unit_type: unit.unit_type,
       rent_amount: unit.rent_amount,
       status: unit.status,
+      electricity_token_number: unit.electricity_token_number || "",
     });
   };
 
@@ -235,6 +238,15 @@ function Units() {
           style={{ marginLeft: "10px" }}
         />
 
+        <input
+          type="text"
+          name="electricity_token_number"
+          placeholder="Electricity Token Number"
+          value={formData.electricity_token_number}
+          onChange={handleChange}
+          style={{ marginLeft: "10px" }}
+        />
+
         <select
           name="status"
           value={formData.status}
@@ -314,6 +326,7 @@ function Units() {
             <th>Unit Number</th>
             <th>Type</th>
             <th>Rent</th>
+            <th>Electricity Token</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -322,7 +335,7 @@ function Units() {
         <tbody>
           {visibleUnits.length === 0 && (
             <tr>
-              <td colSpan="6" style={{ textAlign: "center", padding: "15px" }}>
+              <td colSpan="7" style={{ textAlign: "center", padding: "15px" }}>
                 {search ? "No units match your search." : "No units found."}
               </td>
             </tr>
@@ -338,7 +351,7 @@ function Units() {
                 {isNewEstateGroup && (
                   <tr key={`group-${unit.estate}`} style={{ background: "#e2e8f0" }}>
                     <td
-                      colSpan="6"
+                      colSpan="7"
                       style={{
                         fontWeight: "bold",
                         color: "#1e293b",
@@ -355,6 +368,7 @@ function Units() {
                   <td>{unit.unit_number}</td>
                   <td>{unit.unit_type}</td>
                   <td>KES {unit.rent_amount}</td>
+                  <td>{unit.electricity_token_number || "—"}</td>
                   <td>
                     <span
                       style={{

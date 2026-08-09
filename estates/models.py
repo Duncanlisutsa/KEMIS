@@ -74,6 +74,13 @@ class Unit(models.Model):
 
     description = models.TextField(blank=True)
 
+    electricity_token_number = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        help_text="The unit's electricity meter/token number, visible to the tenant."
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
