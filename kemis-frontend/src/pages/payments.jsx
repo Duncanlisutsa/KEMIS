@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -7,6 +7,8 @@ import {
   TextField,
   MenuItem,
   Button,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
 import {
   FaPlus,
@@ -24,6 +26,7 @@ import {
   FaCopy,
   FaCheckCircle,
   FaBan,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
@@ -69,14 +72,17 @@ const formatDate = (value) => {
   });
 };
 
-// ---------- dd/mm/yyyy date field ----------
+// ---------- dd/mm/yyyy date field (with calendar picker) ----------
 // Native <input type="date"> renders its own placeholder/segments, and on
 // several browsers (Safari, Firefox) that placeholder sits in the same
 // spot as the MUI label, so the two visually collide once the field is
-// styled for dark mode. This swaps that native picker for a plain masked
-// text input that always displays and accepts dd/mm/yyyy, while still
-// feeding the same ISO (yyyy-mm-dd) string into formData that the API
-// expects.
+// styled for dark mode. This keeps the native calendar picker (so you can
+// still click a date off a calendar), but the picker itself is hidden and
+// triggered by a calendar icon button — the visible text field always
+// shows dd/mm/yyyy and never renders the browser's own placeholder, so
+// there's nothing left to collide with the label. Typing digits directly
+// into the field still works too. Either way the ISO (yyyy-mm-dd) string
+// the API expects is what gets sent up to formData via onChange.
 
 const isoToDdmmyyyy = (iso) => {
   if (!iso) return "";

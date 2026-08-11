@@ -38,6 +38,7 @@ export function NotificationProvider({ children }) {
           vertical: "top",
           horizontal: "right",
         }}
+        sx={{ zIndex: 9999 }}
       >
         <Alert
           severity={notification.severity}
