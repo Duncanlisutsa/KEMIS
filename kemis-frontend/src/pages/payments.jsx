@@ -69,6 +69,67 @@ const formatDate = (value) => {
   });
 };
 
+// ---------- dd/mm/yyyy date field ----------
+// Native <input type="date"> renders its own placeholder/segments, and on
+// several browsers (Safari, Firefox) that placeholder sits in the same
+// spot as the MUI label, so the two visually collide once the field is
+// styled for dark mode. This swaps that native picker for a plain masked
+// text input that always displays and accepts dd/mm/yyyy, while still
+// feeding the same ISO (yyyy-mm-dd) string into formData that the API
+// expects.
+
+const isoToDdmmyyyy = (iso) => {
+  if (!iso) return "";
+  const match = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return "";
+  const [, yyyy, mm, dd] = match;
+  return `${dd}/${mm}/${yyyy}`;
+};
+
+const ddmmyyyyToIso = (str) => {
+  const match = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return "";
+  const [, dd, mm, yyyy] = match;
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+function DateFieldDDMMYYYY({ label, name, value, onChange, required, style }) {
+  const [text, setText] = useState(() => isoToDdmmyyyy(value));
+
+  useEffect(() => {
+    setText(isoToDdmmyyyy(value));
+  }, [value]);
+
+  const handleInput = (e) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+    let formatted = digits;
+    if (digits.length > 4) {
+      formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+    } else if (digits.length > 2) {
+      formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    }
+    setText(formatted);
+
+    const iso = digits.length === 8 ? ddmmyyyyToIso(formatted) : "";
+    onChange({ target: { name, value: iso } });
+  };
+
+  return (
+    <TextField
+      label={label}
+      name={name}
+      value={text}
+      onChange={handleInput}
+      placeholder="DD/MM/YYYY"
+      required={required}
+      fullWidth
+      style={style}
+      inputProps={{ inputMode: "numeric", maxLength: 10 }}
+      InputLabelProps={{ shrink: true }}
+    />
+  );
+}
+
 // ---------- Reusable pieces ----------
 
 function StatCard({ icon, label, value, tone = "default" }) {
@@ -275,15 +336,12 @@ function ApprovePaymentModal({ open, onClose, onSubmit, formData, onChange, targ
             style={{ gridColumn: "1 / -1" }}
           />
 
-          <TextField
+          <DateFieldDDMMYYYY
             label="Payment Date"
-            type="date"
             name="payment_date"
             value={formData.payment_date}
             onChange={onChange}
             required
-            fullWidth
-            InputLabelProps={{ shrink: true }}
           />
 
           <TextField
@@ -407,15 +465,12 @@ function PaymentFormModal({
             fullWidth
           />
 
-          <TextField
+          <DateFieldDDMMYYYY
             label="Payment Date"
-            type="date"
             name="payment_date"
             value={formData.payment_date}
             onChange={onChange}
             required
-            fullWidth
-            InputLabelProps={{ shrink: true }}
           />
 
           <TextField
