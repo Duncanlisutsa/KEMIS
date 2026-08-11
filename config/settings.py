@@ -162,7 +162,7 @@ AUTH_USER_MODEL = 'accounts.User'
 # Both are env-overridable so they can be swapped once a dedicated
 # Safaricom Till/Paybill is registered, without a code change.
 KEMIS_PAYBILL_NUMBER = env('KEMIS_PAYBILL_NUMBER', default='222111')
-KEMIS_ACCOUNT_NUMBER = env('KEMIS_ACCOUNT_NUMBER', default='12345678')
+KEMIS_ACCOUNT_NUMBER = env('KEMIS_ACCOUNT_NUMBER', default='000000')
 
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
     "http://localhost:5173",
