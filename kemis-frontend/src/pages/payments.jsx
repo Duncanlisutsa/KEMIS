@@ -135,34 +135,33 @@ function DateFieldDDMMYYYY({ label, name, value, onChange, required, style }) {
         placeholder="DD/MM/YYYY"
         required={required}
         fullWidth
-        inputProps={{ inputMode: "numeric", maxLength: 10 }}
-        InputLabelProps={{ shrink: true }}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "rgba(0, 0, 0, 0.54)",
-                }}
-              >
-                <FaCalendarAlt style={{ fontSize: "16px" }} />
-              </span>
-            </InputAdornment>
-          ),
+        slotProps={{
+          htmlInput: { inputMode: "numeric", maxLength: 10 },
+          inputLabel: { shrink: true },
+          input: {
+            endAdornment: (
+              <InputAdornment position="end">
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "rgba(0, 0, 0, 0.54)",
+                  }}
+                >
+                  <FaCalendarAlt style={{ fontSize: "16px" }} />
+                </span>
+              </InputAdornment>
+            ),
+          },
         }}
       />
 
       {/* Real native date input, laid directly on top of the calendar
           icon at normal clickable size but fully transparent. Clicking
           it is a genuine click on an <input type="date">, so every
-          browser opens its own real calendar popup — far more reliable
-          than trying to trigger showPicker() on a near-invisible 1px
-          element, which only ever managed to show the tiny value
-          tooltip instead of the actual calendar. Typing in the visible
-          text field above still works as before since this only covers
+          browser opens its own real calendar popup. Typing in the
+          visible text field above still works, since this only covers
           the icon's small area, not the whole field. */}
       <input
         type="date"
