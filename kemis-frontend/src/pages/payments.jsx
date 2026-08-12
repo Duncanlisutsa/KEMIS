@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -8,7 +8,6 @@ import {
   MenuItem,
   Button,
   InputAdornment,
-  IconButton,
 } from "@mui/material";
 import {
   FaPlus,
@@ -101,7 +100,6 @@ const ddmmyyyyToIso = (str) => {
 
 function DateFieldDDMMYYYY({ label, name, value, onChange, required, style }) {
   const [text, setText] = useState(() => isoToDdmmyyyy(value));
-  const nativeDateRef = useRef(null);
 
   useEffect(() => {
     setText(isoToDdmmyyyy(value));
@@ -127,21 +125,6 @@ function DateFieldDDMMYYYY({ label, name, value, onChange, required, style }) {
     onChange({ target: { name, value: iso } });
   };
 
-  const openCalendar = () => {
-    const el = nativeDateRef.current;
-    if (!el) return;
-    if (typeof el.showPicker === "function") {
-      try {
-        el.showPicker();
-        return;
-      } catch (err) {
-        // fall through to focus/click below
-      }
-    }
-    el.focus();
-    el.click();
-  };
-
   return (
     <div style={{ position: "relative", ...(style || {}) }}>
       <TextField
@@ -157,38 +140,46 @@ function DateFieldDDMMYYYY({ label, name, value, onChange, required, style }) {
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton
-                type="button"
-                onClick={openCalendar}
-                edge="end"
-                size="small"
-                title="Open calendar"
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "rgba(0, 0, 0, 0.54)",
+                }}
               >
                 <FaCalendarAlt style={{ fontSize: "16px" }} />
-              </IconButton>
+              </span>
             </InputAdornment>
           ),
         }}
       />
 
-      {/* Hidden native date input: supplies the actual calendar UI via
-          showPicker(). Kept off-screen so its own placeholder/segments
-          never overlap the label above. */}
+      {/* Real native date input, laid directly on top of the calendar
+          icon at normal clickable size but fully transparent. Clicking
+          it is a genuine click on an <input type="date">, so every
+          browser opens its own real calendar popup — far more reliable
+          than trying to trigger showPicker() on a near-invisible 1px
+          element, which only ever managed to show the tiny value
+          tooltip instead of the actual calendar. Typing in the visible
+          text field above still works as before since this only covers
+          the icon's small area, not the whole field. */}
       <input
-        ref={nativeDateRef}
         type="date"
         value={value || ""}
         onChange={handleNativePick}
-        tabIndex={-1}
-        aria-hidden="true"
+        aria-label={`${label} calendar picker`}
         style={{
           position: "absolute",
-          width: 1,
-          height: 1,
-          opacity: 0,
-          pointerEvents: "none",
-          bottom: 0,
+          top: 0,
           right: 0,
+          width: "44px",
+          height: "100%",
+          opacity: 0,
+          cursor: "pointer",
+          border: "none",
+          padding: 0,
+          margin: 0,
         }}
       />
     </div>
