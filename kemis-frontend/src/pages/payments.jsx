@@ -195,6 +195,20 @@ function DateFieldDDMMYYYY({ label, name, value, onChange, required, style }) {
   );
 }
 
+// ---------- Reusable pieces ----------
+
+function StatCard({ icon, label, value, tone = "default" }) {
+  return (
+    <div className={`stat-card tone-${tone}`}>
+      <div className="stat-icon">{icon}</div>
+      <div className="stat-body">
+        <span className="stat-label">{label}</span>
+        <span className="stat-value">{value}</span>
+      </div>
+    </div>
+  );
+}
+
 const STATUS_META = {
   PAID: { label: "Paid", tone: "success" },
   PENDING: { label: "Pending Approval", tone: "warning" },
