@@ -101,6 +101,7 @@ const ddmmyyyyToIso = (str) => {
 
 function DateFieldDDMMYYYY({ label, name, value, onChange, required, style }) {
   const [text, setText] = useState(() => isoToDdmmyyyy(value));
+  const nativeDateRef = useRef(null);
 
   useEffect(() => {
     setText(isoToDdmmyyyy(value));
@@ -120,32 +121,76 @@ function DateFieldDDMMYYYY({ label, name, value, onChange, required, style }) {
     onChange({ target: { name, value: iso } });
   };
 
-  return (
-    <TextField
-      label={label}
-      name={name}
-      value={text}
-      onChange={handleInput}
-      placeholder="DD/MM/YYYY"
-      required={required}
-      fullWidth
-      style={style}
-      inputProps={{ inputMode: "numeric", maxLength: 10 }}
-      InputLabelProps={{ shrink: true }}
-    />
-  );
-}
+  const handleNativePick = (e) => {
+    const iso = e.target.value;
+    setText(isoToDdmmyyyy(iso));
+    onChange({ target: { name, value: iso } });
+  };
 
-// ---------- Reusable pieces ----------
+  const openCalendar = () => {
+    const el = nativeDateRef.current;
+    if (!el) return;
+    if (typeof el.showPicker === "function") {
+      try {
+        el.showPicker();
+        return;
+      } catch (err) {
+        // fall through to focus/click below
+      }
+    }
+    el.focus();
+    el.click();
+  };
 
-function StatCard({ icon, label, value, tone = "default" }) {
   return (
-    <div className={`stat-card tone-${tone}`}>
-      <div className="stat-icon">{icon}</div>
-      <div className="stat-body">
-        <span className="stat-label">{label}</span>
-        <span className="stat-value">{value}</span>
-      </div>
+    <div style={{ position: "relative", ...(style || {}) }}>
+      <TextField
+        label={label}
+        name={name}
+        value={text}
+        onChange={handleInput}
+        placeholder="DD/MM/YYYY"
+        required={required}
+        fullWidth
+        inputProps={{ inputMode: "numeric", maxLength: 10 }}
+        InputLabelProps={{ shrink: true }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                type="button"
+                onClick={openCalendar}
+                edge="end"
+                size="small"
+                title="Open calendar"
+              >
+                <FaCalendarAlt style={{ fontSize: "16px" }} />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+
+      {/* Hidden native date input: supplies the actual calendar UI via
+          showPicker(). Kept off-screen so its own placeholder/segments
+          never overlap the label above. */}
+      <input
+        ref={nativeDateRef}
+        type="date"
+        value={value || ""}
+        onChange={handleNativePick}
+        tabIndex={-1}
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          width: 1,
+          height: 1,
+          opacity: 0,
+          pointerEvents: "none",
+          bottom: 0,
+          right: 0,
+        }}
+      />
     </div>
   );
 }
