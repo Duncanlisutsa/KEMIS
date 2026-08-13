@@ -692,7 +692,8 @@ function Payments() {
   const { user } = useContext(AuthContext);
   const { showNotification } = useNotification();
   const isTenant = user?.role === "TENANT";
-  const isLandlord = user?.role === "LANDLORD";
+  const canViewAccountInfo =
+    user?.role === "ADMIN" || user?.role === "MANAGER" || user?.role === "LANDLORD";
   const canApprove =
     user?.role === "MANAGER" || user?.role === "ADMIN" || user?.role === "LANDLORD";
 
@@ -1142,7 +1143,7 @@ function Payments() {
         />
       )}
 
-      {isLandlord && (
+      {canViewAccountInfo && (
         <AccountInfoPanel paybillInfo={paybillInfo} onCopy={handleCopy} />
       )}
 
