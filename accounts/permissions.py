@@ -93,3 +93,16 @@ class IsAdminOrManagerOrTenantOrLandlordReadOnly(BasePermission):
             return request.method in SAFE_METHODS
 
         return False
+
+
+class IsAdminOrManagerOrTenantOrLandlord(BasePermission):
+    """
+    Admins, Managers, Tenants and Landlords all have full access at the
+    permission-class level. Further scoping (e.g. a Landlord only acting
+    on payments within their own estate) is enforced in each view.
+    """
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            request.user.role in ["ADMIN", "MANAGER", "TENANT", "LANDLORD"]
+        )

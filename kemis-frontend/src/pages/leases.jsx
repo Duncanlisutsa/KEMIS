@@ -3,9 +3,12 @@ import api from "../services/api";
 import { useNotification } from "../context/NotificationContext";
 import UnitDropdown from "../components/UnitDropdown";
 import Pagination from "../components/Pagination";
+import { AuthContext } from "../context/AuthContext";
 
 function Leases() {
+  const { user } = useContext(AuthContext);
   const { showNotification } = useNotification();
+  const canManage = user?.role === "ADMIN" || user?.role === "MANAGER";
 
   const [leases, setLeases] = useState([]);
   const [tenants, setTenants] = useState([]);
@@ -206,6 +209,7 @@ function Leases() {
     <div>
       <h1>Leases</h1>
 
+      {canManage && (
       <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
 
         <select
@@ -330,6 +334,7 @@ function Leases() {
         )}
 
       </form>
+      )}
 
       <div style={{ marginBottom: "15px" }}>
         <input
@@ -351,14 +356,14 @@ function Leases() {
             <th>Monthly Rent</th>
             <th>Deposit</th>
             <th>Status</th>
-            <th>Actions</th>
+            {canManage && <th>Actions</th>}
           </tr>
         </thead>
 
         <tbody>
           {filteredLeases.length === 0 && (
             <tr>
-              <td colSpan={8} style={{ textAlign: "center", padding: "15px" }}>
+              <td colSpan={canManage ? 8 : 7} style={{ textAlign: "center", padding: "15px" }}>
                 {search ? "No leases match your search." : "No leases found."}
               </td>
             </tr>
@@ -374,6 +379,7 @@ function Leases() {
               <td>KES {lease.security_deposit}</td>
               <td>{lease.status}</td>
 
+              {canManage && (
               <td>
                 <button
                   onClick={() => editLease(lease)}
@@ -401,6 +407,7 @@ function Leases() {
                   Delete
                 </button>
               </td>
+              )}
 
             </tr>
           ))}

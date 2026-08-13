@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Pagination from "../components/Pagination";
 import { useNotification } from "../context/NotificationContext";
+import { AuthContext } from "../context/AuthContext";
 
 
 function Units() {
+  const { user } = useContext(AuthContext);
   const { showNotification } = useNotification();
+  const canManage = user?.role === "ADMIN" || user?.role === "MANAGER";
 
   const [units, setUnits] = useState([]);
   const [estates, setEstates] = useState([]);
@@ -186,6 +189,7 @@ function Units() {
     <div>
       <h1>Units</h1>
 
+      {canManage && (
       <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
 
         <select
@@ -265,6 +269,7 @@ function Units() {
           {editingId ? "Update Unit" : "Add Unit"}
         </button>
       </form>
+      )}
 
       <div
         style={{
@@ -328,14 +333,14 @@ function Units() {
             <th>Rent</th>
             <th>Electricity Token</th>
             <th>Status</th>
-            <th>Actions</th>
+            {canManage && <th>Actions</th>}
           </tr>
         </thead>
 
         <tbody>
           {visibleUnits.length === 0 && (
             <tr>
-              <td colSpan="7" style={{ textAlign: "center", padding: "15px" }}>
+              <td colSpan={canManage ? 7 : 6} style={{ textAlign: "center", padding: "15px" }}>
                 {search ? "No units match your search." : "No units found."}
               </td>
             </tr>
@@ -351,7 +356,7 @@ function Units() {
                 {isNewEstateGroup && (
                   <tr key={`group-${unit.estate}`} style={{ background: "#e2e8f0" }}>
                     <td
-                      colSpan="7"
+                      colSpan={canManage ? 7 : 6}
                       style={{
                         fontWeight: "bold",
                         color: "#1e293b",
@@ -391,6 +396,7 @@ function Units() {
                     </span>
                   </td>
 
+                  {canManage && (
                   <td>
                     <button
                       onClick={() => editUnit(unit)}
@@ -421,6 +427,7 @@ function Units() {
                       Delete
                     </button>
                   </td>
+                  )}
                 </tr>
               </>
             );

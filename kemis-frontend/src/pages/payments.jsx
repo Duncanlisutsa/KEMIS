@@ -308,6 +308,64 @@ function PaybillPanel({ paybillInfo, onOpenSubmit, onCopy }) {
   );
 }
 
+function AccountInfoPanel({ paybillInfo, onCopy }) {
+  if (!paybillInfo) return null;
+
+  return (
+    <div className="panel" style={{ marginBottom: "30px" }}>
+      <strong className="panel-title" style={{ display: "block" }}>
+        M-Pesa Paybill Details
+      </strong>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "16px",
+        }}
+      >
+        <div>
+          <span style={{ display: "block", fontSize: "13px", color: "var(--text-muted)" }}>
+            Paybill Number
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "22px", fontWeight: 700 }}>
+              {paybillInfo.paybill_number}
+            </span>
+            <button
+              type="button"
+              className="icon-btn edit"
+              title="Copy paybill number"
+              onClick={() => onCopy(paybillInfo.paybill_number, "Paybill number")}
+            >
+              <FaCopy />
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <span style={{ display: "block", fontSize: "13px", color: "var(--text-muted)" }}>
+            Account Number
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ fontSize: "22px", fontWeight: 700 }}>
+              {paybillInfo.account_number}
+            </span>
+            <button
+              type="button"
+              className="icon-btn edit"
+              title="Copy account number"
+              onClick={() => onCopy(paybillInfo.account_number, "Account number")}
+            >
+              <FaCopy />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SubmitPaymentModal({ open, onClose, onSubmit, formData, onChange, submitting }) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -634,7 +692,9 @@ function Payments() {
   const { user } = useContext(AuthContext);
   const { showNotification } = useNotification();
   const isTenant = user?.role === "TENANT";
-  const canApprove = user?.role === "MANAGER" || user?.role === "ADMIN";
+  const isLandlord = user?.role === "LANDLORD";
+  const canApprove =
+    user?.role === "MANAGER" || user?.role === "ADMIN" || user?.role === "LANDLORD";
 
   const [payments, setPayments] = useState([]);
   const [leases, setLeases] = useState([]);
@@ -1080,6 +1140,10 @@ function Payments() {
           onOpenSubmit={openSubmitModal}
           onCopy={handleCopy}
         />
+      )}
+
+      {isLandlord && (
+        <AccountInfoPanel paybillInfo={paybillInfo} onCopy={handleCopy} />
       )}
 
       {isTenant && leases.length > 0 && (

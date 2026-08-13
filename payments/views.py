@@ -9,7 +9,7 @@ from rest_framework.response import Response
 
 from .models import Payment
 from .serializers import PaymentSerializer
-from accounts.permissions import IsAdminOrManagerOrTenantOrLandlordReadOnly
+from accounts.permissions import IsAdminOrManagerOrTenantOrLandlord
 from audit.mixins import AuditLogMixin
 from leases.models import Lease
 from notifications_app.models import Notification
@@ -17,7 +17,7 @@ from notifications_app.models import Notification
 
 class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     serializer_class = PaymentSerializer
-    permission_classes = [IsAdminOrManagerOrTenantOrLandlordReadOnly]
+    permission_classes = [IsAdminOrManagerOrTenantOrLandlord]
 
     def get_queryset(self):
         user = self.request.user
@@ -48,7 +48,7 @@ class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
         tenant_name = payment.lease.tenant.user.get_full_name() or payment.lease.tenant.user.username
 
         for recipient in recipients:
-            if recipient.role not in ("MANAGER", "ADMIN"):
+            if recipient.role not in ("MANAGER", "ADMIN", "LANDLORD"):
                 continue
 
             Notification.objects.create(
@@ -93,8 +93,8 @@ class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
             self._notify_managers_of_submission(instance)
             return
 
-        # Manager/Admin recording a payment directly (e.g. cash or bank
-        # handed to them in person) - the figures are known up front.
+        # Manager/Admin/Landlord recording a payment directly (e.g. cash or
+        # bank handed to them in person) - the figures are known up front.
         if not serializer.validated_data.get("amount"):
             raise ValidationError({"amount": "This field is required."})
 
@@ -106,6 +106,11 @@ class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
             raise ValidationError({"lease": "This field is required."})
 
         if user.role == "MANAGER" and lease.unit.estate.manager_id != user.id:
+            raise ValidationError(
+                {"lease": "You can only record payments for leases within your own estate."}
+            )
+
+        if user.role == "LANDLORD" and lease.unit.estate.owner_id != user.id:
             raise ValidationError(
                 {"lease": "You can only record payments for leases within your own estate."}
             )
@@ -134,6 +139,9 @@ class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
         if user.role == "MANAGER" and serializer.instance.lease.unit.estate.manager_id != user.id:
             raise PermissionDenied("You can only manage payments within your own estate.")
 
+        if user.role == "LANDLORD" and serializer.instance.lease.unit.estate.owner_id != user.id:
+            raise PermissionDenied("You can only manage payments within your own estate.")
+
         old_snapshot = self._audit_snapshot(serializer.instance)
         instance = serializer.save()
         self._audit_log("UPDATE", instance, old_snapshot=old_snapshot)
@@ -149,6 +157,9 @@ class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
         if user.role == "MANAGER" and instance.lease.unit.estate.manager_id != user.id:
             raise PermissionDenied("You can only manage payments within your own estate.")
 
+        if user.role == "LANDLORD" and instance.lease.unit.estate.owner_id != user.id:
+            raise PermissionDenied("You can only manage payments within your own estate.")
+
         self._audit_log("DELETE", instance)
         instance.delete()
 
@@ -158,12 +169,15 @@ class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     def approve(self, request, pk=None):
         user = request.user
 
-        if user.role not in ("ADMIN", "MANAGER"):
-            raise PermissionDenied("Only a manager or admin can approve payments.")
+        if user.role not in ("ADMIN", "MANAGER", "LANDLORD"):
+            raise PermissionDenied("Only a landlord, manager, or admin can approve payments.")
 
         payment = self.get_object()
 
         if user.role == "MANAGER" and payment.lease.unit.estate.manager_id != user.id:
+            raise PermissionDenied("You can only approve payments within your own estate.")
+
+        if user.role == "LANDLORD" and payment.lease.unit.estate.owner_id != user.id:
             raise PermissionDenied("You can only approve payments within your own estate.")
 
         if payment.status != "PENDING":
@@ -213,12 +227,15 @@ class PaymentViewSet(AuditLogMixin, viewsets.ModelViewSet):
     def reject(self, request, pk=None):
         user = request.user
 
-        if user.role not in ("ADMIN", "MANAGER"):
-            raise PermissionDenied("Only a manager or admin can reject payments.")
+        if user.role not in ("ADMIN", "MANAGER", "LANDLORD"):
+            raise PermissionDenied("Only a landlord, manager, or admin can reject payments.")
 
         payment = self.get_object()
 
         if user.role == "MANAGER" and payment.lease.unit.estate.manager_id != user.id:
+            raise PermissionDenied("You can only manage payments within your own estate.")
+
+        if user.role == "LANDLORD" and payment.lease.unit.estate.owner_id != user.id:
             raise PermissionDenied("You can only manage payments within your own estate.")
 
         if payment.status != "PENDING":

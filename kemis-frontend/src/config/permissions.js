@@ -5,15 +5,15 @@ export const PERMISSIONS = {
 
   units: ["ADMIN", "MANAGER", "LANDLORD"],
 
-  tenants: ["ADMIN", "MANAGER", "LANDLORD"],
+  tenants: ["ADMIN", "MANAGER"],
 
   leases: ["ADMIN", "MANAGER", "LANDLORD"],
 
   payments: ["ADMIN", "MANAGER", "TENANT", "LANDLORD"],
 
-  maintenance: ["ADMIN", "MANAGER", "TENANT", "LANDLORD"],
+  maintenance: ["ADMIN", "MANAGER", "TENANT"],
 
-  reports: ["ADMIN", "MANAGER", "LANDLORD"],
+  reports: ["ADMIN", "MANAGER"],
 
   staffAccounts: ["ADMIN"],
 
