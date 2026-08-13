@@ -12,6 +12,7 @@ function Reports() {
   const [downloading, setDownloading] = useState(false);
   const [sendingRentReminders, setSendingRentReminders] = useState(false);
   const [sendingLeaseAlerts, setSendingLeaseAlerts] = useState(false);
+  const [reportDownloading, setReportDownloading] = useState({});
 
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -58,6 +59,27 @@ function Reports() {
     link.remove();
     window.URL.revokeObjectURL(url);
   };
+
+  const downloadReportPdf = async (key, endpoint, filename) => {
+    setReportDownloading((prev) => ({ ...prev, [key]: true }));
+
+    try {
+      const response = await api.get(endpoint, { responseType: "blob" });
+      triggerDownload(response.data, filename);
+    } catch (error) {
+      console.error(`Error downloading ${key} report:`, error);
+      showNotification("Failed to download report.", "error");
+    } finally {
+      setReportDownloading((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
+  const PROPERTY_REPORTS = [
+    { key: "units", label: "Units Report", endpoint: "reports/units/pdf/", filename: "KEMIS_Units_Report.pdf" },
+    { key: "leases", label: "Leases Report", endpoint: "reports/leases/pdf/", filename: "KEMIS_Leases_Report.pdf" },
+    { key: "tenants", label: "Tenants Report", endpoint: "reports/tenants/pdf/", filename: "KEMIS_Tenants_Report.pdf" },
+    { key: "maintenance", label: "Maintenance Report", endpoint: "reports/maintenance-summary/pdf/", filename: "KEMIS_Maintenance_Report.pdf" },
+  ];
 
 
   const sendRentReminders = async () => {
@@ -205,6 +227,39 @@ function Reports() {
           {downloading ? "Generating..." : "Download PDF"}
         </button>
         </div>
+      </div>
+
+      <h2>Property &amp; Tenancy Reports</h2>
+      <p style={{ color: "#64748b", fontSize: "14px", marginTop: "-8px" }}>
+        Download a full PDF listing for each area you have access to.
+      </p>
+
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "10px",
+          marginBottom: "30px",
+        }}
+      >
+        {PROPERTY_REPORTS.map((report) => (
+          <button
+            key={report.key}
+            onClick={() => downloadReportPdf(report.key, report.endpoint, report.filename)}
+            disabled={reportDownloading[report.key]}
+            style={{
+              background: "#0f172a",
+              color: "white",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "6px",
+              cursor: reportDownloading[report.key] ? "not-allowed" : "pointer",
+              opacity: reportDownloading[report.key] ? 0.7 : 1,
+            }}
+          >
+            {reportDownloading[report.key] ? "Generating..." : report.label}
+          </button>
+        ))}
       </div>
 
       <h2>Monthly Revenue Report</h2>

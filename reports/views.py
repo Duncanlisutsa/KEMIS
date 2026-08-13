@@ -22,7 +22,7 @@ from leases.models import Lease
 from leases.utils import auto_expire_leases
 from payments.models import Payment
 
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.db.models.functions import TruncMonth
 
 from maintenance.models import MaintenanceRequest
@@ -658,6 +658,346 @@ def occupancy_report_pdf(request):
     buffer.seek(0)
 
     filename = f"KEMIS_Occupancy_Report_{timezone.now().strftime('%Y%m%d')}.pdf"
+
+    return FileResponse(buffer, as_attachment=True, filename=filename)
+
+
+def _units_report_data(user):
+    """Full unit listing, scoped to the requesting user's estates."""
+    units_qs = Unit.objects.select_related("estate").order_by(
+        "estate__name", "unit_number"
+    )
+
+    if user.role == "MANAGER":
+        units_qs = units_qs.filter(estate__manager=user)
+    elif user.role == "LANDLORD":
+        units_qs = units_qs.filter(estate__owner=user)
+    # ADMIN sees every unit, no filter applied.
+
+    rows = []
+    for unit in units_qs:
+        active_lease = (
+            Lease.objects.filter(unit=unit, status="ACTIVE")
+            .select_related("tenant__user")
+            .first()
+        )
+
+        rows.append({
+            "estate_name": unit.estate.name,
+            "unit_number": unit.unit_number,
+            "unit_type": unit.get_unit_type_display(),
+            "status": unit.get_status_display(),
+            "rent_amount": unit.rent_amount,
+            "tenant_name": (
+                active_lease.tenant.user.get_full_name()
+                or active_lease.tenant.user.username
+            ) if active_lease else "-",
+        })
+
+    return rows
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminOrManagerOrLandlordReadOnly])
+def units_report(request):
+    return Response(_units_report_data(request.user))
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminOrManagerOrLandlordReadOnly])
+def units_report_pdf(request):
+    data = _units_report_data(request.user)
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        topMargin=2 * cm,
+        bottomMargin=2 * cm,
+    )
+
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("KABRAS ESTATE", styles["Title"]))
+    elements.append(Paragraph("Units Report", styles["Heading2"]))
+    elements.append(
+        Paragraph(
+            f"Generated on {timezone.now().strftime('%d %B %Y, %H:%M')}",
+            styles["Normal"],
+        )
+    )
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph(f"Total Units: {len(data)}", styles["Normal"]))
+    elements.append(Spacer(1, 16))
+
+    table_data = [["Estate", "Unit", "Type", "Status", "Rent (KES)", "Current Tenant"]]
+
+    for u in data:
+        table_data.append([
+            u["estate_name"],
+            u["unit_number"],
+            u["unit_type"],
+            u["status"],
+            f"{u['rent_amount']:,.2f}",
+            u["tenant_name"],
+        ])
+
+    if len(table_data) == 1:
+        table_data.append(["No units found."] + [""] * 5)
+
+    table = Table(
+        table_data,
+        colWidths=[3.2 * cm, 2.5 * cm, 3 * cm, 2.8 * cm, 2.8 * cm, 4 * cm],
+        repeatRows=1,
+    )
+
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("ALIGN", (4, 0), (4, -1), "RIGHT"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f1f5f9")]),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+
+    elements.append(table)
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    filename = f"KEMIS_Units_Report_{timezone.now().strftime('%Y%m%d')}.pdf"
+
+    return FileResponse(buffer, as_attachment=True, filename=filename)
+
+
+def _tenants_report_data(user):
+    """Full tenant listing, scoped to the requesting user's estates."""
+    tenants_qs = Tenant.objects.select_related("user").order_by(
+        "user__first_name", "user__last_name"
+    )
+
+    if user.role == "MANAGER":
+        tenants_qs = tenants_qs.filter(
+            Q(leases__unit__estate__manager=user) | Q(leases__isnull=True)
+        ).distinct()
+    elif user.role == "LANDLORD":
+        tenants_qs = tenants_qs.filter(leases__unit__estate__owner=user).distinct()
+    # ADMIN sees every tenant, no filter applied.
+
+    rows = []
+    for tenant in tenants_qs:
+        active_lease = (
+            Lease.objects.filter(tenant=tenant, status="ACTIVE")
+            .select_related("unit__estate")
+            .first()
+        )
+
+        rows.append({
+            "full_name": tenant.user.get_full_name() or tenant.user.username,
+            "national_id": tenant.national_id,
+            "phone_number": tenant.phone_number,
+            "emergency_contact_name": tenant.emergency_contact_name,
+            "emergency_contact_phone": tenant.emergency_contact_phone,
+            "estate_name": active_lease.unit.estate.name if active_lease else "-",
+            "unit_number": active_lease.unit.unit_number if active_lease else "-",
+        })
+
+    return rows
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminOrManagerOrLandlordReadOnly])
+def tenants_report(request):
+    return Response(_tenants_report_data(request.user))
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminOrManagerOrLandlordReadOnly])
+def tenants_report_pdf(request):
+    data = _tenants_report_data(request.user)
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        topMargin=1.5 * cm,
+        bottomMargin=1.5 * cm,
+    )
+
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("KABRAS ESTATE", styles["Title"]))
+    elements.append(Paragraph("Tenants Report", styles["Heading2"]))
+    elements.append(
+        Paragraph(
+            f"Generated on {timezone.now().strftime('%d %B %Y, %H:%M')}",
+            styles["Normal"],
+        )
+    )
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph(f"Total Tenants: {len(data)}", styles["Normal"]))
+    elements.append(Spacer(1, 16))
+
+    table_data = [[
+        "Full Name", "National ID", "Phone", "Emergency Contact",
+        "Emergency Phone", "Estate", "Unit"
+    ]]
+
+    for t in data:
+        table_data.append([
+            t["full_name"],
+            t["national_id"],
+            t["phone_number"],
+            t["emergency_contact_name"],
+            t["emergency_contact_phone"],
+            t["estate_name"],
+            t["unit_number"],
+        ])
+
+    if len(table_data) == 1:
+        table_data.append(["No tenants found."] + [""] * 6)
+
+    table = Table(
+        table_data,
+        colWidths=[3.5 * cm, 3 * cm, 3 * cm, 3.5 * cm, 3.5 * cm, 3 * cm, 2.5 * cm],
+        repeatRows=1,
+    )
+
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f1f5f9")]),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+
+    elements.append(table)
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    filename = f"KEMIS_Tenants_Report_{timezone.now().strftime('%Y%m%d')}.pdf"
+
+    return FileResponse(buffer, as_attachment=True, filename=filename)
+
+
+def _leases_report_data(user):
+    """Full lease listing, scoped to the requesting user's estates (or,
+    for a tenant, to their own lease history)."""
+    leases_qs = Lease.objects.select_related(
+        "tenant__user", "unit__estate"
+    ).order_by("-start_date")
+
+    if user.role == "MANAGER":
+        leases_qs = leases_qs.filter(unit__estate__manager=user)
+    elif user.role == "LANDLORD":
+        leases_qs = leases_qs.filter(unit__estate__owner=user)
+    elif user.role == "TENANT":
+        leases_qs = leases_qs.filter(tenant=user.tenant)
+    # ADMIN sees every lease, no filter applied.
+
+    rows = []
+    for lease in leases_qs:
+        rows.append({
+            "tenant_name": lease.tenant.user.get_full_name() or lease.tenant.user.username,
+            "estate_name": lease.unit.estate.name,
+            "unit_number": lease.unit.unit_number,
+            "start_date": lease.start_date,
+            "end_date": lease.end_date,
+            "monthly_rent": lease.monthly_rent,
+            "status": lease.get_status_display(),
+        })
+
+    return rows
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminOrManagerOrTenantOrLandlordReadOnly])
+def leases_report(request):
+    auto_expire_leases()
+    return Response(_leases_report_data(request.user))
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminOrManagerOrTenantOrLandlordReadOnly])
+def leases_report_pdf(request):
+    auto_expire_leases()
+    data = _leases_report_data(request.user)
+
+    buffer = BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        topMargin=2 * cm,
+        bottomMargin=2 * cm,
+    )
+
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("KABRAS ESTATE", styles["Title"]))
+    elements.append(Paragraph("Leases Report", styles["Heading2"]))
+    elements.append(
+        Paragraph(
+            f"Generated on {timezone.now().strftime('%d %B %Y, %H:%M')}",
+            styles["Normal"],
+        )
+    )
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph(f"Total Leases: {len(data)}", styles["Normal"]))
+    elements.append(Spacer(1, 16))
+
+    table_data = [["Tenant", "Estate", "Unit", "Start", "End", "Rent (KES)", "Status"]]
+
+    for l in data:
+        table_data.append([
+            l["tenant_name"],
+            l["estate_name"],
+            l["unit_number"],
+            l["start_date"].strftime("%d %b %Y"),
+            l["end_date"].strftime("%d %b %Y"),
+            f"{l['monthly_rent']:,.2f}",
+            l["status"],
+        ])
+
+    if len(table_data) == 1:
+        table_data.append(["No leases found."] + [""] * 6)
+
+    table = Table(
+        table_data,
+        colWidths=[3.2 * cm, 3 * cm, 2.3 * cm, 2.5 * cm, 2.5 * cm, 2.8 * cm, 2.5 * cm],
+        repeatRows=1,
+    )
+
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e293b")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("ALIGN", (5, 0), (5, -1), "RIGHT"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f1f5f9")]),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+
+    elements.append(table)
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    filename = f"KEMIS_Leases_Report_{timezone.now().strftime('%Y%m%d')}.pdf"
 
     return FileResponse(buffer, as_attachment=True, filename=filename)
 
