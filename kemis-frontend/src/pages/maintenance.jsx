@@ -8,6 +8,7 @@ function Maintenance() {
   const { user } = useContext(AuthContext);
   const { showNotification } = useNotification();
   const isTenant = user?.role === "TENANT";
+  const canManage = user?.role === "ADMIN" || user?.role === "MANAGER";
 
   const [requests, setRequests] = useState([]);
   const [tenants, setTenants] = useState([]);
@@ -30,11 +31,11 @@ function Maintenance() {
 
     if (isTenant) {
       fetchOwnLease();
-    } else {
+    } else if (canManage) {
       fetchTenants();
       fetchUnits();
     }
-  }, [isTenant]);
+  }, [isTenant, canManage]);
 
   const fetchRequests = async () => {
     try {
@@ -202,6 +203,7 @@ function Maintenance() {
 
       <h1>Maintenance Requests</h1>
 
+      {(isTenant || canManage) && (
       <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
 
         {isTenant ? (
@@ -320,6 +322,7 @@ function Maintenance() {
         </button>
 
       </form>
+      )}
 
       <table border="1" cellPadding="10" width="100%">
 
@@ -332,7 +335,7 @@ function Maintenance() {
             <th>Status</th>
             <th>Reported</th>
             <th>Resolved</th>
-            {!isTenant && <th>Actions</th>}
+            {canManage && <th>Actions</th>}
           </tr>
         </thead>
 
@@ -340,7 +343,7 @@ function Maintenance() {
 
           {requests.length === 0 && (
             <tr>
-              <td colSpan={isTenant ? 7 : 8} style={{ textAlign: "center", padding: "15px" }}>
+              <td colSpan={canManage ? 8 : 7} style={{ textAlign: "center", padding: "15px" }}>
                 No maintenance requests found.
               </td>
             </tr>
@@ -356,13 +359,7 @@ function Maintenance() {
               <td>{formatDateOnly(request.reported_date)}</td>
 
               <td>
-                {isTenant ? (
-                  request.status === "COMPLETED" ? (
-                    formatDateOnly(request.resolved_date)
-                  ) : (
-                    "-"
-                  )
-                ) : (
+                {canManage ? (
                   <label
                     style={{
                       display: "flex",
@@ -380,10 +377,14 @@ function Maintenance() {
                       ? formatDateOnly(request.resolved_date)
                       : "Not resolved"}
                   </label>
+                ) : request.status === "COMPLETED" ? (
+                  formatDateOnly(request.resolved_date)
+                ) : (
+                  "-"
                 )}
               </td>
 
-              {!isTenant && (
+              {canManage && (
                 <td>
 
                   <button

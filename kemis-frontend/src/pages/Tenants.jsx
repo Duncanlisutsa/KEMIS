@@ -1,11 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Pagination from "../components/Pagination";
 import { useNotification } from "../context/NotificationContext";
+import { AuthContext } from "../context/AuthContext";
 
 function Tenants() {
+  const { user } = useContext(AuthContext);
   const { showNotification } = useNotification();
+  const canManage = user?.role === "ADMIN" || user?.role === "MANAGER";
 
   const [tenants, setTenants] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -174,6 +177,7 @@ const editTenant = (tenant) => {
     <div>
       <h1>Tenants</h1>
 
+      {canManage && (
       <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
 
 <input
@@ -278,6 +282,7 @@ const editTenant = (tenant) => {
         </button>
 
       </form>
+      )}
 
       <div style={{ marginBottom: "15px" }}>
         <input
@@ -297,14 +302,14 @@ const editTenant = (tenant) => {
             <th>Phone</th>
             <th>Emergency Contact Name</th>
             <th>Emergency Contact Phone</th>
-            <th>Actions</th>
+            {canManage && <th>Actions</th>}
           </tr>
         </thead>
 
         <tbody>
           {filteredTenants.length === 0 && (
             <tr>
-              <td colSpan={6} style={{ textAlign: "center", padding: "15px" }}>
+              <td colSpan={canManage ? 6 : 5} style={{ textAlign: "center", padding: "15px" }}>
                 {search ? "No tenants match your search." : "No tenants found."}
               </td>
             </tr>
@@ -318,6 +323,7 @@ const editTenant = (tenant) => {
               <td>{tenant.emergency_contact_name}</td>
               <td>{tenant.emergency_contact_phone}</td>
 
+              {canManage && (
               <td>
                 <button
                   onClick={() => editTenant(tenant)}
@@ -349,6 +355,7 @@ const editTenant = (tenant) => {
                   Delete
                 </button>
               </td>
+              )}
             </tr>
           ))}
         </tbody>
