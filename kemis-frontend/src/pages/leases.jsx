@@ -24,6 +24,47 @@ const STATUS_OPTIONS = [
   { value: "TERMINATED", label: "Terminated" },
 ];
 
+// Mirrors the backend's Lease.duration_months property (dateutil's
+// relativedelta, rounded up for any partial trailing month) so the
+// admin sees the same figure in the modal that the API will return
+// once the lease is saved.
+function estimateDurationMonths(startStr, endStr) {
+  if (!startStr || !endStr) return null;
+
+  const start = new Date(startStr);
+  const end = new Date(endStr);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    return null;
+  }
+
+  let years = end.getFullYear() - start.getFullYear();
+  let months = end.getMonth() - start.getMonth();
+  let days = end.getDate() - start.getDate();
+
+  if (days < 0) months -= 1;
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  let totalMonths = years * 12 + months;
+  if (days > 0) totalMonths += 1;
+
+  return Math.max(totalMonths, 1);
+}
+
+function formatDuration(months) {
+  if (!months) return null;
+  const years = Math.floor(months / 12);
+  const remainder = months % 12;
+
+  const parts = [];
+  if (years) parts.push(`${years} year${years > 1 ? "s" : ""}`);
+  if (remainder) parts.push(`${remainder} month${remainder > 1 ? "s" : ""}`);
+
+  return parts.join(", ") || "Less than a month";
+}
+
 function Leases() {
   const { user } = useContext(AuthContext);
   const { showNotification } = useNotification();
@@ -229,6 +270,9 @@ function Leases() {
 
   const tenantOptions = tenants.map((t) => ({ value: t.id, label: t.full_name }));
 
+  const estimatedMonths = estimateDurationMonths(formData.start_date, formData.end_date);
+  const durationLabel = formatDuration(estimatedMonths);
+
   return (
     <div>
       <div className="payments-toolbar">
@@ -331,34 +375,51 @@ function Leases() {
         onChange={handleChange}
         onSubmit={handleSubmit}
         infoPanel={
-          (selectedTenant || selectedUnit) && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-              {selectedTenant && (
-                <div>
-                  <strong style={{ display: "block", marginBottom: "6px" }}>
-                    Tenant Information
-                  </strong>
-                  <div style={{ fontSize: "14px", lineHeight: 1.7 }}>
-                    <div>Name: {selectedTenant.full_name}</div>
-                    <div>Phone: {selectedTenant.phone_number}</div>
-                    <div>ID Number: {selectedTenant.national_id}</div>
-                    <div>Email: {selectedTenant.user_email}</div>
+          (selectedTenant || selectedUnit || durationLabel) && (
+            <div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                {selectedTenant && (
+                  <div>
+                    <strong style={{ display: "block", marginBottom: "6px" }}>
+                      Tenant Information
+                    </strong>
+                    <div style={{ fontSize: "14px", lineHeight: 1.7 }}>
+                      <div>Name: {selectedTenant.full_name}</div>
+                      <div>Phone: {selectedTenant.phone_number}</div>
+                      <div>ID Number: {selectedTenant.national_id}</div>
+                      <div>Email: {selectedTenant.user_email}</div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {selectedUnit && (
-                <div>
-                  <strong style={{ display: "block", marginBottom: "6px" }}>
-                    Unit Information
-                  </strong>
-                  <div style={{ fontSize: "14px", lineHeight: 1.7 }}>
-                    <div>Estate: {selectedUnit.estate_name}</div>
-                    <div>Unit Number: {selectedUnit.unit_number}</div>
-                    <div>Unit Type: {selectedUnit.unit_type}</div>
-                    <div>Rent: KES {selectedUnit.rent_amount}</div>
-                    <div>Status: {selectedUnit.status}</div>
+                {selectedUnit && (
+                  <div>
+                    <strong style={{ display: "block", marginBottom: "6px" }}>
+                      Unit Information
+                    </strong>
+                    <div style={{ fontSize: "14px", lineHeight: 1.7 }}>
+                      <div>Estate: {selectedUnit.estate_name}</div>
+                      <div>Unit Number: {selectedUnit.unit_number}</div>
+                      <div>Unit Type: {selectedUnit.unit_type}</div>
+                      <div>Rent: KES {selectedUnit.rent_amount}</div>
+                      <div>Status: {selectedUnit.status}</div>
+                    </div>
                   </div>
+                )}
+              </div>
+
+              {durationLabel && (
+                <div
+                  style={{
+                    marginTop: (selectedTenant || selectedUnit) ? "14px" : 0,
+                    paddingTop: (selectedTenant || selectedUnit) ? "14px" : 0,
+                    borderTop: (selectedTenant || selectedUnit) ? "1px solid var(--border)" : "none",
+                    fontSize: "14px",
+                  }}
+                >
+                  <strong>Lease Period:</strong> {formData.start_date} &rarr; {formData.end_date}
+                  {" "}&mdash; approximately <strong>{durationLabel}</strong>
+                  {estimatedMonths ? ` (${estimatedMonths} month${estimatedMonths > 1 ? "s" : ""} of rent)` : ""}
                 </div>
               )}
             </div>
@@ -381,8 +442,21 @@ function Leases() {
               <UnitDropdown units={units} value={formData.unit} onChange={handleUnitChange} />
             ),
           },
-          { name: "start_date", label: "Start Date", type: "date", required: true },
-          { name: "end_date", label: "End Date", type: "date", required: true },
+          { name: "section-lease-period", type: "section", label: "Lease Period", fullWidth: true },
+          {
+            name: "start_date",
+            label: "Start Date",
+            type: "date",
+            required: true,
+          },
+          {
+            name: "end_date",
+            label: "End Date",
+            type: "date",
+            required: true,
+            min: formData.start_date || undefined,
+            helperText: durationLabel ? `≈ ${durationLabel}` : undefined,
+          },
           {
             name: "monthly_rent",
             label: "Monthly Rent",

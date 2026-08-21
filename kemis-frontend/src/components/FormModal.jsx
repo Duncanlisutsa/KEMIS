@@ -107,6 +107,29 @@ function FormModal({
                   <TextField {...commonProps} multiline minRows={3} />
                 );
               }
+                            // A plain full-width heading used to visually group a
+              // handful of fields together (e.g. "Lease Period" above
+              // the start/end date pickers). Renders no input.
+              if (field.type === "section") {
+                return (
+                  <div
+                    key={field.name || field.label}
+                    style={{
+                      gridColumn: "1 / -1",
+                      marginTop: "4px",
+                      paddingBottom: "4px",
+                      borderBottom: "1px solid var(--border)",
+                      fontSize: "13px",
+                      fontWeight: "bold",
+                      color: "var(--text-muted)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.03em",
+                    }}
+                  >
+                    {field.label}
+                  </div>
+                );
+              }
 
               // Escape hatch for specialised inputs (e.g. a custom
               // searchable unit dropdown) that don't fit a plain TextField.
@@ -138,6 +161,11 @@ function FormModal({
                   type={field.type === "readonly" ? "text" : field.type || "text"}
                   placeholder={field.placeholder}
                   InputLabelProps={field.type === "date" ? { shrink: true } : undefined}
+                  inputProps={
+                    field.min !== undefined || field.max !== undefined
+                      ? { min: field.min, max: field.max }
+                      : undefined
+                  }
                 />
               );
             })}
