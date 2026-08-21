@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from accounts.permissions import IsAdminOrManager
 
 from .models import Notification
-from .serializers import NotificationSerializer
+from .serializers import NotificationSerializer, SendTenantNotificationSerializer
 from .utils import generate_rent_reminders, generate_lease_expiry_alerts
 
 
@@ -52,3 +52,27 @@ def send_rent_reminders(request):
 def send_lease_expiry_alerts(request):
     sent = generate_lease_expiry_alerts()
     return Response({"detail": f"Lease expiry alerts sent: {sent}", "sent": sent})
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminOrManager])
+def send_notification_to_tenant(request):
+    """
+    Lets an admin/manager send a single ad-hoc notification to one OR
+    MANY specific tenants, in addition to the automated rent-reminder
+    and lease-expiry jobs above.
+
+    Expects: {"tenant_ids": [1, 2, 3], "notification_type": "GENERAL", "message": "..."}
+    """
+    serializer = SendTenantNotificationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    notifications = serializer.save()
+
+    return Response(
+        {
+            "detail": f"Notification sent to {len(notifications)} tenant(s).",
+            "sent": len(notifications),
+            "notifications": NotificationSerializer(notifications, many=True).data,
+        },
+        status=201,
+    )

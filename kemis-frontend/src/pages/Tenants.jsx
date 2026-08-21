@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from "react";
-import { FaPlus, FaEdit, FaTrash, FaSearch } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaSearch, FaBell } from "react-icons/fa";
 import api from "../services/api";
 import ConfirmDialog from "../components/ConfirmDialog";
 import FormModal from "../components/FormModal";
@@ -17,6 +17,18 @@ const EMPTY_FORM = {
   phone_number: "",
   emergency_contact_name: "",
   emergency_contact_phone: "",
+};
+
+const NOTIFICATION_TYPE_OPTIONS = [
+  { value: "GENERAL", label: "General" },
+  { value: "RENT_OVERDUE", label: "Rent Overdue" },
+  { value: "LEASE_EXPIRING", label: "Lease Expiring Soon" },
+  { value: "MAINTENANCE_UPDATE", label: "Maintenance Update" },
+];
+
+const EMPTY_NOTIFY_FORM = {
+  notification_type: "GENERAL",
+  message: "",
 };
 
 function Tenants() {
@@ -39,6 +51,13 @@ function Tenants() {
   const [pageSize, setPageSize] = useState(10);
 
   const [formData, setFormData] = useState(EMPTY_FORM);
+
+  const [notifyModalOpen, setNotifyModalOpen] = useState(false);
+  const [notifyTargets, setNotifyTargets] = useState([]);
+  const [notifySubmitting, setNotifySubmitting] = useState(false);
+  const [notifyForm, setNotifyForm] = useState(EMPTY_NOTIFY_FORM);
+
+  const [selectedIds, setSelectedIds] = useState([]);
 
   useEffect(() => {
     fetchTenants();
@@ -132,6 +151,73 @@ function Tenants() {
     }
   };
 
+  // `tenantsToNotify` is always an array — a single row's "bell" click
+  // passes a 1-item array, the toolbar "Notify Selected" passes many.
+  const openNotifyModal = (tenantsToNotify) => {
+    if (!tenantsToNotify || tenantsToNotify.length === 0) return;
+    setNotifyTargets(tenantsToNotify);
+    setNotifyForm(EMPTY_NOTIFY_FORM);
+    setNotifyModalOpen(true);
+  };
+
+  const closeNotifyModal = () => {
+    if (notifySubmitting) return;
+    setNotifyModalOpen(false);
+    setNotifyTargets([]);
+    setNotifyForm(EMPTY_NOTIFY_FORM);
+  };
+
+  const handleNotifyChange = (e) => {
+    setNotifyForm({
+      ...notifyForm,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleNotifySubmit = async () => {
+    if (notifyTargets.length === 0) return;
+    setNotifySubmitting(true);
+
+    try {
+      const response = await api.post("notifications/send-to-tenant/", {
+        tenant_ids: notifyTargets.map((t) => t.id),
+        notification_type: notifyForm.notification_type,
+        message: notifyForm.message,
+      });
+
+      const sentCount = response.data?.sent ?? notifyTargets.length;
+      showNotification(
+        sentCount === 1
+          ? `Notification sent to ${notifyTargets[0].full_name}.`
+          : `Notification sent to ${sentCount} tenants.`,
+        "success"
+      );
+
+      // Clear the checkboxes for whichever tenants we just notified.
+      const notifiedIds = new Set(notifyTargets.map((t) => t.id));
+      setSelectedIds((prev) => prev.filter((id) => !notifiedIds.has(id)));
+
+      closeNotifyModal();
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      const data = error.response?.data;
+      const firstFieldError =
+        data && typeof data === "object"
+          ? Object.values(data).find((v) => Array.isArray(v) && v.length)?.[0]
+          : null;
+      const message = firstFieldError || data?.detail || "Failed to send notification.";
+      showNotification(message, "error");
+    } finally {
+      setNotifySubmitting(false);
+    }
+  };
+
+  const toggleSelectTenant = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
   const deleteTenant = async () => {
     if (!tenantToDelete) return;
 
@@ -189,6 +275,25 @@ function Tenants() {
     [tenants, tenantToDelete]
   );
 
+  // "Select all" is scoped to the current page, matching what the
+  // user can actually see and check off in one glance.
+  const pageIds = paginatedTenants.map((t) => t.id);
+  const allOnPageSelected =
+    pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+
+  const toggleSelectAllOnPage = () => {
+    setSelectedIds((prev) =>
+      allOnPageSelected
+        ? prev.filter((id) => !pageIds.includes(id))
+        : [...new Set([...prev, ...pageIds])]
+    );
+  };
+
+  const selectedTenants = useMemo(
+    () => tenants.filter((t) => selectedIds.includes(t.id)),
+    [tenants, selectedIds]
+  );
+
   return (
     <div>
       <div className="payments-toolbar">
@@ -196,6 +301,14 @@ function Tenants() {
 
         {canManage && (
           <div className="payments-toolbar-actions">
+            {selectedIds.length > 0 && (
+              <button
+                className="btn-outline"
+                onClick={() => openNotifyModal(selectedTenants)}
+              >
+                <FaBell /> Notify Selected ({selectedIds.length})
+              </button>
+            )}
             <button className="btn-primary" onClick={openAddModal}>
               <FaPlus /> Add Tenant
             </button>
@@ -216,6 +329,16 @@ function Tenants() {
       <table border="1" cellPadding="10" width="100%">
         <thead>
           <tr>
+            {canManage && (
+              <th style={{ width: "36px" }}>
+                <input
+                  type="checkbox"
+                  checked={allOnPageSelected}
+                  onChange={toggleSelectAllOnPage}
+                  title="Select all on this page"
+                />
+              </th>
+            )}
             <th>Full Name</th>
             <th>National ID</th>
             <th>Phone</th>
@@ -228,7 +351,7 @@ function Tenants() {
         <tbody>
           {filteredTenants.length === 0 && (
             <tr>
-              <td colSpan={canManage ? 6 : 5} style={{ textAlign: "center", padding: "15px" }}>
+              <td colSpan={canManage ? 7 : 5} style={{ textAlign: "center", padding: "15px" }}>
                 {search ? "No tenants match your search." : "No tenants found."}
               </td>
             </tr>
@@ -236,6 +359,15 @@ function Tenants() {
 
           {paginatedTenants.map((tenant) => (
             <tr key={tenant.id}>
+              {canManage && (
+                <td>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(tenant.id)}
+                    onChange={() => toggleSelectTenant(tenant.id)}
+                  />
+                </td>
+              )}
               <td>{tenant.full_name}</td>
               <td>{tenant.national_id}</td>
               <td>{tenant.phone_number}</td>
@@ -244,6 +376,14 @@ function Tenants() {
 
               {canManage && (
                 <td>
+                  <button
+                    className="icon-btn"
+                    title="Send notification"
+                    onClick={() => openNotifyModal([tenant])}
+                  >
+                    <FaBell />
+                  </button>
+
                   <button
                     className="icon-btn edit"
                     title="Edit tenant"
@@ -338,6 +478,63 @@ function Tenants() {
             required: true,
           },
         ]}
+      />
+
+      <FormModal
+        open={notifyModalOpen}
+        onClose={closeNotifyModal}
+        title={
+          notifyTargets.length === 1
+            ? `Notify ${notifyTargets[0].full_name}`
+            : `Notify ${notifyTargets.length} Tenants`
+        }
+        submitLabel="Send"
+        submitting={notifySubmitting}
+        formData={notifyForm}
+        onChange={handleNotifyChange}
+        onSubmit={handleNotifySubmit}
+        maxWidth="xs"
+        fields={[
+          {
+            name: "notification_type",
+            label: "Notification Type",
+            type: "select",
+            options: NOTIFICATION_TYPE_OPTIONS,
+            fullWidth: true,
+          },
+          {
+            name: "message",
+            label: "Message",
+            type: "textarea",
+            required: true,
+            fullWidth: true,
+            helperText: "This will appear in each tenant's notification bell.",
+          },
+        ]}
+        infoPanel={
+          notifyTargets.length > 1 ? (
+            <div>
+              <strong style={{ display: "block", marginBottom: "8px" }}>
+                Recipients ({notifyTargets.length})
+              </strong>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                {notifyTargets.map((t) => (
+                  <span
+                    key={t.id}
+                    style={{
+                      padding: "3px 10px",
+                      borderRadius: "999px",
+                      background: "var(--border)",
+                      fontSize: "13px",
+                    }}
+                  >
+                    {t.full_name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null
+        }
       />
 
       <ConfirmDialog
