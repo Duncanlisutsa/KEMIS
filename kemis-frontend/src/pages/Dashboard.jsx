@@ -289,12 +289,16 @@ function Dashboard() {
       );
     }
 
+    const isOpenEnded = !stats.lease_end;
+
     const start = new Date(stats.lease_start);
-    const end = new Date(stats.lease_end);
+    const end = isOpenEnded ? null : new Date(stats.lease_end);
     const now = new Date();
-    const totalDays = Math.max((end - start) / 86400000, 1);
-    const elapsedDays = Math.min(Math.max((now - start) / 86400000, 0), totalDays);
-    const leaseProgress = Math.round((elapsedDays / totalDays) * 100);
+    const totalDays = isOpenEnded ? null : Math.max((end - start) / 86400000, 1);
+    const elapsedDays = isOpenEnded
+      ? null
+      : Math.min(Math.max((now - start) / 86400000, 0), totalDays);
+    const leaseProgress = isOpenEnded ? null : Math.round((elapsedDays / totalDays) * 100);
 
     return (
       <div>
@@ -351,17 +355,25 @@ function Dashboard() {
             <h3 className="panel-title">Lease Period</h3>
             <div className="lease-dates">
               <span>{monthDayYear(stats.lease_start)}</span>
-              <span>{monthDayYear(stats.lease_end)}</span>
+              <span>{isOpenEnded ? "Open-ended" : monthDayYear(stats.lease_end)}</span>
             </div>
-            <div className="progress-track">
-              <div
-                className="progress-fill"
-                style={{ width: `${leaseProgress}%` }}
-              />
-            </div>
-            <span className="progress-caption">
-              {leaseProgress}% of lease term elapsed
-            </span>
+            {isOpenEnded ? (
+              <span className="progress-caption">
+                No fixed end date — your lease continues month to month.
+              </span>
+            ) : (
+              <>
+                <div className="progress-track">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${leaseProgress}%` }}
+                  />
+                </div>
+                <span className="progress-caption">
+                  {leaseProgress}% of lease term elapsed
+                </span>
+              </>
+            )}
           </div>
 
           <QuickLinks

@@ -13,6 +13,7 @@ const EMPTY_FORM = {
   unit: "",
   start_date: "",
   end_date: "",
+  open_ended: false,
   monthly_rent: "",
   security_deposit: "",
   status: "ACTIVE",
@@ -27,12 +28,16 @@ const STATUS_OPTIONS = [
 // Mirrors the backend's Lease.duration_months property (dateutil's
 // relativedelta, rounded up for any partial trailing month) so the
 // admin sees the same figure in the modal that the API will return
-// once the lease is saved.
-function estimateDurationMonths(startStr, endStr) {
-  if (!startStr || !endStr) return null;
+// once the lease is saved. For open-ended leases (no end date), the
+// backend measures elapsed time up to today - this does the same.
+function estimateDurationMonths(startStr, endStr, openEnded) {
+  if (!startStr) return null;
+
+  const effectiveEndStr = openEnded ? new Date().toISOString().slice(0, 10) : endStr;
+  if (!effectiveEndStr) return null;
 
   const start = new Date(startStr);
-  const end = new Date(endStr);
+  const end = new Date(effectiveEndStr);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
     return null;
   }
@@ -124,11 +129,11 @@ function Leases() {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
 
     if (name === "tenant") {
@@ -162,7 +167,8 @@ function Leases() {
       tenant: lease.tenant,
       unit: lease.unit,
       start_date: lease.start_date,
-      end_date: lease.end_date,
+      end_date: lease.end_date || "",
+      open_ended: !lease.end_date,
       monthly_rent: lease.monthly_rent,
       security_deposit: lease.security_deposit,
       status: lease.status,
@@ -191,11 +197,17 @@ function Leases() {
     setSubmitting(true);
 
     try {
+      const { open_ended, ...rest } = formData;
+      const payload = {
+        ...rest,
+        end_date: open_ended ? null : formData.end_date,
+      };
+
       if (editingId) {
-        await api.put(`leases/${editingId}/`, formData);
+        await api.put(`leases/${editingId}/`, payload);
         showNotification("Lease updated successfully!", "success");
       } else {
-        await api.post("leases/", formData);
+        await api.post("leases/", payload);
         showNotification("Lease added successfully!", "success");
       }
 
@@ -270,7 +282,11 @@ function Leases() {
 
   const tenantOptions = tenants.map((t) => ({ value: t.id, label: t.full_name }));
 
-  const estimatedMonths = estimateDurationMonths(formData.start_date, formData.end_date);
+  const estimatedMonths = estimateDurationMonths(
+    formData.start_date,
+    formData.end_date,
+    formData.open_ended
+  );
   const durationLabel = formatDuration(estimatedMonths);
 
   return (
@@ -325,7 +341,7 @@ function Leases() {
               <td>{lease.tenant_name}</td>
               <td>{lease.unit_number}</td>
               <td>{lease.start_date}</td>
-              <td>{lease.end_date}</td>
+              <td>{lease.end_date || "Open-ended"}</td>
               <td>KES {lease.monthly_rent}</td>
               <td>KES {lease.security_deposit}</td>
               <td>{lease.status}</td>
@@ -375,7 +391,7 @@ function Leases() {
         onChange={handleChange}
         onSubmit={handleSubmit}
         infoPanel={
-          (selectedTenant || selectedUnit || durationLabel) && (
+          (selectedTenant || selectedUnit || durationLabel || formData.open_ended) && (
             <div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 {selectedTenant && (
@@ -408,7 +424,7 @@ function Leases() {
                 )}
               </div>
 
-              {durationLabel && (
+              {(durationLabel || formData.open_ended) && (
                 <div
                   style={{
                     marginTop: (selectedTenant || selectedUnit) ? "14px" : 0,
@@ -417,9 +433,19 @@ function Leases() {
                     fontSize: "14px",
                   }}
                 >
-                  <strong>Lease Period:</strong> {formData.start_date} &rarr; {formData.end_date}
-                  {" "}&mdash; approximately <strong>{durationLabel}</strong>
-                  {estimatedMonths ? ` (${estimatedMonths} month${estimatedMonths > 1 ? "s" : ""} of rent)` : ""}
+                  <strong>Lease Period:</strong> {formData.start_date}
+                  {" "}&rarr;{" "}
+                  {formData.open_ended ? "Open-ended (no fixed end date)" : formData.end_date}
+                  {durationLabel && (
+                    <>
+                      {" "}&mdash; approximately <strong>{durationLabel}</strong>
+                      {estimatedMonths
+                        ? ` (${estimatedMonths} month${estimatedMonths > 1 ? "s" : ""} of rent${
+                            formData.open_ended ? " so far" : ""
+                          })`
+                        : ""}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -449,13 +475,23 @@ function Leases() {
             type: "date",
             required: true,
           },
+          ...(formData.open_ended
+            ? []
+            : [
+                {
+                  name: "end_date",
+                  label: "End Date",
+                  type: "date",
+                  required: true,
+                  min: formData.start_date || undefined,
+                  helperText: durationLabel ? `≈ ${durationLabel}` : undefined,
+                },
+              ]),
           {
-            name: "end_date",
-            label: "End Date",
-            type: "date",
-            required: true,
-            min: formData.start_date || undefined,
-            helperText: durationLabel ? `≈ ${durationLabel}` : undefined,
+            name: "open_ended",
+            label: "No fixed end date — tenant stays and pays monthly until the lease is terminated",
+            type: "checkbox",
+            fullWidth: true,
           },
           {
             name: "monthly_rent",

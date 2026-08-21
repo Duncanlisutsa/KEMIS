@@ -966,7 +966,7 @@ def leases_report_pdf(request):
             l["estate_name"],
             l["unit_number"],
             l["start_date"].strftime("%d %b %Y"),
-            l["end_date"].strftime("%d %b %Y"),
+            l["end_date"].strftime("%d %b %Y") if l["end_date"] else "Open-ended",
             f"{l['monthly_rent']:,.2f}",
             l["status"],
         ])

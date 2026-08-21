@@ -23,6 +23,7 @@ class LeaseSerializer(serializers.ModelSerializer):
     )
 
     duration_months = serializers.IntegerField(read_only=True)
+    is_open_ended = serializers.BooleanField(read_only=True)
     total_rent_due = serializers.DecimalField(
         max_digits=10, decimal_places=2, read_only=True
     )
@@ -48,15 +49,20 @@ class LeaseSerializer(serializers.ModelSerializer):
             "security_deposit",
             "status",
             "duration_months",
+            "is_open_ended",
             "total_rent_due",
             "total_rent_paid",
             "rent_balance",
             "created_at",
         ]
+        extra_kwargs = {
+            "end_date": {"required": False, "allow_null": True},
+        }
 
     def validate(self, attrs):
         """
-        Prevent more than one ACTIVE lease for the same unit.
+        Prevent more than one ACTIVE lease for the same unit, and make
+        sure a fixed end date (when given) is after the start date.
         """
 
         unit = attrs.get("unit")
@@ -65,6 +71,14 @@ class LeaseSerializer(serializers.ModelSerializer):
         if self.instance:
             unit = attrs.get("unit", self.instance.unit)
             status = attrs.get("status", self.instance.status)
+
+        start_date = attrs.get("start_date", getattr(self.instance, "start_date", None))
+        end_date = attrs.get("end_date", getattr(self.instance, "end_date", None))
+
+        if start_date and end_date and end_date <= start_date:
+            raise serializers.ValidationError(
+                {"end_date": "End date must be after the start date."}
+            )
 
         if status == "ACTIVE":
             active_lease = Lease.objects.filter(

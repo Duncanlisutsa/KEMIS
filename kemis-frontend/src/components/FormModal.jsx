@@ -6,6 +6,8 @@ import {
   TextField,
   MenuItem,
   Button,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 
 /**
@@ -23,12 +25,13 @@ import {
  *   {
  *     name: string (required, matches formData key),
  *     label: string,
- *     type: "text" | "number" | "email" | "password" | "date" | "select" | "textarea" | "readonly" | "custom",
+ *     type: "text" | "number" | "email" | "password" | "date" | "select" | "textarea" | "readonly" | "checkbox" | "section" | "custom",
  *     required: boolean,
  *     disabled: boolean,
  *     fullWidth: boolean,        // span both grid columns
  *     placeholder: string,       // used as the empty option for selects
  *     helperText: string,
+ *     min, max,                  // passed through to date/number inputs
  *     options: [{ value, label }], // required when type === "select"
  *     render: (formData, onChange) => JSX  // required when type === "custom"
  *   }
@@ -107,7 +110,44 @@ function FormModal({
                   <TextField {...commonProps} multiline minRows={3} />
                 );
               }
-                            // A plain full-width heading used to visually group a
+
+              if (field.type === "checkbox") {
+                return (
+                  <div
+                    key={field.name}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      ...(field.fullWidth ? { gridColumn: "1 / -1" } : {}),
+                    }}
+                  >
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          name={field.name}
+                          checked={!!formData[field.name]}
+                          onChange={onChange}
+                          disabled={field.disabled}
+                        />
+                      }
+                      label={field.label}
+                    />
+                    {field.helperText && (
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--text-muted)",
+                          marginLeft: "-4px",
+                        }}
+                      >
+                        {field.helperText}
+                      </span>
+                    )}
+                  </div>
+                );
+              }
+
+              // A plain full-width heading used to visually group a
               // handful of fields together (e.g. "Lease Period" above
               // the start/end date pickers). Renders no input.
               if (field.type === "section") {

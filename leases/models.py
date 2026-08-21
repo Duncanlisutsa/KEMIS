@@ -23,7 +23,11 @@ class Lease(models.Model):
     )
 
     start_date = models.DateField()
-    end_date = models.DateField()
+    end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Leave blank for an open-ended lease with no fixed end date.",
+    )
 
     monthly_rent = models.DecimalField(
         max_digits=10,
@@ -44,14 +48,25 @@ class Lease(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property
+    def is_open_ended(self):
+        return self.end_date is None
+
+    @property
     def duration_months(self):
         """
         Number of months the lease covers, rounded up for any
         partial trailing month (e.g. Jan 1 - Apr 20 counts as 4 months).
+
+        Open-ended leases (no end_date) use today's date instead, so
+        this reflects the number of months elapsed so far rather than
+        a fixed total - it grows month by month as the tenancy continues.
         """
         from dateutil.relativedelta import relativedelta
+        from django.utils import timezone
 
-        rd = relativedelta(self.end_date, self.start_date)
+        effective_end = self.end_date or timezone.localdate()
+
+        rd = relativedelta(effective_end, self.start_date)
         months = rd.years * 12 + rd.months
         if rd.days > 0:
             months += 1
