@@ -1,9 +1,19 @@
 import { useContext, useEffect, useState } from "react";
+import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import api from "../services/api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ConfirmDialog from "../components/ConfirmDialog";
+import FormModal from "../components/FormModal";
 import { useNotification } from "../context/NotificationContext";
 import { AuthContext } from "../context/AuthContext";
+
+const EMPTY_FORM = {
+  name: "",
+  location: "",
+  description: "",
+  manager: "",
+  owner: "",
+};
 
 function Estates() {
   const { user } = useContext(AuthContext);
@@ -16,13 +26,10 @@ function Estates() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    location: "",
-    description: "",
-    manager: "",
-    owner: "",
-  });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [estateToDelete, setEstateToDelete] = useState(null);
@@ -84,7 +91,13 @@ function Estates() {
     }
   };
 
-  const handleEdit = (estate) => {
+  const openAddModal = () => {
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+    setModalOpen(true);
+  };
+
+  const openEditModal = (estate) => {
     setFormData({
       name: estate.name,
       location: estate.location,
@@ -94,6 +107,14 @@ function Estates() {
     });
 
     setEditingId(estate.id);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    if (submitting) return;
+    setModalOpen(false);
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
   };
 
   const handleChange = (e) => {
@@ -103,8 +124,8 @@ function Estates() {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+    setSubmitting(true);
 
     try {
       const payload = {
@@ -121,21 +142,14 @@ function Estates() {
         showNotification("Estate added successfully!", "success");
       }
 
-      setFormData({
-        name: "",
-        location: "",
-        description: "",
-        manager: "",
-        owner: "",
-      });
-
-      setEditingId(null);
+      closeModal();
       fetchEstates();
-
     } catch (error) {
       console.error("Error saving estate:", error);
       const message = error.response?.data?.detail || "Failed to save estate.";
       showNotification(message, "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -143,76 +157,22 @@ function Estates() {
     return <LoadingSpinner text="Loading estates..." />;
   }
 
+  const managerOptions = managers.map((m) => ({ value: m.id, label: m.full_name }));
+  const landlordOptions = landlords.map((l) => ({ value: l.id, label: l.full_name }));
+
   return (
     <div>
-      <h1>{isAdmin ? "Estates" : "My Estate"}</h1>
+      <div className="payments-toolbar">
+        <h1 style={{ margin: 0 }}>{isAdmin ? "Estates" : "My Estate"}</h1>
 
-      {isAdmin && (
-        <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
-          <input
-            type="text"
-            name="name"
-            placeholder="Estate Name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-
-          <input
-            type="text"
-            name="location"
-            placeholder="Location"
-            value={formData.location}
-            onChange={handleChange}
-            required
-            style={{ marginLeft: "10px" }}
-          />
-
-          <input
-            type="text"
-            name="description"
-            placeholder="Description"
-            value={formData.description}
-            onChange={handleChange}
-            style={{ marginLeft: "10px" }}
-          />
-
-          <select
-            name="manager"
-            value={formData.manager}
-            onChange={handleChange}
-            style={{ marginLeft: "10px" }}
-          >
-            <option value="">No Manager Assigned</option>
-            {managers.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.full_name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            name="owner"
-            value={formData.owner}
-            onChange={handleChange}
-            style={{ marginLeft: "10px" }}
-          >
-            <option value="">No Owner Assigned</option>
-            {landlords.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.full_name}
-              </option>
-            ))}
-          </select>
-
-          <button
-            type="submit"
-            style={{ marginLeft: "10px" }}
-          >
-            {editingId ? "Update Estate" : "Add Estate"}
-          </button>
-        </form>
-      )}
+        {isAdmin && (
+          <div className="payments-toolbar-actions">
+            <button className="btn-primary" onClick={openAddModal}>
+              <FaPlus /> Add Estate
+            </button>
+          </div>
+        )}
+      </div>
 
       <table border="1" cellPadding="10" width="100%">
         <thead>
@@ -247,18 +207,23 @@ function Estates() {
 
               {isAdmin && (
                 <td>
-                  <button onClick={() => handleEdit(estate)}>
-                    Edit
+                  <button
+                    className="icon-btn edit"
+                    title="Edit estate"
+                    onClick={() => openEditModal(estate)}
+                  >
+                    <FaEdit />
                   </button>
 
                   <button
+                    className="icon-btn delete"
+                    title="Delete estate"
                     onClick={() => {
                       setEstateToDelete(estate.id);
                       setConfirmOpen(true);
                     }}
-                    style={{ marginLeft: "10px" }}
                   >
-                    Delete
+                    <FaTrash />
                   </button>
                 </td>
               )}
@@ -266,6 +231,37 @@ function Estates() {
           ))}
         </tbody>
       </table>
+
+      <FormModal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingId ? "Update Estate" : "Add Estate"}
+        isEditing={!!editingId}
+        submitting={submitting}
+        formData={formData}
+        onChange={handleChange}
+        onSubmit={handleSubmit}
+        fields={[
+          { name: "name", label: "Estate Name", required: true },
+          { name: "location", label: "Location", required: true },
+          { name: "description", label: "Description", fullWidth: true },
+          {
+            name: "manager",
+            label: "Manager",
+            type: "select",
+            placeholder: "No Manager Assigned",
+            options: managerOptions,
+          },
+          {
+            name: "owner",
+            label: "Owner",
+            type: "select",
+            placeholder: "No Owner Assigned",
+            options: landlordOptions,
+          },
+        ]}
+      />
+
       <ConfirmDialog
         open={confirmOpen}
         title="Delete Estate"

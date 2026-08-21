@@ -1,7 +1,24 @@
 import { useEffect, useState } from "react";
+import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import api from "../services/api";
 import ConfirmDialog from "../components/ConfirmDialog";
+import FormModal from "../components/FormModal";
 import { useNotification } from "../context/NotificationContext";
+
+const EMPTY_FORM = {
+  username: "",
+  first_name: "",
+  last_name: "",
+  email: "",
+  phone: "",
+  role: "MANAGER",
+  password: "",
+};
+
+const ROLE_OPTIONS = [
+  { value: "MANAGER", label: "Manager" },
+  { value: "LANDLORD", label: "Landlord" },
+];
 
 function StaffAccounts() {
   const { showNotification } = useNotification();
@@ -10,18 +27,13 @@ function StaffAccounts() {
   const [editingId, setEditingId] = useState(null);
   const [originalAccount, setOriginalAccount] = useState(null);
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
 
-  const [formData, setFormData] = useState({
-    username: "",
-    first_name: "",
-    last_name: "",
-    email: "",
-    phone: "",
-    role: "MANAGER",
-    password: "",
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   useEffect(() => {
     fetchAccounts();
@@ -43,21 +55,14 @@ function StaffAccounts() {
     });
   };
 
-  const resetForm = () => {
-    setFormData({
-      username: "",
-      first_name: "",
-      last_name: "",
-      email: "",
-      phone: "",
-      role: "MANAGER",
-      password: "",
-    });
+  const openAddModal = () => {
     setEditingId(null);
     setOriginalAccount(null);
+    setFormData(EMPTY_FORM);
+    setModalOpen(true);
   };
 
-  const editAccount = (account) => {
+  const openEditModal = (account) => {
     setEditingId(account.id);
     setOriginalAccount(account);
 
@@ -70,10 +75,20 @@ function StaffAccounts() {
       role: account.role,
       password: "",
     });
+
+    setModalOpen(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const closeModal = () => {
+    if (submitting) return;
+    setModalOpen(false);
+    setEditingId(null);
+    setOriginalAccount(null);
+    setFormData(EMPTY_FORM);
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
 
     try {
       if (editingId) {
@@ -93,9 +108,8 @@ function StaffAccounts() {
         showNotification("Account created successfully!", "success");
       }
 
-      resetForm();
+      closeModal();
       fetchAccounts();
-
     } catch (error) {
       console.error("Error saving account:", error);
       const data = error.response?.data;
@@ -105,6 +119,8 @@ function StaffAccounts() {
           : null;
       const message = firstFieldError || data?.detail || "Failed to save account.";
       showNotification(message, "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -127,96 +143,15 @@ function StaffAccounts() {
 
   return (
     <div>
-      <h1>Manager & Landlord Accounts</h1>
+      <div className="payments-toolbar">
+        <h1 style={{ margin: 0 }}>Manager & Landlord Accounts</h1>
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
-
-        <select
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-          disabled={!!editingId}
-        >
-          <option value="MANAGER">Manager</option>
-          <option value="LANDLORD">Landlord</option>
-        </select>
-
-        <input
-          type="text"
-          name="username"
-          placeholder={editingId ? originalAccount?.username : "Username"}
-          value={formData.username}
-          onChange={handleChange}
-          required={!editingId}
-          style={{ marginLeft: "10px" }}
-        />
-
-        <input
-          type="text"
-          name="first_name"
-          placeholder={editingId ? originalAccount?.first_name : "First Name"}
-          value={formData.first_name}
-          onChange={handleChange}
-          required={!editingId}
-          style={{ marginLeft: "10px" }}
-        />
-
-        <input
-          type="text"
-          name="last_name"
-          placeholder={editingId ? originalAccount?.last_name : "Last Name"}
-          value={formData.last_name}
-          onChange={handleChange}
-          required={!editingId}
-          style={{ marginLeft: "10px" }}
-        />
-
-        <br /><br />
-
-        <input
-          type="email"
-          name="email"
-          placeholder={editingId ? originalAccount?.email : "Email"}
-          value={formData.email}
-          onChange={handleChange}
-          required={!editingId}
-        />
-
-        <input
-          type="text"
-          name="phone"
-          placeholder="Phone Number"
-          value={formData.phone}
-          onChange={handleChange}
-          style={{ marginLeft: "10px" }}
-        />
-
-        <input
-          type="text"
-          name="password"
-          placeholder={editingId ? "New Password (leave blank to keep current)" : "Set Login Password"}
-          value={formData.password}
-          onChange={handleChange}
-          required={!editingId}
-          minLength={6}
-          style={{ marginLeft: "10px" }}
-        />
-
-        <button type="submit" style={{ marginLeft: "10px" }}>
-          {editingId ? "Update Account" : "Add Account"}
-        </button>
-
-        {editingId && (
-          <button
-            type="button"
-            onClick={resetForm}
-            style={{ marginLeft: "10px" }}
-          >
-            Cancel
+        <div className="payments-toolbar-actions">
+          <button className="btn-primary" onClick={openAddModal}>
+            <FaPlus /> Add Account
           </button>
-        )}
-
-      </form>
+        </div>
+      </div>
 
       <table border="1" cellPadding="10" width="100%">
         <thead>
@@ -249,39 +184,85 @@ function StaffAccounts() {
 
               <td>
                 <button
-                  onClick={() => editAccount(account)}
-                  style={{
-                    marginRight: "10px",
-                    backgroundColor: "orange",
-                    color: "white",
-                    border: "none",
-                    padding: "5px 10px",
-                    cursor: "pointer",
-                  }}
+                  className="icon-btn edit"
+                  title="Edit account"
+                  onClick={() => openEditModal(account)}
                 >
-                  Edit
+                  <FaEdit />
                 </button>
 
                 <button
+                  className="icon-btn delete"
+                  title="Delete account"
                   onClick={() => {
                     setAccountToDelete(account.id);
                     setConfirmOpen(true);
                   }}
-                  style={{
-                    backgroundColor: "red",
-                    color: "white",
-                    border: "none",
-                    padding: "5px 10px",
-                    cursor: "pointer",
-                  }}
                 >
-                  Delete
+                  <FaTrash />
                 </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      <FormModal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingId ? "Update Account" : "Add Manager / Landlord Account"}
+        isEditing={!!editingId}
+        submitting={submitting}
+        formData={formData}
+        onChange={handleChange}
+        onSubmit={handleSubmit}
+        fields={[
+          {
+            name: "role",
+            label: "Role",
+            type: "select",
+            disabled: !!editingId,
+            options: ROLE_OPTIONS,
+            fullWidth: true,
+          },
+          {
+            name: "username",
+            label: "Username",
+            required: !editingId,
+            placeholder: editingId ? originalAccount?.username : undefined,
+            helperText: editingId ? "Leave blank to keep the current username" : undefined,
+          },
+          {
+            name: "first_name",
+            label: "First Name",
+            required: !editingId,
+            placeholder: editingId ? originalAccount?.first_name : undefined,
+          },
+          {
+            name: "last_name",
+            label: "Last Name",
+            required: !editingId,
+            placeholder: editingId ? originalAccount?.last_name : undefined,
+          },
+          {
+            name: "email",
+            label: "Email",
+            type: "email",
+            required: !editingId,
+            placeholder: editingId ? originalAccount?.email : undefined,
+          },
+          { name: "phone", label: "Phone Number" },
+          {
+            name: "password",
+            label: editingId ? "New Password" : "Set Login Password",
+            type: "password",
+            required: !editingId,
+            helperText: editingId
+              ? "Leave blank to keep the current password"
+              : "Minimum 6 characters",
+          },
+        ]}
+      />
 
       <ConfirmDialog
         open={confirmOpen}

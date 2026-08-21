@@ -1,9 +1,28 @@
 import { useContext, useEffect, useMemo, useState } from "react";
+import { FaPlus, FaEdit, FaTrash, FaSearch } from "react-icons/fa";
 import api from "../services/api";
 import { useNotification } from "../context/NotificationContext";
 import UnitDropdown from "../components/UnitDropdown";
 import Pagination from "../components/Pagination";
+import FormModal from "../components/FormModal";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { AuthContext } from "../context/AuthContext";
+
+const EMPTY_FORM = {
+  tenant: "",
+  unit: "",
+  start_date: "",
+  end_date: "",
+  monthly_rent: "",
+  security_deposit: "",
+  status: "ACTIVE",
+};
+
+const STATUS_OPTIONS = [
+  { value: "ACTIVE", label: "Active" },
+  { value: "EXPIRED", label: "Expired" },
+  { value: "TERMINATED", label: "Terminated" },
+];
 
 function Leases() {
   const { user } = useContext(AuthContext);
@@ -18,19 +37,17 @@ function Leases() {
   const [selectedTenant, setSelectedTenant] = useState(null);
   const [selectedUnit, setSelectedUnit] = useState(null);
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [leaseToDelete, setLeaseToDelete] = useState(null);
+
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [formData, setFormData] = useState({
-    tenant: "",
-    unit: "",
-    start_date: "",
-    end_date: "",
-    monthly_rent: "",
-    security_deposit: "",
-    status: "ACTIVE",
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   useEffect(() => {
     fetchLeases();
@@ -91,48 +108,15 @@ function Leases() {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      if (editingId) {
-        await api.put(`leases/${editingId}/`, formData);
-        showNotification("Lease updated successfully!", "success");
-      } else {
-        await api.post("leases/", formData);
-        showNotification("Lease added successfully!", "success");
-      }
-
-      setFormData({
-        tenant: "",
-        unit: "",
-        start_date: "",
-        end_date: "",
-        monthly_rent: "",
-        security_deposit: "",
-        status: "ACTIVE",
-      });
-
-      setEditingId(null);
-      setSelectedTenant(null);
-      setSelectedUnit(null);
-
-      fetchLeases();
-
-    } catch (error) {
-      console.error("Error saving lease:", error);
-
-      const message =
-        error.response?.data?.detail ||
-        error.response?.data?.unit?.[0] ||
-        error.response?.data?.non_field_errors?.[0] ||
-        "Failed to save lease.";
-
-      showNotification(message, "error");
-    }
+  const openAddModal = () => {
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+    setSelectedTenant(null);
+    setSelectedUnit(null);
+    setModalOpen(true);
   };
 
-  const editLease = (lease) => {
+  const openEditModal = (lease) => {
     setFormData({
       tenant: lease.tenant,
       unit: lease.unit,
@@ -150,23 +134,61 @@ function Leases() {
     setSelectedUnit(unit || null);
 
     setEditingId(lease.id);
+    setModalOpen(true);
   };
 
-  const deleteLease = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this lease?"
-    );
+  const closeModal = () => {
+    if (submitting) return;
+    setModalOpen(false);
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+    setSelectedTenant(null);
+    setSelectedUnit(null);
+  };
 
-    if (!confirmDelete) return;
+  const handleSubmit = async () => {
+    setSubmitting(true);
 
     try {
-      await api.delete(`leases/${id}/`);
+      if (editingId) {
+        await api.put(`leases/${editingId}/`, formData);
+        showNotification("Lease updated successfully!", "success");
+      } else {
+        await api.post("leases/", formData);
+        showNotification("Lease added successfully!", "success");
+      }
+
+      closeModal();
+      fetchLeases();
+    } catch (error) {
+      console.error("Error saving lease:", error);
+
+      const message =
+        error.response?.data?.detail ||
+        error.response?.data?.unit?.[0] ||
+        error.response?.data?.non_field_errors?.[0] ||
+        "Failed to save lease.";
+
+      showNotification(message, "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const deleteLease = async () => {
+    if (!leaseToDelete) return;
+
+    try {
+      await api.delete(`leases/${leaseToDelete.id}/`);
       showNotification("Lease deleted successfully!", "success");
       fetchLeases();
     } catch (error) {
       console.error("Error deleting lease:", error);
       const message = error.response?.data?.detail || "Failed to delete lease.";
       showNotification(message, "error");
+    } finally {
+      setConfirmOpen(false);
+      setLeaseToDelete(null);
     }
   };
 
@@ -205,144 +227,29 @@ function Leases() {
     currentPage * pageSize
   );
 
+  const tenantOptions = tenants.map((t) => ({ value: t.id, label: t.full_name }));
+
   return (
     <div>
-      <h1>Leases</h1>
+      <div className="payments-toolbar">
+        <h1 style={{ margin: 0 }}>Leases</h1>
 
-      {canManage && (
-      <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
-
-        <select
-          name="tenant"
-          value={formData.tenant}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select Tenant</option>
-
-          {tenants.map((tenant) => (
-            <option key={tenant.id} value={tenant.id}>
-              {tenant.full_name}
-            </option>
-          ))}
-        </select>
-
-        <span style={{ marginLeft: "10px" }}>
-          <UnitDropdown
-            units={units}
-            value={formData.unit}
-            onChange={handleUnitChange}
-          />
-        </span>
-
-        <input
-          type="date"
-          name="start_date"
-          value={formData.start_date}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
-        />
-
-        <input
-          type="date"
-          name="end_date"
-          value={formData.end_date}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
-        />
-
-        <input
-          type="number"
-          name="monthly_rent"
-          placeholder="Monthly Rent"
-          value={formData.monthly_rent}
-          readOnly
-          style={{
-            marginLeft: "10px",
-            backgroundColor: "#f3f4f6",
-          }}
-        />
-
-        <input
-          type="number"
-          name="security_deposit"
-          placeholder="Security Deposit"
-          value={formData.security_deposit}
-          readOnly
-          style={{
-            marginLeft: "10px",
-            backgroundColor: "#f3f4f6",
-          }}
-        />
-
-        <select
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          style={{ marginLeft: "10px" }}
-        >
-          <option value="ACTIVE">Active</option>
-          <option value="EXPIRED">Expired</option>
-          <option value="TERMINATED">Terminated</option>
-        </select>
-
-        <button type="submit" style={{ marginLeft: "10px" }}>
-          {editingId ? "Update Lease" : "Add Lease"}
-        </button>
-
-        {selectedTenant && (
-          <div
-            style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginTop: "10px",
-              marginBottom: "10px",
-              borderRadius: "5px",
-              background: "#f8fafc",
-            }}
-          >
-            <strong>Tenant Information</strong>
-
-            <p>Name: {selectedTenant.full_name}</p>
-            <p>Phone: {selectedTenant.phone_number}</p>
-            <p>ID Number: {selectedTenant.national_id}</p>
-            <p>Email: {selectedTenant.user_email}</p>
+        {canManage && (
+          <div className="payments-toolbar-actions">
+            <button className="btn-primary" onClick={openAddModal}>
+              <FaPlus /> Add Lease
+            </button>
           </div>
         )}
+      </div>
 
-        {selectedUnit && (
-          <div
-            style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginTop: "10px",
-              marginBottom: "10px",
-              borderRadius: "5px",
-              background: "#f8fafc",
-            }}
-          >
-            <strong>Unit Information</strong>
-
-            <p>Estate: {selectedUnit.estate_name}</p>
-            <p>Unit Number: {selectedUnit.unit_number}</p>
-            <p>Unit Type: {selectedUnit.unit_type}</p>
-            <p>Rent: KES {selectedUnit.rent_amount}</p>
-            <p>Status: {selectedUnit.status}</p>
-          </div>
-        )}
-
-      </form>
-      )}
-
-      <div style={{ marginBottom: "15px" }}>
+      <div className="search-bar">
+        <FaSearch />
         <input
           type="text"
           placeholder="Search by tenant, unit, or status..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ width: "100%", maxWidth: "400px", padding: "8px" }}
         />
       </div>
 
@@ -380,35 +287,26 @@ function Leases() {
               <td>{lease.status}</td>
 
               {canManage && (
-              <td>
-                <button
-                  onClick={() => editLease(lease)}
-                  style={{
-                    backgroundColor: "blue",
-                    color: "white",
-                    border: "none",
-                    padding: "5px 10px",
-                    marginRight: "5px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteLease(lease.id)}
-                  style={{
-                    backgroundColor: "red",
-                    color: "white",
-                    border: "none",
-                    padding: "5px 10px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Delete
-                </button>
-              </td>
+                <td>
+                  <button
+                    className="icon-btn edit"
+                    title="Edit lease"
+                    onClick={() => openEditModal(lease)}
+                  >
+                    <FaEdit />
+                  </button>
+                  <button
+                    className="icon-btn delete"
+                    title="Delete lease"
+                    onClick={() => {
+                      setLeaseToDelete(lease);
+                      setConfirmOpen(true);
+                    }}
+                  >
+                    <FaTrash />
+                  </button>
+                </td>
               )}
-
             </tr>
           ))}
         </tbody>
@@ -421,6 +319,101 @@ function Leases() {
         pageSize={pageSize}
         onPageChange={setCurrentPage}
         onPageSizeChange={setPageSize}
+      />
+
+      <FormModal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingId ? "Update Lease" : "Add Lease"}
+        isEditing={!!editingId}
+        submitting={submitting}
+        formData={formData}
+        onChange={handleChange}
+        onSubmit={handleSubmit}
+        infoPanel={
+          (selectedTenant || selectedUnit) && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              {selectedTenant && (
+                <div>
+                  <strong style={{ display: "block", marginBottom: "6px" }}>
+                    Tenant Information
+                  </strong>
+                  <div style={{ fontSize: "14px", lineHeight: 1.7 }}>
+                    <div>Name: {selectedTenant.full_name}</div>
+                    <div>Phone: {selectedTenant.phone_number}</div>
+                    <div>ID Number: {selectedTenant.national_id}</div>
+                    <div>Email: {selectedTenant.user_email}</div>
+                  </div>
+                </div>
+              )}
+
+              {selectedUnit && (
+                <div>
+                  <strong style={{ display: "block", marginBottom: "6px" }}>
+                    Unit Information
+                  </strong>
+                  <div style={{ fontSize: "14px", lineHeight: 1.7 }}>
+                    <div>Estate: {selectedUnit.estate_name}</div>
+                    <div>Unit Number: {selectedUnit.unit_number}</div>
+                    <div>Unit Type: {selectedUnit.unit_type}</div>
+                    <div>Rent: KES {selectedUnit.rent_amount}</div>
+                    <div>Status: {selectedUnit.status}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        }
+        fields={[
+          {
+            name: "tenant",
+            label: "Tenant",
+            type: "select",
+            required: true,
+            placeholder: "Select Tenant",
+            options: tenantOptions,
+          },
+          {
+            name: "unit",
+            label: "Unit",
+            type: "custom",
+            render: () => (
+              <UnitDropdown units={units} value={formData.unit} onChange={handleUnitChange} />
+            ),
+          },
+          { name: "start_date", label: "Start Date", type: "date", required: true },
+          { name: "end_date", label: "End Date", type: "date", required: true },
+          {
+            name: "monthly_rent",
+            label: "Monthly Rent",
+            type: "number",
+            disabled: true,
+            helperText: "Set automatically from the selected unit",
+          },
+          {
+            name: "security_deposit",
+            label: "Security Deposit",
+            type: "number",
+            disabled: true,
+            helperText: "Set automatically from the selected unit",
+          },
+          { name: "status", label: "Status", type: "select", options: STATUS_OPTIONS },
+        ]}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete Lease"
+        message={
+          leaseToDelete
+            ? `Are you sure you want to delete the lease for "${leaseToDelete.tenant_name}" — ${leaseToDelete.unit_number}? This action cannot be undone.`
+            : ""
+        }
+        onConfirm={deleteLease}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setLeaseToDelete(null);
+        }}
       />
     </div>
   );

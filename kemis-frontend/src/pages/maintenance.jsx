@@ -1,8 +1,34 @@
 import { useContext, useEffect, useState } from "react";
+import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
 import { useNotification } from "../context/NotificationContext";
 import UnitDropdown from "../components/UnitDropdown";
+import FormModal from "../components/FormModal";
+import ConfirmDialog from "../components/ConfirmDialog";
+
+const EMPTY_FORM = {
+  tenant: "",
+  unit: "",
+  title: "",
+  description: "",
+  priority: "MEDIUM",
+  status: "PENDING",
+  resolved_date: "",
+};
+
+const PRIORITY_OPTIONS = [
+  { value: "LOW", label: "Low" },
+  { value: "MEDIUM", label: "Medium" },
+  { value: "HIGH", label: "High" },
+  { value: "URGENT", label: "Urgent" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "PENDING", label: "Pending" },
+  { value: "IN_PROGRESS", label: "In Progress" },
+  { value: "COMPLETED", label: "Completed" },
+];
 
 function Maintenance() {
   const { user } = useContext(AuthContext);
@@ -16,15 +42,13 @@ function Maintenance() {
   const [ownLease, setOwnLease] = useState(null);
   const [editingId, setEditingId] = useState(null);
 
-  const [formData, setFormData] = useState({
-    tenant: "",
-    unit: "",
-    title: "",
-    description: "",
-    priority: "MEDIUM",
-    status: "PENDING",
-    resolved_date: "",
-  });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState(null);
+
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   useEffect(() => {
     fetchRequests();
@@ -85,8 +109,36 @@ function Maintenance() {
     setFormData((prev) => ({ ...prev, unit: unitId }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const openAddModal = () => {
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+    setModalOpen(true);
+  };
+
+  const openEditModal = (request) => {
+    setFormData({
+      tenant: request.tenant,
+      unit: request.unit,
+      title: request.title,
+      description: request.description,
+      priority: request.priority,
+      status: request.status,
+      resolved_date: request.resolved_date ? request.resolved_date.slice(0, 10) : "",
+    });
+
+    setEditingId(request.id);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    if (submitting) return;
+    setModalOpen(false);
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
 
     try {
       const payload = isTenant
@@ -105,19 +157,8 @@ function Maintenance() {
         showNotification("Request added successfully!", "success");
       }
 
-      setFormData({
-        tenant: "",
-        unit: "",
-        title: "",
-        description: "",
-        priority: "MEDIUM",
-        status: "PENDING",
-        resolved_date: "",
-      });
-
-      setEditingId(null);
+      closeModal();
       fetchRequests();
-
     } catch (error) {
       console.error("Error saving request:", error);
       const message =
@@ -125,40 +166,25 @@ function Maintenance() {
         error.response?.data?.non_field_errors?.[0] ||
         "Failed to save request.";
       showNotification(message, "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const editRequest = (request) => {
-    setFormData({
-      tenant: request.tenant,
-      unit: request.unit,
-      title: request.title,
-      description: request.description,
-      priority: request.priority,
-      status: request.status,
-      resolved_date: request.resolved_date
-        ? request.resolved_date.slice(0, 10)
-        : "",
-    });
-
-    setEditingId(request.id);
-  };
-
-  const deleteRequest = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this request?"
-    );
-
-    if (!confirmDelete) return;
+  const deleteRequest = async () => {
+    if (!requestToDelete) return;
 
     try {
-      await api.delete(`maintenance/${id}/`);
+      await api.delete(`maintenance/${requestToDelete.id}/`);
       showNotification("Request deleted successfully!", "success");
       fetchRequests();
     } catch (error) {
       console.error("Error deleting request:", error);
       const message = error.response?.data?.detail || "Failed to delete request.";
       showNotification(message, "error");
+    } finally {
+      setConfirmOpen(false);
+      setRequestToDelete(null);
     }
   };
 
@@ -198,134 +224,34 @@ function Maintenance() {
     });
   };
 
+  const tenantOptions = tenants.map((t) => ({ value: t.id, label: t.full_name }));
+
   return (
     <div>
+      <div className="payments-toolbar">
+        <h1 style={{ margin: 0 }}>Maintenance Requests</h1>
 
-      <h1>Maintenance Requests</h1>
-
-      {(isTenant || canManage) && (
-      <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
-
-        {isTenant ? (
-          <div
-            style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginBottom: "10px",
-              borderRadius: "5px",
-              background: "#f8fafc",
-              maxWidth: "300px",
-            }}
-          >
-            <strong>Filing for:</strong>
-            {ownLease ? (
-              <p style={{ margin: "5px 0 0 0" }}>
-                {ownLease.unit_number} &mdash; {ownLease.tenant_name}
-              </p>
-            ) : (
-              <p style={{ margin: "5px 0 0 0", color: "#b91c1c" }}>
-                No active lease found. You can't file a request.
-              </p>
-            )}
+        {(isTenant || canManage) && (
+          <div className="payments-toolbar-actions">
+            <button
+              className="btn-primary"
+              onClick={openAddModal}
+              disabled={isTenant && !ownLease}
+              title={isTenant && !ownLease ? "No active lease found." : undefined}
+            >
+              <FaPlus /> New Request
+            </button>
           </div>
-        ) : (
-          <>
-            <select
-              name="tenant"
-              value={formData.tenant}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select Tenant</option>
-
-              {tenants.map((tenant) => (
-                <option key={tenant.id} value={tenant.id}>
-                  {tenant.full_name}
-                </option>
-              ))}
-            </select>
-
-            <span style={{ marginLeft: "10px" }}>
-              <UnitDropdown
-                units={units}
-                value={formData.unit}
-                onChange={handleUnitChange}
-              />
-            </span>
-          </>
         )}
+      </div>
 
-        <input
-          type="text"
-          name="title"
-          placeholder="Issue Title"
-          value={formData.title}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: isTenant ? "0" : "10px", marginTop: isTenant ? "10px" : "0" }}
-        />
-
-        <br /><br />
-
-        <textarea
-          name="description"
-          placeholder="Description"
-          value={formData.description}
-          onChange={handleChange}
-          required
-          rows="3"
-          cols="50"
-        />
-
-        <br /><br />
-
-        <select
-          name="priority"
-          value={formData.priority}
-          onChange={handleChange}
-        >
-          <option value="LOW">Low</option>
-          <option value="MEDIUM">Medium</option>
-          <option value="HIGH">High</option>
-          <option value="URGENT">Urgent</option>
-        </select>
-
-        {!isTenant && (
-          <>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              style={{ marginLeft: "10px" }}
-            >
-              <option value="PENDING">Pending</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="COMPLETED">Completed</option>
-            </select>
-
-            <input
-              type="date"
-              name="resolved_date"
-              value={formData.resolved_date}
-              onChange={handleChange}
-              style={{ marginLeft: "10px" }}
-            />
-          </>
-        )}
-
-        <button
-          type="submit"
-          disabled={isTenant && !ownLease}
-          style={{ marginLeft: "10px" }}
-        >
-          {editingId ? "Update Request" : "Add Request"}
-        </button>
-
-      </form>
+      {isTenant && !ownLease && (
+        <p style={{ color: "#b91c1c", marginTop: "-6px" }}>
+          No active lease found. You can't file a request.
+        </p>
       )}
 
       <table border="1" cellPadding="10" width="100%">
-
         <thead>
           <tr>
             <th>Tenant</th>
@@ -340,7 +266,6 @@ function Maintenance() {
         </thead>
 
         <tbody>
-
           {requests.length === 0 && (
             <tr>
               <td colSpan={canManage ? 8 : 7} style={{ textAlign: "center", padding: "15px" }}>
@@ -386,43 +311,113 @@ function Maintenance() {
 
               {canManage && (
                 <td>
-
                   <button
-                    onClick={() => editRequest(request)}
-                    style={{
-                      backgroundColor: "blue",
-                      color: "white",
-                      border: "none",
-                      padding: "5px 10px",
-                      marginRight: "5px",
-                      cursor: "pointer",
-                    }}
+                    className="icon-btn edit"
+                    title="Edit request"
+                    onClick={() => openEditModal(request)}
                   >
-                    Edit
+                    <FaEdit />
                   </button>
 
                   <button
-                    onClick={() => deleteRequest(request.id)}
-                    style={{
-                      backgroundColor: "red",
-                      color: "white",
-                      border: "none",
-                      padding: "5px 10px",
-                      cursor: "pointer",
+                    className="icon-btn delete"
+                    title="Delete request"
+                    onClick={() => {
+                      setRequestToDelete(request);
+                      setConfirmOpen(true);
                     }}
                   >
-                    Delete
+                    <FaTrash />
                   </button>
-
                 </td>
               )}
             </tr>
           ))}
-
         </tbody>
-
       </table>
 
+      <FormModal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingId ? "Update Maintenance Request" : "New Maintenance Request"}
+        isEditing={!!editingId}
+        submitting={submitting}
+        formData={formData}
+        onChange={handleChange}
+        onSubmit={handleSubmit}
+        infoPanel={
+          isTenant ? (
+            <>
+              <strong>Filing for:</strong>
+              {ownLease ? (
+                <p style={{ margin: "5px 0 0 0" }}>
+                  {ownLease.unit_number} &mdash; {ownLease.tenant_name}
+                </p>
+              ) : (
+                <p style={{ margin: "5px 0 0 0", color: "#b91c1c" }}>
+                  No active lease found. You can't file a request.
+                </p>
+              )}
+            </>
+          ) : undefined
+        }
+        fields={[
+          ...(!isTenant
+            ? [
+                {
+                  name: "tenant",
+                  label: "Tenant",
+                  type: "select",
+                  required: true,
+                  placeholder: "Select Tenant",
+                  options: tenantOptions,
+                },
+                {
+                  name: "unit",
+                  label: "Unit",
+                  type: "custom",
+                  render: () => (
+                    <UnitDropdown
+                      units={units}
+                      value={formData.unit}
+                      onChange={handleUnitChange}
+                    />
+                  ),
+                },
+              ]
+            : []),
+          { name: "title", label: "Issue Title", required: true, fullWidth: true },
+          {
+            name: "description",
+            label: "Description",
+            type: "textarea",
+            required: true,
+            fullWidth: true,
+          },
+          { name: "priority", label: "Priority", type: "select", options: PRIORITY_OPTIONS },
+          ...(!isTenant
+            ? [
+                { name: "status", label: "Status", type: "select", options: STATUS_OPTIONS },
+                { name: "resolved_date", label: "Resolved Date", type: "date" },
+              ]
+            : []),
+        ]}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete Request"
+        message={
+          requestToDelete
+            ? `Are you sure you want to delete "${requestToDelete.title}"? This action cannot be undone.`
+            : ""
+        }
+        onConfirm={deleteRequest}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setRequestToDelete(null);
+        }}
+      />
     </div>
   );
 }

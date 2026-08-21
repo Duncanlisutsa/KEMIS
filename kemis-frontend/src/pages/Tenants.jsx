@@ -1,9 +1,23 @@
 import { useContext, useEffect, useMemo, useState } from "react";
+import { FaPlus, FaEdit, FaTrash, FaSearch } from "react-icons/fa";
 import api from "../services/api";
 import ConfirmDialog from "../components/ConfirmDialog";
+import FormModal from "../components/FormModal";
 import Pagination from "../components/Pagination";
 import { useNotification } from "../context/NotificationContext";
 import { AuthContext } from "../context/AuthContext";
+
+const EMPTY_FORM = {
+  username: "",
+  first_name: "",
+  last_name: "",
+  email: "",
+  password: "",
+  national_id: "",
+  phone_number: "",
+  emergency_contact_name: "",
+  emergency_contact_phone: "",
+};
 
 function Tenants() {
   const { user } = useContext(AuthContext);
@@ -14,6 +28,9 @@ function Tenants() {
   const [editingId, setEditingId] = useState(null);
   const [originalTenant, setOriginalTenant] = useState(null);
 
+  const [modalOpen, setModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState(null);
 
@@ -21,17 +38,7 @@ function Tenants() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [formData, setFormData] = useState({
-    username: "",
-    first_name: "",
-    last_name: "",
-    email: "",
-    password: "",
-    national_id: "",
-    phone_number: "",
-    emergency_contact_name: "",
-    emergency_contact_phone: "",
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM);
 
   useEffect(() => {
     fetchTenants();
@@ -53,7 +60,14 @@ function Tenants() {
     });
   };
 
-const editTenant = (tenant) => {
+  const openAddModal = () => {
+    setEditingId(null);
+    setOriginalTenant(null);
+    setFormData(EMPTY_FORM);
+    setModalOpen(true);
+  };
+
+  const openEditModal = (tenant) => {
     setEditingId(tenant.id);
     setOriginalTenant(tenant);
 
@@ -68,10 +82,20 @@ const editTenant = (tenant) => {
       emergency_contact_name: tenant.emergency_contact_name,
       emergency_contact_phone: tenant.emergency_contact_phone,
     });
+
+    setModalOpen(true);
   };
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+
+  const closeModal = () => {
+    if (submitting) return;
+    setModalOpen(false);
+    setEditingId(null);
+    setOriginalTenant(null);
+    setFormData(EMPTY_FORM);
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
 
     try {
       if (editingId) {
@@ -87,28 +111,13 @@ const editTenant = (tenant) => {
         });
 
         showNotification("Tenant updated successfully!", "success");
-        setEditingId(null);
-        setOriginalTenant(null);
-
       } else {
         await api.post("tenants/", formData);
         showNotification("Tenant added successfully!", "success");
       }
 
-      setFormData({
-        username: "",
-        first_name: "",
-        last_name: "",
-        email: "",
-        password: "",
-        national_id: "",
-        phone_number: "",
-        emergency_contact_name: "",
-        emergency_contact_phone: "",
-      });
-
+      closeModal();
       fetchTenants();
-
     } catch (error) {
       console.error("Error saving tenant:", error);
       const data = error.response?.data;
@@ -118,6 +127,8 @@ const editTenant = (tenant) => {
           : null;
       const message = firstFieldError || data?.detail || "Failed to save tenant.";
       showNotification(message, "error");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -173,124 +184,32 @@ const editTenant = (tenant) => {
     currentPage * pageSize
   );
 
+  const tenantToDeleteObj = useMemo(
+    () => tenants.find((t) => t.id === tenantToDelete),
+    [tenants, tenantToDelete]
+  );
+
   return (
     <div>
-      <h1>Tenants</h1>
+      <div className="payments-toolbar">
+        <h1 style={{ margin: 0 }}>Tenants</h1>
 
-      {canManage && (
-      <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
-
-<input
-          type="text"
-          name="username"
-          placeholder={editingId ? originalTenant?.username : "Username"}
-          value={formData.username}
-          onChange={handleChange}
-          required={!editingId}
-        />
-
-        <input
-          type="text"
-          name="first_name"
-          placeholder={editingId ? originalTenant?.first_name : "First Name"}
-          value={formData.first_name}
-          onChange={handleChange}
-          required={!editingId}
-          style={{ marginLeft: "10px" }}
-        />
-
-        <input
-          type="text"
-          name="last_name"
-          placeholder={editingId ? originalTenant?.last_name : "Last Name"}
-          value={formData.last_name}
-          onChange={handleChange}
-          required={!editingId}
-          style={{ marginLeft: "10px" }}
-        />
-
-        <input
-          type="email"
-          name="email"
-          placeholder={editingId ? originalTenant?.email : "Email"}
-          value={formData.email}
-          onChange={handleChange}
-          required={!editingId}
-          style={{ marginLeft: "10px" }}
-        />
-
-        {!editingId && (
-          <input
-            type="text"
-            name="password"
-            placeholder="Set Login Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            minLength={6}
-            style={{ marginLeft: "10px" }}
-          />
+        {canManage && (
+          <div className="payments-toolbar-actions">
+            <button className="btn-primary" onClick={openAddModal}>
+              <FaPlus /> Add Tenant
+            </button>
+          </div>
         )}
+      </div>
 
-        <br /><br />
-
-        <input
-          type="text"
-          name="national_id"
-          placeholder="National ID"
-          value={formData.national_id}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          type="text"
-          name="phone_number"
-          placeholder="Phone Number"
-          value={formData.phone_number}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
-        />
-
-        <br /><br />
-
-        <input
-          type="text"
-          name="emergency_contact_name"
-          placeholder="Emergency Contact Name"
-          value={formData.emergency_contact_name}
-          onChange={handleChange}
-          required
-        />
-
-        <input
-          type="text"
-          name="emergency_contact_phone"
-          placeholder="Emergency Contact Phone"
-          value={formData.emergency_contact_phone}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
-        />
-
-        <button
-          type="submit"
-          style={{ marginLeft: "10px" }}
-        >
-          {editingId ? "Update Tenant" : "Add Tenant"}
-        </button>
-
-      </form>
-      )}
-
-      <div style={{ marginBottom: "15px" }}>
+      <div className="search-bar">
+        <FaSearch />
         <input
           type="text"
           placeholder="Search by name, national ID, or phone..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ width: "100%", maxWidth: "400px", padding: "8px" }}
         />
       </div>
 
@@ -324,37 +243,26 @@ const editTenant = (tenant) => {
               <td>{tenant.emergency_contact_phone}</td>
 
               {canManage && (
-              <td>
-                <button
-                  onClick={() => editTenant(tenant)}
-                  style={{
-                    marginRight: "10px",
-                    backgroundColor: "orange",
-                    color: "white",
-                    border: "none",
-                    padding: "5px 10px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Edit
-                </button>
+                <td>
+                  <button
+                    className="icon-btn edit"
+                    title="Edit tenant"
+                    onClick={() => openEditModal(tenant)}
+                  >
+                    <FaEdit />
+                  </button>
 
-                <button
-                  onClick={() => {
-                    setTenantToDelete(tenant.id);
-                    setConfirmOpen(true);
-                  }}
-                  style={{
-                    backgroundColor: "red",
-                    color: "white",
-                    border: "none",
-                    padding: "5px 10px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Delete
-                </button>
-              </td>
+                  <button
+                    className="icon-btn delete"
+                    title="Delete tenant"
+                    onClick={() => {
+                      setTenantToDelete(tenant.id);
+                      setConfirmOpen(true);
+                    }}
+                  >
+                    <FaTrash />
+                  </button>
+                </td>
               )}
             </tr>
           ))}
@@ -370,10 +278,76 @@ const editTenant = (tenant) => {
         onPageSizeChange={setPageSize}
       />
 
+      <FormModal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingId ? "Update Tenant" : "Add Tenant"}
+        isEditing={!!editingId}
+        submitting={submitting}
+        formData={formData}
+        onChange={handleChange}
+        onSubmit={handleSubmit}
+        fields={[
+          {
+            name: "username",
+            label: "Username",
+            required: !editingId,
+            placeholder: editingId ? originalTenant?.username : undefined,
+            helperText: editingId ? "Leave blank to keep the current username" : undefined,
+          },
+          {
+            name: "first_name",
+            label: "First Name",
+            required: !editingId,
+            placeholder: editingId ? originalTenant?.first_name : undefined,
+          },
+          {
+            name: "last_name",
+            label: "Last Name",
+            required: !editingId,
+            placeholder: editingId ? originalTenant?.last_name : undefined,
+          },
+          {
+            name: "email",
+            label: "Email",
+            type: "email",
+            required: !editingId,
+            placeholder: editingId ? originalTenant?.email : undefined,
+          },
+          ...(!editingId
+            ? [
+                {
+                  name: "password",
+                  label: "Set Login Password",
+                  type: "password",
+                  required: true,
+                  helperText: "Minimum 6 characters",
+                },
+              ]
+            : []),
+          { name: "national_id", label: "National ID", required: true },
+          { name: "phone_number", label: "Phone Number", required: true },
+          {
+            name: "emergency_contact_name",
+            label: "Emergency Contact Name",
+            required: true,
+          },
+          {
+            name: "emergency_contact_phone",
+            label: "Emergency Contact Phone",
+            required: true,
+          },
+        ]}
+      />
+
       <ConfirmDialog
         open={confirmOpen}
         title="Delete Tenant"
-        message="Are you sure you want to delete this tenant? This action cannot be undone."
+        message={
+          tenantToDeleteObj
+            ? `Are you sure you want to delete "${tenantToDeleteObj.full_name}"? This action cannot be undone.`
+            : "Are you sure you want to delete this tenant? This action cannot be undone."
+        }
         onConfirm={deleteTenant}
         onCancel={() => {
           setConfirmOpen(false);

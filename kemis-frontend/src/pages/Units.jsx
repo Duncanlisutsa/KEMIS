@@ -1,10 +1,34 @@
 import { useContext, useEffect, useMemo, useState } from "react";
+import { FaPlus, FaEdit, FaTrash, FaSearch } from "react-icons/fa";
 import api from "../services/api";
 import ConfirmDialog from "../components/ConfirmDialog";
+import FormModal from "../components/FormModal";
 import Pagination from "../components/Pagination";
 import { useNotification } from "../context/NotificationContext";
 import { AuthContext } from "../context/AuthContext";
 
+const EMPTY_FORM = {
+  estate: "",
+  unit_number: "",
+  unit_type: "",
+  rent_amount: "",
+  status: "VACANT",
+  electricity_token_number: "",
+};
+
+const UNIT_TYPE_OPTIONS = [
+  { value: "SINGLE", label: "Single Room" },
+  { value: "BEDSITTER", label: "Bedsitter" },
+  { value: "ONE_BEDROOM", label: "One Bedroom" },
+  { value: "TWO_BEDROOM", label: "Two Bedroom" },
+  { value: "BUSINESS", label: "Business Premise" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "VACANT", label: "Vacant" },
+  { value: "RESERVED", label: "Reserved" },
+  { value: "MAINTENANCE", label: "Under Maintenance" },
+];
 
 function Units() {
   const { user } = useContext(AuthContext);
@@ -19,16 +43,11 @@ function Units() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [formData, setFormData] = useState({
-    estate: "",
-    unit_number: "",
-    unit_type: "",
-    rent_amount: "",
-    status: "VACANT",
-    electricity_token_number: "",
-  });
-
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState(null);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [unitToDelete, setUnitToDelete] = useState(null);
@@ -63,53 +82,13 @@ function Units() {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      if (editingId) {
-        await api.put(`property/units/${editingId}/`, {
-          ...formData,
-          rent_amount: Number(formData.rent_amount),
-        });
-
-        showNotification("Unit updated successfully!", "success");
-
-      } else {
-        await api.post("property/units/", {
-          ...formData,
-          rent_amount: Number(formData.rent_amount),
-        });
-
-        showNotification("Unit added successfully!", "success");
-      }
-
-      setFormData({
-        estate: "",
-        unit_number: "",
-        unit_type: "",
-        rent_amount: "",
-        status: "VACANT",
-        electricity_token_number: "",
-      });
-
-      fetchUnits();
-      setEditingId(null);
-
-    } catch (error) {
-      console.error("Error saving unit:", error);
-
-      const message =
-        error.response?.data?.unit_number?.[0] ||
-        error.response?.data?.detail ||
-        error.response?.data?.non_field_errors?.[0] ||
-        "Failed to save unit.";
-
-      showNotification(message, "error");
-    }
+  const openAddModal = () => {
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+    setModalOpen(true);
   };
 
-  const editUnit = (unit) => {
+  const openEditModal = (unit) => {
     setEditingId(unit.id);
 
     setFormData({
@@ -120,6 +99,52 @@ function Units() {
       status: unit.status,
       electricity_token_number: unit.electricity_token_number || "",
     });
+
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    if (submitting) return;
+    setModalOpen(false);
+    setEditingId(null);
+    setFormData(EMPTY_FORM);
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+
+    try {
+      if (editingId) {
+        await api.put(`property/units/${editingId}/`, {
+          ...formData,
+          rent_amount: Number(formData.rent_amount),
+        });
+
+        showNotification("Unit updated successfully!", "success");
+      } else {
+        await api.post("property/units/", {
+          ...formData,
+          rent_amount: Number(formData.rent_amount),
+        });
+
+        showNotification("Unit added successfully!", "success");
+      }
+
+      closeModal();
+      fetchUnits();
+    } catch (error) {
+      console.error("Error saving unit:", error);
+
+      const message =
+        error.response?.data?.unit_number?.[0] ||
+        error.response?.data?.detail ||
+        error.response?.data?.non_field_errors?.[0] ||
+        "Failed to save unit.";
+
+      showNotification(message, "error");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const deleteUnit = async () => {
@@ -127,16 +152,12 @@ function Units() {
       await api.delete(`property/units/${unitToDelete.id}/`);
 
       fetchUnits();
-
-      setConfirmOpen(false);
-      setUnitToDelete(null);
-
       showNotification("Unit deleted successfully!", "success");
-
     } catch (error) {
       console.error("Error deleting unit:", error);
       const message = error.response?.data?.detail || "Failed to delete unit.";
       showNotification(message, "error");
+    } finally {
       setConfirmOpen(false);
       setUnitToDelete(null);
     }
@@ -185,91 +206,24 @@ function Units() {
     currentPage * pageSize
   );
 
+  const estateOptions = useMemo(
+    () => estates.map((estate) => ({ value: estate.id, label: estate.name })),
+    [estates]
+  );
+
   return (
     <div>
-      <h1>Units</h1>
+      <div className="payments-toolbar">
+        <h1 style={{ margin: 0 }}>Units</h1>
 
-      {canManage && (
-      <form onSubmit={handleSubmit} style={{ marginBottom: "30px" }}>
-
-        <select
-          name="estate"
-          value={formData.estate}
-          onChange={handleChange}
-          required
-        >
-          <option value="">Select Estate</option>
-
-          {estates.map((estate) => (
-            <option key={estate.id} value={estate.id}>
-              {estate.name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          name="unit_type"
-          value={formData.unit_type}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
-        >
-          <option value="">Select Unit Type</option>
-          <option value="SINGLE">Single Room</option>
-          <option value="BEDSITTER">Bedsitter</option>
-          <option value="ONE_BEDROOM">One Bedroom</option>
-          <option value="TWO_BEDROOM">Two Bedroom</option>
-          <option value="BUSINESS">Business Premise</option>
-        </select>
-
-        <input
-          type="text"
-          name="unit_number"
-          placeholder="Unit Number"
-          value={formData.unit_number}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
-        />
-
-        <input
-          type="number"
-          name="rent_amount"
-          placeholder="Rent Amount"
-          value={formData.rent_amount}
-          onChange={handleChange}
-          required
-          style={{ marginLeft: "10px" }}
-        />
-
-        <input
-          type="text"
-          name="electricity_token_number"
-          placeholder="Electricity Token Number"
-          value={formData.electricity_token_number}
-          onChange={handleChange}
-          style={{ marginLeft: "10px" }}
-        />
-
-        <select
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          style={{ marginLeft: "10px" }}
-        >
-          <option value="VACANT">Vacant</option>
-          <option value="RESERVED">Reserved</option>
-          <option value="MAINTENANCE">Under Maintenance</option>
-        </select>
-
-        <button
-          type="submit"
-          style={{ marginLeft: "10px" }}
-        >
-          {editingId ? "Update Unit" : "Add Unit"}
-        </button>
-      </form>
-      )}
+        {canManage && (
+          <div className="payments-toolbar-actions">
+            <button className="btn-primary" onClick={openAddModal}>
+              <FaPlus /> Add Unit
+            </button>
+          </div>
+        )}
+      </div>
 
       <div
         style={{
@@ -277,6 +231,7 @@ function Units() {
           alignItems: "center",
           gap: "10px",
           marginBottom: "15px",
+          flexWrap: "wrap",
         }}
       >
         <label style={{ fontWeight: "bold", fontSize: "14px" }}>
@@ -302,25 +257,21 @@ function Units() {
         {estateFilter && (
           <button
             onClick={() => setEstateFilter("")}
-            style={{
-              background: "none",
-              border: "1px solid #cbd5e1",
-              borderRadius: "4px",
-              padding: "4px 10px",
-              cursor: "pointer",
-              fontSize: "13px",
-            }}
+            className="btn-outline"
+            style={{ padding: "6px 12px" }}
           >
             Clear Filter
           </button>
         )}
+      </div>
 
+      <div className="search-bar">
+        <FaSearch />
         <input
           type="text"
           placeholder="Search by unit number, type, or status..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ padding: "6px 8px", minWidth: "260px" }}
         />
       </div>
 
@@ -354,12 +305,12 @@ function Units() {
             return (
               <>
                 {isNewEstateGroup && (
-                  <tr key={`group-${unit.estate}`} style={{ background: "#e2e8f0" }}>
+                  <tr key={`group-${unit.estate}`} style={{ background: "var(--table-header-bg)" }}>
                     <td
                       colSpan={canManage ? 7 : 6}
                       style={{
                         fontWeight: "bold",
-                        color: "#1e293b",
+                        color: "var(--text)",
                         padding: "8px 10px",
                       }}
                     >
@@ -376,18 +327,18 @@ function Units() {
                   <td>{unit.electricity_token_number || "—"}</td>
                   <td>
                     <span
+                      className={
+                        unit.status === "OCCUPIED"
+                          ? "badge-success"
+                          : unit.status === "VACANT"
+                          ? "badge-info"
+                          : unit.status === "RESERVED"
+                          ? "badge-warning"
+                          : "badge-danger"
+                      }
                       style={{
                         padding: "4px 10px",
                         borderRadius: "15px",
-                        color: "white",
-                        backgroundColor:
-                          unit.status === "OCCUPIED"
-                            ? "#16a34a"
-                            : unit.status === "VACANT"
-                            ? "#2563eb"
-                            : unit.status === "RESERVED"
-                            ? "#f59e0b"
-                            : "#dc2626",
                         fontWeight: "bold",
                         fontSize: "12px",
                       }}
@@ -397,36 +348,25 @@ function Units() {
                   </td>
 
                   {canManage && (
-                  <td>
-                    <button
-                      onClick={() => editUnit(unit)}
-                      style={{
-                        backgroundColor: "blue",
-                        color: "white",
-                        border: "none",
-                        padding: "5px 10px",
-                        cursor: "pointer",
-                        marginRight: "5px",
-                      }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => {
-                        setUnitToDelete(unit);
-                        setConfirmOpen(true);
-                      }}
-                      style={{
-                        backgroundColor: "red",
-                        color: "white",
-                        border: "none",
-                        padding: "5px 10px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </td>
+                    <td>
+                      <button
+                        className="icon-btn edit"
+                        title="Edit unit"
+                        onClick={() => openEditModal(unit)}
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        className="icon-btn delete"
+                        title="Delete unit"
+                        onClick={() => {
+                          setUnitToDelete(unit);
+                          setConfirmOpen(true);
+                        }}
+                      >
+                        <FaTrash />
+                      </button>
+                    </td>
                   )}
                 </tr>
               </>
@@ -442,6 +382,47 @@ function Units() {
         pageSize={pageSize}
         onPageChange={setCurrentPage}
         onPageSizeChange={setPageSize}
+      />
+
+      <FormModal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingId ? "Update Unit" : "Add Unit"}
+        isEditing={!!editingId}
+        submitting={submitting}
+        formData={formData}
+        onChange={handleChange}
+        onSubmit={handleSubmit}
+        fields={[
+          {
+            name: "estate",
+            label: "Estate",
+            type: "select",
+            required: true,
+            placeholder: "Select Estate",
+            options: estateOptions,
+          },
+          {
+            name: "unit_type",
+            label: "Unit Type",
+            type: "select",
+            required: true,
+            placeholder: "Select Unit Type",
+            options: UNIT_TYPE_OPTIONS,
+          },
+          { name: "unit_number", label: "Unit Number", required: true },
+          { name: "rent_amount", label: "Rent Amount", type: "number", required: true },
+          {
+            name: "electricity_token_number",
+            label: "Electricity Token Number",
+          },
+          {
+            name: "status",
+            label: "Status",
+            type: "select",
+            options: STATUS_OPTIONS,
+          },
+        ]}
       />
 
       <ConfirmDialog
