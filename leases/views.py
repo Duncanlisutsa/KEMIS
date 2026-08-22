@@ -23,7 +23,7 @@ class LeaseViewSet(AuditLogMixin, viewsets.ModelViewSet):
             return Lease.objects.all()
 
         if user.role == "MANAGER":
-            return Lease.objects.filter(unit__estate__manager=user)
+            return Lease.objects.filter(unit__estate__managers=user).distinct()
 
         if user.role == "TENANT":
             return Lease.objects.filter(tenant=user.tenant)
@@ -34,7 +34,7 @@ class LeaseViewSet(AuditLogMixin, viewsets.ModelViewSet):
         return Lease.objects.none()
 
     def _check_unit_ownership(self, user, unit):
-        if user.role == "MANAGER" and unit.estate.manager_id != user.id:
+        if user.role == "MANAGER" and not unit.estate.managers.filter(id=user.id).exists():
             raise ValidationError(
                 {"unit": "You can only create leases for units within your own estate."}
             )

@@ -21,7 +21,7 @@ class MaintenanceRequestViewSet(AuditLogMixin, viewsets.ModelViewSet):
             return MaintenanceRequest.objects.all()
 
         if user.role == "MANAGER":
-            return MaintenanceRequest.objects.filter(unit__estate__manager=user)
+            return MaintenanceRequest.objects.filter(unit__estate__managers=user).distinct()
 
         if user.role == "TENANT":
             return MaintenanceRequest.objects.filter(tenant=user.tenant)

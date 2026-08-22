@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Estate, Unit
+from .models import Estate, Unit, MAX_MANAGERS_PER_ESTATE
 
 User = get_user_model()
 
@@ -11,15 +11,12 @@ class EstateSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    manager_name = serializers.CharField(
-        source="manager.get_full_name",
-        read_only=True
-    )
+    manager_names = serializers.SerializerMethodField()
 
-    manager = serializers.PrimaryKeyRelatedField(
+    managers = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.filter(role="MANAGER"),
+        many=True,
         required=False,
-        allow_null=True,
     )
 
     owner = serializers.PrimaryKeyRelatedField(
@@ -37,10 +34,20 @@ class EstateSerializer(serializers.ModelSerializer):
             "description",
             "owner",
             "owner_name",
-            "manager",
-            "manager_name",
+            "managers",
+            "manager_names",
             "created_at",
         ]
+
+    def get_manager_names(self, obj):
+        return [m.get_full_name() or m.username for m in obj.managers.all()]
+
+    def validate_managers(self, value):
+        if len(value) > MAX_MANAGERS_PER_ESTATE:
+            raise serializers.ValidationError(
+                f"An estate can have at most {MAX_MANAGERS_PER_ESTATE} managers assigned."
+            )
+        return value
 
 
 class UnitSerializer(serializers.ModelSerializer):

@@ -69,7 +69,7 @@ def generate_lease_expiry_alerts():
         status="ACTIVE",
         end_date__gte=today,
         end_date__lte=horizon,
-    ).select_related("unit__estate__manager", "unit__estate__owner", "tenant__user")
+    ).select_related("unit__estate__owner", "tenant__user").prefetch_related("unit__estate__managers")
 
     for lease in expiring_leases:
         estate = lease.unit.estate
@@ -82,7 +82,9 @@ def generate_lease_expiry_alerts():
             f"on {lease.end_date}. {marker}"
         )
 
-        recipients = [r for r in [estate.manager, estate.owner] if r is not None]
+        recipients = list(estate.managers.all())
+        if estate.owner_id:
+            recipients.append(estate.owner)
 
         for recipient in recipients:
             already_notified = Notification.objects.filter(

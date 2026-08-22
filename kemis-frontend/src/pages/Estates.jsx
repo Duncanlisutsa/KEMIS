@@ -1,5 +1,14 @@
 import { useContext, useEffect, useState } from "react";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import {
+  Select,
+  MenuItem,
+  Checkbox,
+  ListItemText,
+  Chip,
+  Box,
+  FormHelperText,
+} from "@mui/material";
 import api from "../services/api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -7,11 +16,13 @@ import FormModal from "../components/FormModal";
 import { useNotification } from "../context/NotificationContext";
 import { AuthContext } from "../context/AuthContext";
 
+const MAX_MANAGERS = 3;
+
 const EMPTY_FORM = {
   name: "",
   location: "",
   description: "",
-  manager: "",
+  managers: [],
   owner: "",
 };
 
@@ -102,7 +113,7 @@ function Estates() {
       name: estate.name,
       location: estate.location,
       description: estate.description,
-      manager: estate.manager || "",
+      managers: estate.managers || [],
       owner: estate.owner || "",
     });
 
@@ -124,13 +135,29 @@ function Estates() {
     });
   };
 
+  const handleManagersChange = (e) => {
+    const { value } = e.target;
+    // MUI Select (multiple) can hand back a comma-separated string on
+    // some browsers/autofill paths - normalize to an array either way.
+    const nextValue = typeof value === "string" ? value.split(",") : value;
+
+    if (nextValue.length > MAX_MANAGERS) {
+      showNotification(`You can assign at most ${MAX_MANAGERS} managers to an estate.`, "error");
+      return;
+    }
+
+    setFormData({
+      ...formData,
+      managers: nextValue,
+    });
+  };
+
   const handleSubmit = async () => {
     setSubmitting(true);
 
     try {
       const payload = {
         ...formData,
-        manager: formData.manager || null,
         owner: formData.owner || null,
       };
 
@@ -146,7 +173,12 @@ function Estates() {
       fetchEstates();
     } catch (error) {
       console.error("Error saving estate:", error);
-      const message = error.response?.data?.detail || "Failed to save estate.";
+      const data = error.response?.data;
+      const firstFieldError =
+        data && typeof data === "object"
+          ? Object.values(data).find((v) => Array.isArray(v) && v.length)?.[0]
+          : null;
+      const message = firstFieldError || data?.detail || "Failed to save estate.";
       showNotification(message, "error");
     } finally {
       setSubmitting(false);
@@ -157,8 +189,9 @@ function Estates() {
     return <LoadingSpinner text="Loading estates..." />;
   }
 
-  const managerOptions = managers.map((m) => ({ value: m.id, label: m.full_name }));
   const landlordOptions = landlords.map((l) => ({ value: l.id, label: l.full_name }));
+
+  const managerNameById = (id) => managers.find((m) => m.id === id)?.full_name || id;
 
   return (
     <div>
@@ -182,7 +215,7 @@ function Estates() {
             <th>Location</th>
             <th>Description</th>
             <th>Owner</th>
-            <th>Manager</th>
+            <th>Managers</th>
             {isAdmin && <th>Actions</th>}
           </tr>
         </thead>
@@ -203,7 +236,11 @@ function Estates() {
               <td>{estate.location}</td>
               <td>{estate.description}</td>
               <td>{estate.owner_name || "Unassigned"}</td>
-              <td>{estate.manager_name || "Unassigned"}</td>
+              <td>
+                {estate.manager_names && estate.manager_names.length > 0
+                  ? estate.manager_names.join(", ")
+                  : "Unassigned"}
+              </td>
 
               {isAdmin && (
                 <td>
@@ -246,11 +283,49 @@ function Estates() {
           { name: "location", label: "Location", required: true },
           { name: "description", label: "Description", fullWidth: true },
           {
-            name: "manager",
-            label: "Manager",
-            type: "select",
-            placeholder: "No Manager Assigned",
-            options: managerOptions,
+            name: "managers",
+            label: "Managers",
+            type: "custom",
+            fullWidth: true,
+            render: () => (
+              <div>
+                <Select
+                  name="managers"
+                  multiple
+                  fullWidth
+                  displayEmpty
+                  value={formData.managers}
+                  onChange={handleManagersChange}
+                  renderValue={(selected) =>
+                    selected.length === 0 ? (
+                      <span style={{ color: "var(--text-muted)" }}>No Managers Assigned</span>
+                    ) : (
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                        {selected.map((id) => (
+                          <Chip key={id} label={managerNameById(id)} size="small" />
+                        ))}
+                      </Box>
+                    )
+                  }
+                >
+                  {managers.map((m) => {
+                    const disableFurtherSelection =
+                      formData.managers.length >= MAX_MANAGERS &&
+                      !formData.managers.includes(m.id);
+
+                    return (
+                      <MenuItem key={m.id} value={m.id} disabled={disableFurtherSelection}>
+                        <Checkbox checked={formData.managers.includes(m.id)} />
+                        <ListItemText primary={m.full_name} />
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+                <FormHelperText>
+                  Select up to {MAX_MANAGERS} managers ({formData.managers.length}/{MAX_MANAGERS} selected)
+                </FormHelperText>
+              </div>
+            ),
           },
           {
             name: "owner",

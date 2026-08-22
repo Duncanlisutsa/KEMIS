@@ -30,7 +30,7 @@ class EstateViewSet(AuditLogMixin, viewsets.ModelViewSet):
             return Estate.objects.all()
 
         if user.role == "MANAGER":
-            return Estate.objects.filter(manager=user)
+            return Estate.objects.filter(managers=user)
 
         if user.role == "LANDLORD":
             return Estate.objects.filter(owner=user)
@@ -61,7 +61,7 @@ class UnitViewSet(AuditLogMixin, viewsets.ModelViewSet):
             return Unit.objects.all()
 
         if user.role == "MANAGER":
-            return Unit.objects.filter(estate__manager=user)
+            return Unit.objects.filter(estate__managers=user).distinct()
 
         if user.role == "LANDLORD":
             return Unit.objects.filter(estate__owner=user)
@@ -69,7 +69,7 @@ class UnitViewSet(AuditLogMixin, viewsets.ModelViewSet):
         return Unit.objects.none()
 
     def _check_estate_ownership(self, user, estate):
-        if user.role == "MANAGER" and estate.manager_id != user.id:
+        if user.role == "MANAGER" and not estate.managers.filter(id=user.id).exists():
             raise ValidationError(
                 {"estate": "You can only manage units within your own estate."}
             )
