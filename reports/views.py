@@ -670,7 +670,7 @@ def _units_report_data(user):
     )
 
     if user.role == "MANAGER":
-        units_qs = units_qs.filter(estate__manager=user)
+        units_qs = units_qs.filter(estate__managers=user)
     elif user.role == "LANDLORD":
         units_qs = units_qs.filter(estate__owner=user)
     # ADMIN sees every unit, no filter applied.
@@ -784,7 +784,7 @@ def _tenants_report_data(user):
 
     if user.role == "MANAGER":
         tenants_qs = tenants_qs.filter(
-            Q(leases__unit__estate__manager=user) | Q(leases__isnull=True)
+            Q(leases__unit__estate__managers=user) | Q(leases__isnull=True)
         ).distinct()
     elif user.role == "LANDLORD":
         tenants_qs = tenants_qs.filter(leases__unit__estate__owner=user).distinct()
@@ -900,7 +900,7 @@ def _leases_report_data(user):
     ).order_by("-start_date")
 
     if user.role == "MANAGER":
-        leases_qs = leases_qs.filter(unit__estate__manager=user)
+        leases_qs = leases_qs.filter(unit__estate__managers=user)
     elif user.role == "LANDLORD":
         leases_qs = leases_qs.filter(unit__estate__owner=user)
     elif user.role == "TENANT":
@@ -1252,7 +1252,7 @@ def payment_receipt_pdf(request, payment_id):
     if user.role == "ADMIN":
         queryset = Payment.objects.all()
     elif user.role == "MANAGER":
-        queryset = Payment.objects.filter(lease__unit__estate__manager=user)
+        queryset = Payment.objects.filter(lease__unit__estate__managers=user)
     elif user.role == "TENANT":
         queryset = Payment.objects.filter(lease__tenant=user.tenant)
     elif user.role == "LANDLORD":

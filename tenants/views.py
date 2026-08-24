@@ -21,7 +21,7 @@ class TenantViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
         if user.role == "MANAGER":
             return Tenant.objects.filter(
-                Q(leases__unit__estate__manager=user) | Q(leases__isnull=True)
+                Q(leases__unit__estate__managers=user) | Q(leases__isnull=True)
             ).distinct()
 
         if user.role == "LANDLORD":
