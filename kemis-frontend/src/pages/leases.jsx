@@ -413,7 +413,7 @@ function Leases() {
                   </button>
                   {lease.status === "ACTIVE" && (
                     <button
-                      className="icon-btn"
+                      className="icon-btn transfer"
                       title="Move tenant to another room"
                       onClick={() => openTransferModal(lease)}
                     >
