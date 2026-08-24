@@ -95,6 +95,27 @@ class IsAdminOrManagerOrTenantOrLandlordReadOnly(BasePermission):
         return False
 
 
+class IsAdminOrManagerOrLandlordOrTenantReadOnly(BasePermission):
+    """
+    Admins and Managers have full access. Landlords and Tenants have
+    read-only (GET/HEAD/OPTIONS) access, scoped at the queryset level
+    in each view (Landlords to their own estate's units, Tenants to
+    vacant units within their own current estate - e.g. for choosing
+    a room to transfer into).
+    """
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+
+        if request.user.role in ["ADMIN", "MANAGER"]:
+            return True
+
+        if request.user.role in ["LANDLORD", "TENANT"]:
+            return request.method in SAFE_METHODS
+
+        return False
+
+
 class IsAdminOrManagerOrTenantOrLandlord(BasePermission):
     """
     Admins, Managers, Tenants and Landlords all have full access at the

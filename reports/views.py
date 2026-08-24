@@ -158,6 +158,7 @@ def dashboard_statistics(request):
         return Response({
             "role": "TENANT",
             "has_active_lease": True,
+            "lease_id": lease.id,
             "estate_name": lease.unit.estate.name,
             "unit_number": lease.unit.unit_number,
             "electricity_token_number": lease.unit.electricity_token_number,

@@ -9,7 +9,9 @@ from accounts.permissions import (
     IsAdmin,
     IsAdminOrManager,
     IsAdminOrManagerOrLandlordReadOnly,
+    IsAdminOrManagerOrLandlordOrTenantReadOnly,
 )
+from leases.models import Lease
 from leases.utils import auto_expire_leases
 from audit.mixins import AuditLogMixin
 
@@ -49,7 +51,7 @@ class EstateViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
 class UnitViewSet(AuditLogMixin, viewsets.ModelViewSet):
     queryset = Unit.objects.all()
-    permission_classes = [IsAdminOrManagerOrLandlordReadOnly]
+    permission_classes = [IsAdminOrManagerOrLandlordOrTenantReadOnly]
     serializer_class = UnitSerializer
 
     def get_queryset(self):
@@ -65,6 +67,23 @@ class UnitViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
         if user.role == "LANDLORD":
             return Unit.objects.filter(estate__owner=user)
+
+        if user.role == "TENANT":
+            # Read-only, and scoped to vacant units within the estate
+            # the tenant currently lives in - just enough for them to
+            # pick a room to transfer into, nothing more.
+            active_lease = Lease.objects.filter(
+                tenant=user.tenant,
+                status="ACTIVE",
+            ).select_related("unit__estate").first()
+
+            if not active_lease:
+                return Unit.objects.none()
+
+            return Unit.objects.filter(
+                estate=active_lease.unit.estate,
+                status="VACANT",
+            )
 
         return Unit.objects.none()
 

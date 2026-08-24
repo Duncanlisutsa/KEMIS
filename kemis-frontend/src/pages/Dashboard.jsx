@@ -2,6 +2,9 @@ import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
 import { AuthContext } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
+import UnitDropdown from "../components/UnitDropdown";
+import FormModal from "../components/FormModal";
 import {
   FaBuilding,
   FaDoorOpen,
@@ -14,6 +17,7 @@ import {
   FaExclamationCircle,
   FaCheckCircle,
   FaBolt,
+  FaExchangeAlt,
 } from "react-icons/fa";
 
 const currency = (value) =>
@@ -222,9 +226,58 @@ function DashboardSkeleton() {
 
 function Dashboard() {
   const { user } = useContext(AuthContext);
+  const { showNotification } = useNotification();
   const [stats, setStats] = useState(null);
   const [revenue, setRevenue] = useState(null);
   const [error, setError] = useState(null);
+
+  const [moveModalOpen, setMoveModalOpen] = useState(false);
+  const [vacantUnits, setVacantUnits] = useState([]);
+  const [selectedNewUnit, setSelectedNewUnit] = useState("");
+  const [movingRoom, setMovingRoom] = useState(false);
+
+  const openMoveModal = async () => {
+    setSelectedNewUnit("");
+    setMoveModalOpen(true);
+
+    try {
+      const response = await api.get("property/units/");
+      setVacantUnits(response.data);
+    } catch (error) {
+      console.error("Error fetching vacant units:", error);
+      setVacantUnits([]);
+    }
+  };
+
+  const closeMoveModal = () => {
+    if (movingRoom) return;
+    setMoveModalOpen(false);
+    setSelectedNewUnit("");
+  };
+
+  const handleMoveRoom = async () => {
+    if (!selectedNewUnit || !stats?.lease_id) return;
+
+    setMovingRoom(true);
+    try {
+      await api.post(`leases/${stats.lease_id}/transfer/`, {
+        new_unit: selectedNewUnit,
+      });
+      showNotification("You've been moved to your new room!", "success");
+      setMoveModalOpen(false);
+      setSelectedNewUnit("");
+      fetchStats();
+    } catch (error) {
+      console.error("Error transferring room:", error);
+      const message =
+        error.response?.data?.detail ||
+        error.response?.data?.new_unit?.[0] ||
+        "Failed to move to the new room.";
+      showNotification(message, "error");
+    } finally {
+      setMovingRoom(false);
+    }
+  };
 
   const fetchStats = async () => {
     setError(null);
@@ -383,7 +436,44 @@ function Dashboard() {
               { to: "/profile", label: "My Profile", icon: <FaUserFriends /> },
             ]}
           />
+
+          <div className="panel">
+            <h3 className="panel-title">Room Transfer</h3>
+            <p className="empty-note" style={{ marginBottom: "12px" }}>
+              Want to move to a different room within {stats.estate_name}?
+            </p>
+            <button className="btn-primary" onClick={openMoveModal}>
+              <FaExchangeAlt /> Move to Another Room
+            </button>
+          </div>
         </div>
+
+        <FormModal
+          open={moveModalOpen}
+          onClose={closeMoveModal}
+          title="Move to Another Room"
+          submitLabel={movingRoom ? "Moving..." : "Move Me"}
+          submitting={movingRoom}
+          formData={{}}
+          onChange={() => {}}
+          onSubmit={handleMoveRoom}
+          fields={[
+            {
+              name: "new_unit",
+              label: "New Vacant Room",
+              type: "custom",
+              fullWidth: true,
+              render: () => (
+                <UnitDropdown
+                  units={vacantUnits}
+                  value={selectedNewUnit}
+                  onChange={(id) => setSelectedNewUnit(id)}
+                  placeholder="Select a vacant room"
+                />
+              ),
+            },
+          ]}
+        />
       </div>
     );
   }

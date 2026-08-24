@@ -1,7 +1,7 @@
 export const PERMISSIONS = {
   dashboard: ["ADMIN", "MANAGER", "TENANT", "LANDLORD"],
 
-  estates: ["ADMIN", "MANAGER", "LANDLORD"],
+  estates: ["ADMIN"],
 
   units: ["ADMIN", "MANAGER", "LANDLORD"],
 

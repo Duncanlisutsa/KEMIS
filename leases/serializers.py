@@ -5,6 +5,43 @@ from .models import Lease
 from estates.models import Unit
 
 
+class LeaseTransferSerializer(serializers.Serializer):
+    """
+    Validates a request to move an active lease's tenant from their
+    current unit into a different, vacant one. The Lease row itself
+    (and therefore every Payment linked to it via lease_id) is kept -
+    only its `unit` and `monthly_rent` change - so the tenant's full
+    payment history travels with her to the new room automatically.
+    """
+
+    new_unit = serializers.PrimaryKeyRelatedField(queryset=Unit.objects.all())
+
+    def validate_new_unit(self, value):
+        lease = self.context["lease"]
+
+        if value.pk == lease.unit_id:
+            raise serializers.ValidationError(
+                "The tenant is already occupying this unit."
+            )
+
+        if value.estate_id != lease.unit.estate_id:
+            raise serializers.ValidationError(
+                "You can only transfer to a vacant room within the same estate."
+            )
+
+        if value.status != "VACANT":
+            raise serializers.ValidationError(
+                "This unit is not vacant."
+            )
+
+        if Lease.objects.filter(unit=value, status="ACTIVE").exists():
+            raise serializers.ValidationError(
+                "This unit already has an active lease."
+            )
+
+        return value
+
+
 class LeaseSerializer(serializers.ModelSerializer):
 
     tenant_name = serializers.CharField(

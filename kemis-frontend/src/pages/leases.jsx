@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from "react";
-import { FaPlus, FaEdit, FaTrash, FaSearch } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaSearch, FaExchangeAlt } from "react-icons/fa";
 import api from "../services/api";
 import { useNotification } from "../context/NotificationContext";
 import UnitDropdown from "../components/UnitDropdown";
@@ -88,6 +88,11 @@ function Leases() {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [leaseToDelete, setLeaseToDelete] = useState(null);
+
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [leaseToTransfer, setLeaseToTransfer] = useState(null);
+  const [transferUnit, setTransferUnit] = useState("");
+  const [transferring, setTransferring] = useState(false);
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -245,6 +250,57 @@ function Leases() {
     }
   };
 
+  const openTransferModal = (lease) => {
+    setLeaseToTransfer(lease);
+    setTransferUnit("");
+    setTransferOpen(true);
+  };
+
+  const closeTransferModal = () => {
+    if (transferring) return;
+    setTransferOpen(false);
+    setLeaseToTransfer(null);
+    setTransferUnit("");
+  };
+
+  // Same-estate vacant rooms only - mirrors the backend's own
+  // same-estate rule for a transfer, so the picker never offers a
+  // room the API would reject.
+  const vacantUnitsForTransfer = useMemo(() => {
+    if (!leaseToTransfer) return [];
+
+    const currentUnit = units.find((u) => u.id === leaseToTransfer.unit);
+    if (!currentUnit) return [];
+
+    return units.filter(
+      (u) => u.estate === currentUnit.estate && u.status === "VACANT"
+    );
+  }, [leaseToTransfer, units]);
+
+  const handleTransfer = async () => {
+    if (!leaseToTransfer || !transferUnit) return;
+
+    setTransferring(true);
+    try {
+      await api.post(`leases/${leaseToTransfer.id}/transfer/`, {
+        new_unit: transferUnit,
+      });
+      showNotification("Tenant moved to the new room successfully!", "success");
+      closeTransferModal();
+      fetchLeases();
+      fetchUnits();
+    } catch (error) {
+      console.error("Error transferring lease:", error);
+      const message =
+        error.response?.data?.detail ||
+        error.response?.data?.new_unit?.[0] ||
+        "Failed to move tenant to the new room.";
+      showNotification(message, "error");
+    } finally {
+      setTransferring(false);
+    }
+  };
+
   const filteredLeases = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return leases;
@@ -355,6 +411,15 @@ function Leases() {
                   >
                     <FaEdit />
                   </button>
+                  {lease.status === "ACTIVE" && (
+                    <button
+                      className="icon-btn"
+                      title="Move tenant to another room"
+                      onClick={() => openTransferModal(lease)}
+                    >
+                      <FaExchangeAlt />
+                    </button>
+                  )}
                   <button
                     className="icon-btn delete"
                     title="Delete lease"
@@ -524,6 +589,47 @@ function Leases() {
           setConfirmOpen(false);
           setLeaseToDelete(null);
         }}
+      />
+
+      <FormModal
+        open={transferOpen}
+        onClose={closeTransferModal}
+        title={
+          leaseToTransfer
+            ? `Move ${leaseToTransfer.tenant_name} to Another Room`
+            : "Move to Another Room"
+        }
+        submitLabel={transferring ? "Moving..." : "Move Tenant"}
+        submitting={transferring}
+        formData={{}}
+        onChange={() => {}}
+        onSubmit={handleTransfer}
+        infoPanel={
+          leaseToTransfer && (
+            <div style={{ fontSize: "14px", lineHeight: 1.7 }}>
+              Currently in <strong>{leaseToTransfer.unit_number}</strong> at{" "}
+              KES {leaseToTransfer.monthly_rent}/month. Payment history stays
+              attached to this lease and moves with the tenant - only the
+              room and monthly rent change.
+            </div>
+          )
+        }
+        fields={[
+          {
+            name: "new_unit",
+            label: "New Vacant Room (same estate)",
+            type: "custom",
+            fullWidth: true,
+            render: () => (
+              <UnitDropdown
+                units={vacantUnitsForTransfer}
+                value={transferUnit}
+                onChange={(id) => setTransferUnit(id)}
+                placeholder="Select a vacant room"
+              />
+            ),
+          },
+        ]}
       />
     </div>
   );
