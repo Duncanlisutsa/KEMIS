@@ -8,13 +8,18 @@ from rest_framework.response import Response
 from .models import Lease
 from .serializers import LeaseSerializer, LeaseTransferSerializer
 from .utils import auto_expire_leases
-from accounts.permissions import IsAdminOrManagerOrTenantOrLandlordReadOnly
+from accounts.permissions import IsAdminOrManager, IsAdminOrManagerOrTenantOrLandlordReadOnly
 from audit.mixins import AuditLogMixin
 
 
 class LeaseViewSet(AuditLogMixin, viewsets.ModelViewSet):
     serializer_class = LeaseSerializer
     permission_classes = [IsAdminOrManagerOrTenantOrLandlordReadOnly]
+
+    def get_permissions(self):
+        if self.action == "transfer":
+            return [IsAdminOrManager()]
+        return super().get_permissions()
 
     def get_queryset(self):
         auto_expire_leases()
@@ -79,9 +84,9 @@ class LeaseViewSet(AuditLogMixin, viewsets.ModelViewSet):
         needed. The vacated unit is freed up and the new one marked
         occupied in the same transaction.
 
-        Reachable by: the tenant herself (for her own active lease),
-        and Admins/Managers (within their scoped queryset). Landlords
-        are read-only and cannot call this.
+        Reachable by: Admins/Managers only (within their scoped
+        queryset). Tenants cannot transfer themselves, and Landlords
+        are read-only and cannot call this either.
         """
         lease = self.get_object()
 

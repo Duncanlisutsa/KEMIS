@@ -761,6 +761,9 @@ table td, table th {
 .icon-btn.receipt { background: #16a34a; }
 .icon-btn.receipt:hover { background: #15803d; }
 
+.icon-btn.transfer { background: #ea580c; }
+.icon-btn.transfer:hover { background: #c2410c; }
+
 .search-bar {
   display: flex;
   align-items: center;
