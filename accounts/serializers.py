@@ -30,6 +30,25 @@ class StaffUserSerializer(serializers.ModelSerializer):
             )
         return value
 
+    def validate_email(self, value):
+        if not value:
+            return value
+
+        # Same case-insensitive uniqueness rule as TenantSerializer, so a
+        # Manager/Landlord account can never collide with a Tenant's email
+        # (or vice versa) and hijack their password reset link.
+        existing = User.objects.filter(email__iexact=value)
+
+        if self.instance is not None:
+            existing = existing.exclude(pk=self.instance.pk)
+
+        if existing.exists():
+            raise serializers.ValidationError(
+                "A user with this email already exists."
+            )
+
+        return value.lower()
+
     def validate(self, attrs):
         if self.instance is None and not attrs.get('password'):
             raise serializers.ValidationError(

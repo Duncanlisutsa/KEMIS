@@ -66,7 +66,12 @@ class TenantSerializer(serializers.ModelSerializer):
         if not value:
             return value
 
-        existing = User.objects.filter(email=value)
+        # Case-insensitive: "Tenant@x.com" and "tenant@x.com" must not be
+        # treated as different accounts, since password reset lookups
+        # (accounts.views.request_password_reset) match case-insensitively.
+        # Checked against ALL users, not just tenants, so a Tenant can't
+        # collide with a Manager/Landlord email either.
+        existing = User.objects.filter(email__iexact=value)
 
         if self.instance is not None:
             existing = existing.exclude(pk=self.instance.user_id)
@@ -76,7 +81,7 @@ class TenantSerializer(serializers.ModelSerializer):
                 "A user with this email already exists."
             )
 
-        return value
+        return value.lower()
 
     def validate_national_id(self, value):
         existing = Tenant.objects.filter(national_id=value)
