@@ -717,7 +717,7 @@ function Payments() {
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(50);
 
   // Tenant: submit-payment modal
   const [submitModalOpen, setSubmitModalOpen] = useState(false);

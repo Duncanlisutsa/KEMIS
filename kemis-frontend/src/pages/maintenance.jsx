@@ -6,6 +6,7 @@ import { useNotification } from "../context/NotificationContext";
 import UnitDropdown from "../components/UnitDropdown";
 import FormModal from "../components/FormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
+import Pagination from "../components/Pagination";
 
 const EMPTY_FORM = {
   tenant: "",
@@ -50,6 +51,9 @@ function Maintenance() {
 
   const [formData, setFormData] = useState(EMPTY_FORM);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+
   useEffect(() => {
     fetchRequests();
 
@@ -60,6 +64,10 @@ function Maintenance() {
       fetchUnits();
     }
   }, [isTenant, canManage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [requests.length]);
 
   const fetchRequests = async () => {
     try {
@@ -226,6 +234,17 @@ function Maintenance() {
 
   const tenantOptions = tenants.map((t) => ({ value: t.id, label: t.full_name }));
 
+  const totalPages = Math.max(1, Math.ceil(requests.length / pageSize));
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [totalPages, currentPage]);
+
+  const paginatedRequests = requests.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   return (
     <div>
       <div className="payments-toolbar">
@@ -266,7 +285,7 @@ function Maintenance() {
         </thead>
 
         <tbody>
-          {requests.length === 0 && (
+          {paginatedRequests.length === 0 && (
             <tr>
               <td colSpan={canManage ? 8 : 7} style={{ textAlign: "center", padding: "15px" }}>
                 No maintenance requests found.
@@ -274,7 +293,7 @@ function Maintenance() {
             </tr>
           )}
 
-          {requests.map((request) => (
+          {paginatedRequests.map((request) => (
             <tr key={request.id}>
               <td>{request.tenant_name}</td>
               <td>{request.unit_number}</td>
@@ -335,6 +354,15 @@ function Maintenance() {
           ))}
         </tbody>
       </table>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={requests.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+      />
 
       <FormModal
         open={modalOpen}

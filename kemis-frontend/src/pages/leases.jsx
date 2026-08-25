@@ -96,7 +96,7 @@ function Leases() {
 
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(50);
 
   const [formData, setFormData] = useState(EMPTY_FORM);
 
