@@ -16,11 +16,11 @@ import {
 import logo from "../assets/logo.png";
 import api from "../services/api";
 
-import kemis1 from "../assets/kemis1.jpg";
-import kemis2 from "../assets/kemis2.jpg";
-import kemis3 from "../assets/kemis3.jpg";
-import kemis4 from "../assets/kemis4.jpg";
-import kemis5 from "../assets/kemis5.jpg";
+import kemis1 from "../assets/kemis1.png";
+import kemis2 from "../assets/kemis2.png";
+import kemis3 from "../assets/kemis3.png";
+import kemis4 from "../assets/kemis4.png";
+import kemis5 from "../assets/kemis5.png";
 
 const NAVY = "#0f3a5f";
 const ACCENT = "#e8821e";
@@ -28,8 +28,6 @@ const ACCENT = "#e8821e";
 const BACKGROUND_IMAGES = [kemis1, kemis2, kemis3, kemis4, kemis5];
 const SLIDE_INTERVAL_MS = 5000;
 
-// Mirrors Unit.UNIT_TYPES in estates/models.py — keep these in sync if
-// the backend choices ever change.
 const ROOM_TYPES = [
   { icon: FaDoorOpen, label: "Single Room", desc: "A compact, self-contained room — an affordable option for individuals." },
   { icon: FaBed, label: "Bedsitter", desc: "One open living/sleeping space with its own kitchenette and bathroom." },
@@ -71,7 +69,6 @@ function BackgroundSlideshow() {
           }}
         />
       ))}
-      {/* Dark overlay so white text stays readable over any photo */}
       <div
         style={{
           position: "absolute",
@@ -85,7 +82,7 @@ function BackgroundSlideshow() {
 
 function ContactForm() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
-  const [status, setStatus] = useState("idle"); // idle | sending | sent | error
+  const [status, setStatus] = useState("idle");
   const [feedback, setFeedback] = useState("");
 
   const handleChange = (e) => {
@@ -243,7 +240,6 @@ function Landing() {
         </Link>
       </header>
 
-      {/* HERO with fading background slideshow */}
       <main
         style={{
           position: "relative",
@@ -305,7 +301,6 @@ function Landing() {
         </div>
       </main>
 
-      {/* WHAT KEMIS DOES */}
       <section style={{ padding: "50px 20px", background: "#f8fafc" }}>
         <div
           style={{
@@ -339,7 +334,6 @@ function Landing() {
         </div>
       </section>
 
-      {/* ROOM TYPES */}
       <section style={{ padding: "50px 20px", background: "white" }}>
         <h2 style={{ textAlign: "center", color: NAVY, fontSize: "26px", marginBottom: "36px" }}>
           Types of Rooms Available
@@ -379,7 +373,6 @@ function Landing() {
         </p>
       </section>
 
-      {/* CONTACT */}
       <section style={{ padding: "50px 20px", background: "#f1f5f9" }}>
         <h2 style={{ textAlign: "center", color: NAVY, fontSize: "26px", marginBottom: "8px" }}>
           Get in Touch
@@ -418,7 +411,14 @@ function Landing() {
 
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <FaMapMarkerAlt color={ACCENT} />
-              <span style={{ color: "#475569" }}>Nyayo Tea Zone, Lurambi, Kakamega County</span>
+              <a
+                href="https://www.google.com/maps?q=Nyayo+Tea+Zone,+Lurambi,+Kakamega+County"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: NAVY, fontWeight: "bold", textDecoration: "none" }}
+              >
+                Nyayo Tea Zone, Lurambi, Kakamega County
+              </a>
             </div>
           </div>
 
