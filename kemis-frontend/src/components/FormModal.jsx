@@ -200,12 +200,14 @@ function FormModal({
                   {...commonProps}
                   type={field.type === "readonly" ? "text" : field.type || "text"}
                   placeholder={field.placeholder}
-                  InputLabelProps={field.type === "date" ? { shrink: true } : undefined}
-                  inputProps={
-                    field.min !== undefined || field.max !== undefined
-                      ? { min: field.min, max: field.max }
-                      : undefined
-                  }
+                  slotProps={{
+                    ...(field.type === "date"
+                      ? { inputLabel: { shrink: true } }
+                      : {}),
+                    ...(field.min !== undefined || field.max !== undefined
+                      ? { htmlInput: { min: field.min, max: field.max } }
+                      : {}),
+                  }}
                 />
               );
             })}

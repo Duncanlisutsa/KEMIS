@@ -13,17 +13,48 @@
 }
 
 [data-theme="dark"] {
-  color-scheme: light;
+  color-scheme: dark;
 
-  --bg: #e5e7eb;
-  --text: #1f2937;
-  --text-muted: #4b5563;
-  --card-bg: #f3f4f6;
-  --card-shadow: rgba(0, 0, 0, 0.08);
-  --border: #d1d5db;
-  --table-header-bg: #eceef1;
-  --input-bg: #ffffff;
-  --subtle-bg: #eceef1;
+  --bg: #1a1c20;
+  --text: #e5e7eb;
+  --text-muted: #9ca3af;
+  --card-bg: #24272c;
+  --card-shadow: rgba(0, 0, 0, 0.45);
+  --border: #383c42;
+  --table-header-bg: #2a2d33;
+  --input-bg: #2a2d33;
+  --subtle-bg: #2a2d33;
+}
+
+/* MUI ships its own light-mode styles and ignores the vars above —
+   these retheme Dialog/TextField/etc. to match deep-grey dark mode. */
+[data-theme="dark"] .MuiPaper-root {
+  background-color: var(--card-bg) !important;
+  color: var(--text) !important;
+}
+[data-theme="dark"] .MuiOutlinedInput-root {
+  background-color: var(--input-bg);
+  color: var(--text);
+}
+[data-theme="dark"] .MuiOutlinedInput-notchedOutline {
+  border-color: var(--border) !important;
+}
+[data-theme="dark"] .MuiInputLabel-root {
+  color: var(--text-muted);
+}
+[data-theme="dark"] .MuiInputLabel-root.Mui-focused {
+  color: #8ab4f8;
+}
+[data-theme="dark"] .MuiFormHelperText-root {
+  color: var(--text-muted);
+}
+[data-theme="dark"] .MuiMenuItem-root {
+  color: var(--text);
+}
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="time"],
+[data-theme="dark"] input[type="datetime-local"] {
+  color-scheme: dark;
 }
 
 body {
