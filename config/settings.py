@@ -132,6 +132,9 @@ ANYMAIL = {
 }
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="kabras.estatekk@gmail.com")
 
+# Public landing-page "contact us" messages are emailed here.
+CONTACT_RECIPIENT_EMAIL = env("CONTACT_RECIPIENT_EMAIL", default="kabras.estatekk@gmail.com")
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/

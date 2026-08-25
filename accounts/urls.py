@@ -5,6 +5,7 @@ from .views import (
     change_password,
     request_password_reset,
     reset_password_confirm,
+    submit_contact_message,
     list_managers,
     list_landlords,
     StaffUserViewSet,
@@ -18,6 +19,7 @@ urlpatterns = [
     path('change-password/', change_password, name='change-password'),
     path('password-reset/', request_password_reset, name='password-reset'),
     path('password-reset-confirm/', reset_password_confirm, name='password-reset-confirm'),
+    path('contact/', submit_contact_message, name='contact-message'),
     path('managers/', list_managers, name='list-managers'),
     path('landlords/', list_landlords, name='list-landlords'),
 ] + router.urls

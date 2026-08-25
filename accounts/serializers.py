@@ -119,3 +119,20 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
         attrs["user"] = user
         return attrs
+
+from .models import ContactMessage
+
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ContactMessage
+        fields = ['name', 'email', 'phone', 'message']
+
+    def validate_message(self, value):
+        value = value.strip()
+        if len(value) < 10:
+            raise serializers.ValidationError(
+                "Please enter a message of at least 10 characters."
+            )
+        return value

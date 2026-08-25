@@ -15,6 +15,7 @@ from .serializers import (
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
     StaffUserSerializer,
+    ContactMessageSerializer,
 )
 from accounts.permissions import IsAdmin
 from audit.mixins import AuditLogMixin
@@ -115,6 +116,38 @@ def reset_password_confirm(request):
     user.save()
 
     return Response({"detail": "Password reset successful. You can now log in."})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def submit_contact_message(request):
+    serializer = ContactMessageSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    contact_message = serializer.save()
+
+    # The message is already saved above, so a failure here (e.g. email
+    # not fully configured yet) must not turn into an error for the
+    # visitor — fail_silently keeps the form working either way, and
+    # nothing submitted is ever lost.
+    send_mail(
+        subject=f"KEMIS website enquiry from {contact_message.name}",
+        message=(
+            f"Name: {contact_message.name}\n"
+            f"Email: {contact_message.email}\n"
+            f"Phone: {contact_message.phone or '-'}\n\n"
+            f"{contact_message.message}"
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[settings.CONTACT_RECIPIENT_EMAIL],
+        fail_silently=True,
+    )
+
+    return Response(
+        {"detail": "Thanks for reaching out — we'll get back to you soon."},
+        status=status.HTTP_201_CREATED,
+    )
+
 
 @api_view(['GET'])
 @permission_classes([IsAdmin])
