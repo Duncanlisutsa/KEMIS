@@ -7,11 +7,11 @@ import {
   FaMapMarkerAlt,
   FaPhoneAlt,
   FaEnvelope,
-  FaDoorOpen,
   FaHome,
-  FaWarehouse,
   FaStore,
-  FaBed,
+  FaTint,
+  FaBolt,
+  FaWifi,
 } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import api from "../services/api";
@@ -29,13 +29,26 @@ const BACKGROUND_IMAGES = [kemis1, kemis2, kemis3, kemis4, kemis5];
 const SLIDE_INTERVAL_MS = 5000;
 
 const ROOM_TYPES = [
-  { icon: FaDoorOpen, label: "Single Room", desc: "A compact, self-contained room — an affordable option for individuals." },
-  { icon: FaBed, label: "Bedsitter", desc: "One open living/sleeping space with its own kitchenette and bathroom." },
-  { icon: FaHome, label: "One Bedroom", desc: "A separate bedroom plus living area — great for small families or couples." },
-  { icon: FaBuilding, label: "Two Bedroom", desc: "Extra space with two bedrooms, suited to larger families." },
-  { icon: FaStore, label: "Business Premise", desc: "Commercial space for shops, offices, and other business use." },
+  {
+    icon: FaHome,
+    label: "Residential Rooms",
+    desc: "Single rooms, bedsitters, and one- or two-bedroom units for individuals and families.",
+  },
+  {
+    icon: FaStore,
+    label: "Business Premises",
+    desc: "Retail and office spaces suited for shops, businesses, and other commercial use.",
+  },
 ];
 
+const UTILITIES = [
+  { icon: FaTint, label: "Reliable water supply" },
+  { icon: FaBolt, label: "Reliable power supply" },
+  { icon: FaWifi, label: "Reliable internet supply" },
+];
+
+// Fixed, full-page background slideshow so it spans the entire landing
+// page (not just the hero) as the user scrolls through every section.
 function BackgroundSlideshow() {
   const [index, setIndex] = useState(0);
 
@@ -49,10 +62,10 @@ function BackgroundSlideshow() {
   return (
     <div
       style={{
-        position: "absolute",
+        position: "fixed",
         inset: 0,
         overflow: "hidden",
-        zIndex: 0,
+        zIndex: -1,
       }}
     >
       {BACKGROUND_IMAGES.map((src, i) => (
@@ -69,11 +82,12 @@ function BackgroundSlideshow() {
           }}
         />
       ))}
+      {/* Dark overlay so white/dark text stays readable over any photo */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background: "rgba(15, 58, 95, 0.55)",
+          background: "rgba(15, 58, 95, 0.6)",
         }}
       />
     </div>
@@ -190,6 +204,17 @@ function ContactForm() {
   );
 }
 
+// Frosted-glass panel style so section content stays readable while the
+// full-page background slideshow shows through behind everything.
+function panelStyle(extra = {}) {
+  return {
+    background: "rgba(255, 255, 255, 0.9)",
+    backdropFilter: "blur(6px)",
+    WebkitBackdropFilter: "blur(6px)",
+    ...extra,
+  };
+}
+
 function Landing() {
   const isLoggedIn = !!localStorage.getItem("access_token");
 
@@ -199,18 +224,20 @@ function Landing() {
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
-        background: "#f8fafc",
       }}
     >
+      <BackgroundSlideshow />
+
       <header
         style={{
+          ...panelStyle(),
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           padding: "16px 30px",
-          background: "white",
           boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-          position: "relative",
+          position: "sticky",
+          top: 0,
           zIndex: 2,
         }}
       >
@@ -225,22 +252,37 @@ function Landing() {
           </div>
         </div>
 
-        <Link
-          to={isLoggedIn ? "/dashboard" : "/login"}
-          style={{
-            background: ACCENT,
-            color: "white",
-            padding: "8px 20px",
-            borderRadius: "6px",
-            textDecoration: "none",
-            fontWeight: "bold",
-          }}
-        >
-          {isLoggedIn ? "Go to Dashboard" : "Login"}
-        </Link>
+        <nav style={{ display: "flex", alignItems: "center", gap: "26px" }}>
+          <a href="#home" style={{ color: NAVY, fontWeight: "600", textDecoration: "none", fontSize: "14px" }}>
+            Home
+          </a>
+          <a href="#about" style={{ color: NAVY, fontWeight: "600", textDecoration: "none", fontSize: "14px" }}>
+            About Us
+          </a>
+          <a href="#contact" style={{ color: NAVY, fontWeight: "600", textDecoration: "none", fontSize: "14px" }}>
+            Contact Us
+          </a>
+
+          <Link
+            to={isLoggedIn ? "/dashboard" : "/login"}
+            style={{
+              background: ACCENT,
+              color: "white",
+              padding: "8px 20px",
+              borderRadius: "6px",
+              textDecoration: "none",
+              fontWeight: "bold",
+              fontSize: "14px",
+            }}
+          >
+            {isLoggedIn ? "Go to Dashboard" : "Login"}
+          </Link>
+        </nav>
       </header>
 
+      {/* HOME / HERO */}
       <main
+        id="home"
         style={{
           position: "relative",
           flex: 1,
@@ -251,11 +293,8 @@ function Landing() {
           textAlign: "center",
           padding: "80px 20px",
           color: "white",
-          overflow: "hidden",
         }}
       >
-        <BackgroundSlideshow />
-
         <div style={{ position: "relative", zIndex: 1 }}>
           <img src={logo} alt="Kabras Estate logo" style={{ height: "110px", marginBottom: "20px" }} />
 
@@ -301,7 +340,8 @@ function Landing() {
         </div>
       </main>
 
-      <section style={{ padding: "50px 20px", background: "#f8fafc" }}>
+      {/* WHAT KEMIS DOES */}
+      <section style={{ ...panelStyle(), padding: "50px 20px" }}>
         <div
           style={{
             display: "flex",
@@ -328,13 +368,39 @@ function Landing() {
           </div>
 
           <div style={{ width: "150px" }}>
-            <FaWarehouse size={28} color={ACCENT} />
+            <FaStore size={28} color={ACCENT} />
             <p style={{ fontSize: "14px", color: "#475569" }}>Business premises</p>
           </div>
         </div>
       </section>
 
-      <section style={{ padding: "50px 20px", background: "white" }}>
+      {/* ABOUT US */}
+      <section id="about" style={{ ...panelStyle(), padding: "50px 20px" }}>
+        <h2 style={{ textAlign: "center", color: NAVY, fontSize: "26px", marginBottom: "20px" }}>
+          About Us
+        </h2>
+
+        <p
+          style={{
+            maxWidth: "700px",
+            margin: "0 auto",
+            textAlign: "center",
+            color: "#475569",
+            fontSize: "15px",
+            lineHeight: 1.7,
+          }}
+        >
+          Kabras Estate is a managed residential and business community in
+          Nyayo Tea Zone, Lurambi, Kakamega County, offering comfortable
+          living spaces alongside commercial premises. KEMIS is our estate
+          management system, built to keep tenants, leases, payments and
+          maintenance organised so residents and business owners get a
+          reliable, well-run place to live and work.
+        </p>
+      </section>
+
+      {/* ROOM TYPES */}
+      <section style={{ ...panelStyle(), padding: "50px 20px" }}>
         <h2 style={{ textAlign: "center", color: NAVY, fontSize: "26px", marginBottom: "36px" }}>
           Types of Rooms Available
         </h2>
@@ -345,7 +411,7 @@ function Landing() {
             flexWrap: "wrap",
             justifyContent: "center",
             gap: "24px",
-            maxWidth: "1000px",
+            maxWidth: "700px",
             margin: "0 auto",
           }}
         >
@@ -353,7 +419,7 @@ function Landing() {
             <div
               key={label}
               style={{
-                width: "220px",
+                width: "280px",
                 padding: "22px 18px",
                 borderRadius: "10px",
                 background: "#f8fafc",
@@ -368,12 +434,36 @@ function Landing() {
           ))}
         </div>
 
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: "36px",
+            maxWidth: "700px",
+            margin: "36px auto 0 auto",
+          }}
+        >
+          {UTILITIES.map(({ icon: Icon, label }) => (
+            <div
+              key={label}
+              style={{ display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <Icon size={18} color={ACCENT} />
+              <span style={{ fontSize: "14px", color: "#334155", fontWeight: "600" }}>
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+
         <p style={{ textAlign: "center", color: "#94a3b8", fontSize: "13px", marginTop: "28px" }}>
           For current vacancies and rates, reach out using the contact details below.
         </p>
       </section>
 
-      <section style={{ padding: "50px 20px", background: "#f1f5f9" }}>
+      {/* CONTACT */}
+      <section id="contact" style={{ ...panelStyle(), padding: "50px 20px" }}>
         <h2 style={{ textAlign: "center", color: NAVY, fontSize: "26px", marginBottom: "8px" }}>
           Get in Touch
         </h2>
@@ -401,24 +491,17 @@ function Landing() {
 
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
               <FaEnvelope color={ACCENT} />
-              <a
+              
                 href="mailto:kabras.estatekk@gmail.com"
                 style={{ color: NAVY, fontWeight: "bold", textDecoration: "none" }}
-              >
+              <a>
                 kabras.estatekk@gmail.com
               </a>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <FaMapMarkerAlt color={ACCENT} />
-              <a
-                href="https://www.google.com/maps?q=Nyayo+Tea+Zone,+Lurambi,+Kakamega+County"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: NAVY, fontWeight: "bold", textDecoration: "none" }}
-              >
-                Nyayo Tea Zone, Lurambi, Kakamega County
-              </a>
+              <span style={{ color: "#475569" }}>Nyayo Tea Zone, Lurambi, Kakamega County</span>
             </div>
           </div>
 
@@ -426,7 +509,7 @@ function Landing() {
         </div>
       </section>
 
-      <footer style={{ textAlign: "center", padding: "20px", color: "#94a3b8", fontSize: "13px" }}>
+      <footer style={{ ...panelStyle(), textAlign: "center", padding: "20px", color: "#94a3b8", fontSize: "13px" }}>
         &copy; {new Date().getFullYear()} Kabras Estate &middot; Nyayo Tea Zone, Lurambi, Kakamega County
       </footer>
     </div>
