@@ -494,7 +494,7 @@ function Landing() {
               
                 href="mailto:kabras.estatekk@gmail.com"
                 style={{ color: NAVY, fontWeight: "bold", textDecoration: "none" }}
-              <a>
+              <a href="mailto:kabras.estatekk@gmail.com" style={{ color: NAVY, fontWeight: "bold", textDecoration: "none" }}>
                 kabras.estatekk@gmail.com
               </a>
             </div>
