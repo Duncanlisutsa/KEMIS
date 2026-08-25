@@ -491,9 +491,6 @@ function Landing() {
 
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
               <FaEnvelope color={ACCENT} />
-              
-                href="mailto:kabras.estatekk@gmail.com"
-                style={{ color: NAVY, fontWeight: "bold", textDecoration: "none" }}
               <a href="mailto:kabras.estatekk@gmail.com" style={{ color: NAVY, fontWeight: "bold", textDecoration: "none" }}>
                 kabras.estatekk@gmail.com
               </a>
