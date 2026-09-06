@@ -242,6 +242,7 @@ function Tenants() {
     return tenants.filter((tenant) => {
       const haystack = [
         tenant.full_name,
+        tenant.email,
         tenant.national_id,
         tenant.phone_number,
         tenant.emergency_contact_name,
@@ -320,7 +321,7 @@ function Tenants() {
         <FaSearch />
         <input
           type="text"
-          placeholder="Search by name, national ID, or phone..."
+          placeholder="Search by name, email, national ID, or phone..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -340,6 +341,7 @@ function Tenants() {
               </th>
             )}
             <th>Full Name</th>
+            <th>Email</th>
             <th>National ID</th>
             <th>Phone</th>
             <th>Emergency Contact Name</th>
@@ -351,7 +353,7 @@ function Tenants() {
         <tbody>
           {filteredTenants.length === 0 && (
             <tr>
-              <td colSpan={canManage ? 7 : 5} style={{ textAlign: "center", padding: "15px" }}>
+              <td colSpan={canManage ? 8 : 6} style={{ textAlign: "center", padding: "15px" }}>
                 {search ? "No tenants match your search." : "No tenants found."}
               </td>
             </tr>
@@ -369,6 +371,7 @@ function Tenants() {
                 </td>
               )}
               <td>{tenant.full_name}</td>
+              <td>{tenant.email || "—"}</td>
               <td>{tenant.national_id}</td>
               <td>{tenant.phone_number}</td>
               <td>{tenant.emergency_contact_name}</td>
