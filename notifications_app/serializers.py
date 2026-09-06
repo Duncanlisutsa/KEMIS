@@ -53,12 +53,16 @@ class SendTenantNotificationSerializer(serializers.Serializer):
         notification_type = validated_data.get('notification_type', 'GENERAL')
         message = validated_data['message']
 
-        notifications = [
-            Notification(
+        # NOTE: created one-by-one (not bulk_create) so that each save
+        # fires the Notification post_save signal in notifications_app/
+        # signals.py, which is what emails the tenant. bulk_create()
+        # skips Django signals entirely, so switching back to it here
+        # would silently kill the email-on-notify feature again.
+        return [
+            Notification.objects.create(
                 recipient=tenant.user,
                 notification_type=notification_type,
                 message=message,
             )
             for tenant in tenants
         ]
-        return Notification.objects.bulk_create(notifications)
