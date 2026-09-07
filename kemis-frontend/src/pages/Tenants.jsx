@@ -127,6 +127,7 @@ function Tenants() {
           phone_number: formData.phone_number,
           emergency_contact_name: formData.emergency_contact_name,
           emergency_contact_phone: formData.emergency_contact_phone,
+          ...(formData.password ? { password: formData.password } : {}),
         });
 
         showNotification("Tenant updated successfully!", "success");
@@ -457,17 +458,15 @@ function Tenants() {
             required: !editingId,
             placeholder: editingId ? originalTenant?.email : undefined,
           },
-          ...(!editingId
-            ? [
-                {
-                  name: "password",
-                  label: "Set Login Password",
-                  type: "password",
-                  required: true,
-                  helperText: "Minimum 6 characters",
-                },
-              ]
-            : []),
+          {
+            name: "password",
+            label: editingId ? "New Password" : "Set Login Password",
+            type: "password",
+            required: !editingId,
+            helperText: editingId
+              ? "Leave blank to keep the current password"
+              : "Minimum 6 characters",
+          },
           { name: "national_id", label: "National ID", required: true },
           { name: "phone_number", label: "Phone Number", required: true },
           {

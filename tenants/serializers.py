@@ -162,6 +162,14 @@ class TenantSerializer(serializers.ModelSerializer):
             user.email
         )
 
+        password = validated_data.pop('password', None)
+        if password:
+            user.set_password(password)
+            # Admin/Manager just handed this tenant a new password —
+            # they must set their own before using the system again,
+            # same as the Manager/Landlord reset flow.
+            user.must_change_password = True
+
         user.save()
 
         instance.national_id = validated_data.get(
