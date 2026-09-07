@@ -63,6 +63,29 @@ class LeaseViewSet(AuditLogMixin, viewsets.ModelViewSet):
         instance = serializer.save()
         self._audit_log("UPDATE", instance, old_snapshot=old_snapshot)
 
+    def perform_destroy(self, instance):
+        """
+        Deleting a lease used to leave its unit stuck at whatever status
+        it already had (usually OCCUPIED) - nothing ever synced it back
+        to VACANT the way LeaseSerializer.update() does when a lease is
+        merely ended/expired. This mirrors that same logic on delete.
+        """
+        unit = instance.unit
+        was_active = instance.status == "ACTIVE"
+
+        self._audit_log("DELETE", instance)
+        instance.delete()
+
+        if was_active and unit.status != "MAINTENANCE":
+            still_has_active_lease = Lease.objects.filter(
+                unit=unit,
+                status="ACTIVE",
+            ).exists()
+
+            if not still_has_active_lease:
+                unit.status = "VACANT"
+                unit.save(update_fields=["status"])
+
     def destroy(self, request, *args, **kwargs):
         try:
             return super().destroy(request, *args, **kwargs)
