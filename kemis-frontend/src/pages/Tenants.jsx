@@ -96,10 +96,10 @@ function Tenants() {
       last_name: "",
       email: "",
       password: "",
-      national_id: tenant.national_id,
-      phone_number: tenant.phone_number,
-      emergency_contact_name: tenant.emergency_contact_name,
-      emergency_contact_phone: tenant.emergency_contact_phone,
+      national_id: "",
+      phone_number: "",
+      emergency_contact_name: "",
+      emergency_contact_phone: "",
     });
 
     setModalOpen(true);
@@ -123,10 +123,12 @@ function Tenants() {
           first_name: formData.first_name || originalTenant?.first_name,
           last_name: formData.last_name || originalTenant?.last_name,
           email: formData.email || originalTenant?.email,
-          national_id: formData.national_id,
-          phone_number: formData.phone_number,
-          emergency_contact_name: formData.emergency_contact_name,
-          emergency_contact_phone: formData.emergency_contact_phone,
+          national_id: formData.national_id || originalTenant?.national_id,
+          phone_number: formData.phone_number || originalTenant?.phone_number,
+          emergency_contact_name:
+            formData.emergency_contact_name || originalTenant?.emergency_contact_name,
+          emergency_contact_phone:
+            formData.emergency_contact_phone || originalTenant?.emergency_contact_phone,
           ...(formData.password ? { password: formData.password } : {}),
         });
 
@@ -467,17 +469,29 @@ function Tenants() {
               ? "Leave blank to keep the current password"
               : "Minimum 6 characters",
           },
-          { name: "national_id", label: "National ID", required: true },
-          { name: "phone_number", label: "Phone Number", required: true },
+          {
+            name: "national_id",
+            label: "National ID",
+            required: !editingId,
+            placeholder: editingId ? originalTenant?.national_id : undefined,
+          },
+          {
+            name: "phone_number",
+            label: "Phone Number",
+            required: !editingId,
+            placeholder: editingId ? originalTenant?.phone_number : undefined,
+          },
           {
             name: "emergency_contact_name",
             label: "Emergency Contact Name",
-            required: true,
+            required: !editingId,
+            placeholder: editingId ? originalTenant?.emergency_contact_name : undefined,
           },
           {
             name: "emergency_contact_phone",
             label: "Emergency Contact Phone",
-            required: true,
+            required: !editingId,
+            placeholder: editingId ? originalTenant?.emergency_contact_phone : undefined,
           },
         ]}
       />
